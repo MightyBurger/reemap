@@ -1,0 +1,24 @@
+[package]
+name = "reemap"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+enum-map = "2.7.3"
+num-derive = "0.4.2"
+num-traits = "0.2.19"
+strum = { version = "0.27.1", features = ["derive"] }
+arrayvec = "0.7.6"
+windows = { version = "0.61.1", features = [
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_UI_Accessibility",
+] }
+egui = "0.31.1"
+glow = "0.16.0"
+glutin = "0.32.3"
+winit = "0.30.10"
+egui-winit = "0.31.1"
+egui_glow = { version = "0.31.1", features = ["winit"] }
+glutin-winit = "0.5.0"
+log = "0.4.27"
