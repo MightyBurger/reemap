@@ -11,6 +11,7 @@ const SIZE: winit::dpi::LogicalSize<f64> = winit::dpi::LogicalSize {
 
 use glutin::prelude::NotCurrentGlContext;
 use std::{num::NonZeroU32, sync::Arc};
+use tray_icon::TrayIcon;
 use winit::raw_window_handle::HasWindowHandle as _;
 
 struct GlutinWindowContext {
@@ -22,7 +23,6 @@ struct GlutinWindowContext {
 
 impl GlutinWindowContext {
     unsafe fn new(event_loop: &winit::event_loop::ActiveEventLoop) -> Self {
-        // use glutin::context::NotCurrentContext as _;
         use glutin::display::GetGlDisplay as _;
         use glutin::display::GlDisplay as _;
         use glutin::prelude::GlSurface as _;
@@ -150,11 +150,12 @@ impl GlutinWindowContext {
 
 // TODO:
 // Add tray events
-// Add hide and show events
 #[derive(Debug)]
 pub enum ReemapWindowEvent {
     Redraw(std::time::Duration),
     SetWindowVisibility(bool),
+    TrayIconEvent(tray_icon::TrayIconEvent),
+    TrayMenuEvent(tray_icon::menu::MenuEvent),
 }
 
 struct GlowApp {
@@ -165,6 +166,7 @@ struct GlowApp {
     repaint_delay: std::time::Duration,
     clear_color: [f32; 3],
     visible: bool,
+    tray_icon: Option<TrayIcon>,
 }
 
 impl GlowApp {
@@ -177,6 +179,7 @@ impl GlowApp {
             repaint_delay: std::time::Duration::MAX,
             clear_color: [0.1, 0.1, 0.1],
             visible: false,
+            tray_icon: None,
         }
     }
 }
@@ -201,6 +204,31 @@ impl winit::application::ApplicationHandler<ReemapWindowEvent> for GlowApp {
         self.gl_window = Some(gl_window);
         self.gl = Some(gl);
         self.egui_glow = Some(egui_glow);
+
+        let tray_menu = {
+            let menu = tray_icon::menu::Menu::new();
+            let item1 = tray_icon::menu::MenuItem::new("item1", true, None);
+            if let Err(err) = menu.append(&item1) {
+                println!("{err:?}");
+            }
+            menu
+        };
+
+        // note: creating this has the side effect of creating the tray icon
+        let tray_icon = {
+            let path = concat!(env!("CARGO_MANIFEST_DIR"), "/resource/icon.png");
+            let icon = load_icon(std::path::Path::new(path));
+
+            tray_icon::TrayIconBuilder::new()
+                .with_menu(Box::new(tray_menu))
+                .with_tooltip("tooltip test")
+                .with_icon(icon)
+                .with_title("title")
+                .build()
+                .unwrap()
+        };
+
+        self.tray_icon = Some(tray_icon);
     }
 
     fn window_event(
@@ -251,14 +279,10 @@ impl winit::application::ApplicationHandler<ReemapWindowEvent> for GlowApp {
                 self.gl.as_mut().unwrap().clear(glow::COLOR_BUFFER_BIT);
             }
 
-            // draw things behind egui here
-
             self.egui_glow
                 .as_mut()
                 .unwrap()
                 .paint(self.gl_window.as_mut().unwrap().window());
-
-            // draw things on top of egui here
 
             self.gl_window.as_mut().unwrap().swap_buffers().unwrap();
             self.gl_window
@@ -294,7 +318,6 @@ impl winit::application::ApplicationHandler<ReemapWindowEvent> for GlowApp {
         }
     }
 
-    // TODO: Some stuff related to window hiding.
     fn user_event(
         &mut self,
         _event_loop: &winit::event_loop::ActiveEventLoop,
@@ -311,6 +334,7 @@ impl winit::application::ApplicationHandler<ReemapWindowEvent> for GlowApp {
                     }
                 }
             }
+            _ => (),
         }
     }
 
@@ -345,28 +369,54 @@ fn create_display(
     (glutin_window_context, gl)
 }
 
+fn load_icon(path: &std::path::Path) -> tray_icon::Icon {
+    let (icon_rgba, icon_width, icon_height) = {
+        let image = image::open(path)
+            .expect("failed to open icon path")
+            .into_rgba8();
+        let (width, height) = image.dimensions();
+        let rgba = image.into_raw();
+        (rgba, width, height)
+    };
+    tray_icon::Icon::from_rgba(icon_rgba, icon_width, icon_height).expect("failed to open icon")
+}
+
 fn main() {
     let event_loop = winit::event_loop::EventLoop::<ReemapWindowEvent>::with_user_event()
         .build()
         .unwrap();
-    let proxy = event_loop.create_proxy();
-    let proxy2 = event_loop.create_proxy();
 
+    let proxy = event_loop.create_proxy();
     std::thread::spawn(move || {
         let invisible_time = 1000;
-        let visible_time = 3000;
+        let visible_time = 8000;
         loop {
             std::thread::sleep(std::time::Duration::from_millis(invisible_time));
-            proxy2
+            proxy
                 .send_event(ReemapWindowEvent::SetWindowVisibility(true))
                 .unwrap();
             std::thread::sleep(std::time::Duration::from_millis(visible_time));
-            proxy2
+            proxy
                 .send_event(ReemapWindowEvent::SetWindowVisibility(false))
                 .unwrap();
         }
     });
 
+    let proxy = event_loop.create_proxy();
+    tray_icon::TrayIconEvent::set_event_handler(Some(move |event| {
+        proxy
+            .send_event(ReemapWindowEvent::TrayIconEvent(event))
+            .expect("event loop should exist");
+    }));
+
+    let proxy = event_loop.create_proxy();
+    tray_icon::menu::MenuEvent::set_event_handler(Some(move |event| {
+        proxy
+            .send_event(ReemapWindowEvent::TrayMenuEvent(event))
+            .expect("event loop should exist");
+    }));
+
+    let proxy = event_loop.create_proxy();
     let mut app = GlowApp::new(proxy);
     event_loop.run_app(&mut app).expect("failed to run app");
 }
