@@ -320,7 +320,7 @@ impl winit::application::ApplicationHandler<ReemapWindowEvent> for GlowApp {
 
     fn user_event(
         &mut self,
-        _event_loop: &winit::event_loop::ActiveEventLoop,
+        event_loop: &winit::event_loop::ActiveEventLoop,
         event: ReemapWindowEvent,
     ) {
         match event {
@@ -332,6 +332,9 @@ impl winit::application::ApplicationHandler<ReemapWindowEvent> for GlowApp {
                     if visible {
                         gl_window.window().request_redraw();
                     }
+                }
+                if !visible {
+                    event_loop.set_control_flow(winit::event_loop::ControlFlow::Wait);
                 }
             }
             _ => (),
@@ -388,7 +391,7 @@ fn main() {
 
     let proxy = event_loop.create_proxy();
     std::thread::spawn(move || {
-        let invisible_time = 1000;
+        let invisible_time = 8000;
         let visible_time = 8000;
         loop {
             std::thread::sleep(std::time::Duration::from_millis(invisible_time));
