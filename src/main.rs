@@ -130,11 +130,12 @@ impl GlutinWindowContext {
 
     fn resize(&self, physical_size: winit::dpi::PhysicalSize<u32>) {
         use glutin::surface::GlSurface as _;
-        self.gl_surface.resize(
-            &self.gl_context,
-            physical_size.width.try_into().unwrap(),
-            physical_size.height.try_into().unwrap(),
-        );
+        if let (Ok(width), Ok(height)) = (
+            physical_size.width.try_into(),
+            physical_size.height.try_into(),
+        ) {
+            self.gl_surface.resize(&self.gl_context, width, height);
+        }
     }
 
     fn swap_buffers(&self) -> glutin::error::Result<()> {
@@ -165,7 +166,6 @@ struct GlowApp {
     egui_glow: Option<egui_glow::EguiGlow>,
     repaint_delay: std::time::Duration,
     clear_color: [f32; 3],
-    visible: bool,
     tray_icon: Option<TrayIcon>,
 }
 
@@ -178,8 +178,19 @@ impl GlowApp {
             egui_glow: None,
             repaint_delay: std::time::Duration::MAX,
             clear_color: [0.1, 0.1, 0.1],
-            visible: false,
             tray_icon: None,
+        }
+    }
+
+    fn set_visible(&self, visible: bool, event_loop: &winit::event_loop::ActiveEventLoop) {
+        if let Some(ref gl_window) = self.gl_window {
+            gl_window.window().set_visible(visible);
+            if visible {
+                gl_window.window().request_redraw();
+            }
+        }
+        if !visible {
+            event_loop.set_control_flow(winit::event_loop::ControlFlow::Wait);
         }
     }
 }
@@ -208,6 +219,7 @@ impl winit::application::ApplicationHandler<ReemapWindowEvent> for GlowApp {
         let tray_menu = {
             let menu = tray_icon::menu::Menu::new();
             let item1 = tray_icon::menu::MenuItem::new("item1", true, None);
+            dbg!(item1.id());
             if let Err(err) = menu.append(&item1) {
                 println!("{err:?}");
             }
@@ -285,11 +297,6 @@ impl winit::application::ApplicationHandler<ReemapWindowEvent> for GlowApp {
                 .paint(self.gl_window.as_mut().unwrap().window());
 
             self.gl_window.as_mut().unwrap().swap_buffers().unwrap();
-            self.gl_window
-                .as_mut()
-                .unwrap()
-                .window()
-                .set_visible(self.visible);
         };
 
         use winit::event::WindowEvent;
@@ -326,16 +333,14 @@ impl winit::application::ApplicationHandler<ReemapWindowEvent> for GlowApp {
         match event {
             ReemapWindowEvent::Redraw(delay) => self.repaint_delay = delay,
             ReemapWindowEvent::SetWindowVisibility(visible) => {
-                self.visible = visible;
-                if let Some(ref gl_window) = self.gl_window {
-                    gl_window.window().set_visible(visible);
-                    if visible {
-                        gl_window.window().request_redraw();
-                    }
-                }
-                if !visible {
-                    event_loop.set_control_flow(winit::event_loop::ControlFlow::Wait);
-                }
+                self.set_visible(visible, event_loop);
+            }
+            ReemapWindowEvent::TrayIconEvent(tray_icon::TrayIconEvent::DoubleClick {
+                button: tray_icon::MouseButton::Left,
+                ..
+            }) => self.set_visible(true, event_loop),
+            ReemapWindowEvent::TrayMenuEvent(other) => {
+                dbg!(other);
             }
             _ => (),
         }
