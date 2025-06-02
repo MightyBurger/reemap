@@ -354,7 +354,12 @@ impl winit::application::ApplicationHandler<ReemapGuiEvent> for GlowApp {
             ReemapGuiEvent::TrayIconEvent(tray_icon::TrayIconEvent::DoubleClick {
                 button: tray_icon::MouseButton::Left,
                 ..
-            }) => self.set_visible(true, event_loop),
+            }) => {
+                self.set_visible(true, event_loop);
+                if let Some(ref gl_window) = self.gl_window {
+                    gl_window.window().set_minimized(false);
+                }
+            }
             ReemapGuiEvent::TrayMenuEvent(other) => {
                 dbg!(other);
             }
