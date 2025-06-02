@@ -165,12 +165,6 @@ enum ReemapGuiEvent {
     TrayMenuEvent(tray_icon::menu::MenuEvent),
 }
 
-#[derive(Debug)]
-struct ReemapTrayMenuIDs {
-    configure_id: tray_icon::menu::MenuId,
-    exit_id: tray_icon::menu::MenuId,
-}
-
 struct GlowApp {
     proxy: winit::event_loop::EventLoopProxy<ReemapGuiEvent>,
     gl_window: Option<GlutinWindowContext>,
