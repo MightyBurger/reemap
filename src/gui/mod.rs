@@ -257,12 +257,18 @@ impl winit::application::ApplicationHandler<ReemapGuiEvent> for GlowApp {
     ) {
         let mut redraw = || {
             let mut quit = false;
+            let mut dummy = false;
+            let mut my_string = String::new();
 
             self.egui_glow.as_mut().unwrap().run(
                 self.gl_window.as_mut().unwrap().window(),
                 |egui_ctx| {
+                    catppuccin_egui::set_theme(&egui_ctx, catppuccin_egui::MACCHIATO);
                     egui::SidePanel::left("my_side_panel").show(egui_ctx, |ui| {
                         ui.heading("Hello World!");
+
+                        ui.checkbox(&mut dummy, "Hello, checkbox!");
+                        let _response = ui.add(egui::TextEdit::singleline(&mut my_string));
                         if ui.button("Quit").clicked() {
                             quit = true;
                         }

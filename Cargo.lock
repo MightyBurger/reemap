@@ -330,6 +330,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "catppuccin-egui"
+version = "5.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a93c74882fe7e6b16089cc70122af492e16b76016d3ed2af9b0c4b6a8bca0ab0"
+dependencies = [
+ "egui",
+]
+
+[[package]]
 name = "cc"
 version = "1.2.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2518,6 +2527,7 @@ name = "reemap"
 version = "0.1.0"
 dependencies = [
  "arrayvec",
+ "catppuccin-egui",
  "egui",
  "egui-winit",
  "egui_glow",
