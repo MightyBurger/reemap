@@ -255,7 +255,21 @@ impl winit::application::ApplicationHandler<ReemapGuiEvent> for GlowApp {
         _window_id: winit::window::WindowId,
         event: winit::event::WindowEvent,
     ) {
-        let mut redraw = || {
+        use winit::event::WindowEvent;
+
+        // If the user closes the window, continue running in the background.
+        if matches!(event, WindowEvent::CloseRequested) {
+            self.set_visible(false, event_loop);
+            return;
+        }
+
+        // Possibly unnecessary?
+        if matches!(event, WindowEvent::Destroyed) {
+            event_loop.exit();
+            return;
+        }
+
+        if matches!(event, WindowEvent::RedrawRequested) {
             let mut quit = false;
             let mut dummy = false;
             let mut my_string = String::new();
@@ -309,16 +323,6 @@ impl winit::application::ApplicationHandler<ReemapGuiEvent> for GlowApp {
                 .paint(self.gl_window.as_mut().unwrap().window());
 
             self.gl_window.as_mut().unwrap().swap_buffers().unwrap();
-        };
-
-        use winit::event::WindowEvent;
-        if matches!(event, WindowEvent::CloseRequested | WindowEvent::Destroyed) {
-            event_loop.exit();
-            return;
-        }
-
-        if matches!(event, WindowEvent::RedrawRequested) {
-            redraw();
             return;
         }
 
