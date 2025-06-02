@@ -133,23 +133,12 @@ impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for Glow
         }
 
         if matches!(event, WindowEvent::RedrawRequested) {
-            self.egui_glow.as_mut().unwrap().run(
-                self.gl_window.as_mut().unwrap().window(),
-                |cc| self.app_data.update(cc),
-                // |egui_ctx| {
-                //     catppuccin_egui::set_theme(&egui_ctx, catppuccin_egui::MACCHIATO);
-                //     egui::SidePanel::left("my_side_panel").show(egui_ctx, |ui| {
-                //         ui.heading("Hello World!");
-
-                //         ui.checkbox(&mut dummy, "Hello, checkbox!");
-                //         let _response = ui.add(egui::TextEdit::singleline(&mut my_string));
-                //         if ui.button("Quit").clicked() {
-                //             quit = true;
-                //         }
-                //         ui.color_edit_button_rgb(self.clear_color.as_mut().try_into().unwrap());
-                //     });
-                // },
-            );
+            self.egui_glow
+                .as_mut()
+                .unwrap()
+                .run(self.gl_window.as_mut().unwrap().window(), |cc| {
+                    self.app_data.update(cc)
+                });
 
             event_loop.set_control_flow(if self.repaint_delay.is_zero() {
                 self.gl_window.as_mut().unwrap().window().request_redraw();
@@ -161,17 +150,6 @@ impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for Glow
             } else {
                 winit::event_loop::ControlFlow::Wait
             });
-
-            // unsafe {
-            //     use glow::HasContext as _;
-            //     self.gl.as_mut().unwrap().clear_color(
-            //         self.clear_color[0],
-            //         self.clear_color[1],
-            //         self.clear_color[2],
-            //         1.0,
-            //     );
-            //     self.gl.as_mut().unwrap().clear(glow::COLOR_BUFFER_BIT);
-            // }
 
             self.egui_glow
                 .as_mut()
