@@ -6,6 +6,7 @@ const SIZE: winit::dpi::LogicalSize<f64> = winit::dpi::LogicalSize {
     width: 800.0,
     height: 600.0,
 };
+const START_VISIBLE: bool = true;
 
 use glutin::prelude::NotCurrentGlContext;
 use std::{num::NonZeroU32, sync::Arc};
@@ -25,9 +26,18 @@ impl GlutinWindowContext {
         use glutin::display::GlDisplay as _;
         use glutin::prelude::GlSurface as _;
         let winit_window_builder = winit::window::WindowAttributes::default()
-            .with_resizable(true)
             .with_inner_size(SIZE)
+            .with_resizable(false)
+            .with_enabled_buttons({
+                let mut enabled_buttons = winit::window::WindowButtons::all();
+                enabled_buttons.remove(winit::window::WindowButtons::MAXIMIZE);
+                enabled_buttons
+            })
             .with_title(TITLE)
+            .with_fullscreen(None)
+            .with_maximized(false)
+            .with_window_level(winit::window::WindowLevel::AlwaysOnTop)
+            // .with_theme(Some(winit::window::Theme::Dark))
             .with_visible(false);
 
         let config_template_builder = glutin::config::ConfigTemplateBuilder::new()
@@ -148,7 +158,7 @@ impl GlutinWindowContext {
 }
 
 #[derive(Debug)]
-pub enum ReemapWindowEvent {
+pub enum ReemapGuiEvent {
     Redraw(std::time::Duration),
     SetWindowVisibility(bool),
     TrayIconEvent(tray_icon::TrayIconEvent),
@@ -156,7 +166,7 @@ pub enum ReemapWindowEvent {
 }
 
 struct GlowApp {
-    proxy: winit::event_loop::EventLoopProxy<ReemapWindowEvent>,
+    proxy: winit::event_loop::EventLoopProxy<ReemapGuiEvent>,
     gl_window: Option<GlutinWindowContext>,
     gl: Option<Arc<glow::Context>>,
     egui_glow: Option<egui_glow::EguiGlow>,
@@ -166,7 +176,7 @@ struct GlowApp {
 }
 
 impl GlowApp {
-    fn new(proxy: winit::event_loop::EventLoopProxy<ReemapWindowEvent>) -> Self {
+    fn new(proxy: winit::event_loop::EventLoopProxy<ReemapGuiEvent>) -> Self {
         Self {
             proxy,
             gl_window: None,
@@ -191,11 +201,11 @@ impl GlowApp {
     }
 }
 
-impl winit::application::ApplicationHandler<ReemapWindowEvent> for GlowApp {
+impl winit::application::ApplicationHandler<ReemapGuiEvent> for GlowApp {
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
         let (gl_window, gl) = create_display(event_loop);
         let gl = std::sync::Arc::new(gl);
-        gl_window.window().set_visible(false);
+        gl_window.window().set_visible(START_VISIBLE);
 
         let egui_glow = egui_glow::EguiGlow::new(event_loop, gl.clone(), None, None, true);
 
@@ -205,7 +215,7 @@ impl winit::application::ApplicationHandler<ReemapWindowEvent> for GlowApp {
             .set_request_repaint_callback(move |info| {
                 event_loop_proxy
                     .lock()
-                    .send_event(ReemapWindowEvent::Redraw(info.delay))
+                    .send_event(ReemapGuiEvent::Redraw(info.delay))
                     .expect("Cannot send event")
             });
         self.gl_window = Some(gl_window);
@@ -324,18 +334,18 @@ impl winit::application::ApplicationHandler<ReemapWindowEvent> for GlowApp {
     fn user_event(
         &mut self,
         event_loop: &winit::event_loop::ActiveEventLoop,
-        event: ReemapWindowEvent,
+        event: ReemapGuiEvent,
     ) {
         match event {
-            ReemapWindowEvent::Redraw(delay) => self.repaint_delay = delay,
-            ReemapWindowEvent::SetWindowVisibility(visible) => {
+            ReemapGuiEvent::Redraw(delay) => self.repaint_delay = delay,
+            ReemapGuiEvent::SetWindowVisibility(visible) => {
                 self.set_visible(visible, event_loop);
             }
-            ReemapWindowEvent::TrayIconEvent(tray_icon::TrayIconEvent::DoubleClick {
+            ReemapGuiEvent::TrayIconEvent(tray_icon::TrayIconEvent::DoubleClick {
                 button: tray_icon::MouseButton::Left,
                 ..
             }) => self.set_visible(true, event_loop),
-            ReemapWindowEvent::TrayMenuEvent(other) => {
+            ReemapGuiEvent::TrayMenuEvent(other) => {
                 dbg!(other);
             }
             _ => (),
@@ -386,37 +396,21 @@ fn load_icon(path: &std::path::Path) -> tray_icon::Icon {
 }
 
 pub fn run() {
-    let event_loop = winit::event_loop::EventLoop::<ReemapWindowEvent>::with_user_event()
+    let event_loop = winit::event_loop::EventLoop::<ReemapGuiEvent>::with_user_event()
         .build()
         .unwrap();
 
     let proxy = event_loop.create_proxy();
-    std::thread::spawn(move || {
-        let invisible_time = 1000;
-        let visible_time = 8000;
-        loop {
-            std::thread::sleep(std::time::Duration::from_millis(invisible_time));
-            proxy
-                .send_event(ReemapWindowEvent::SetWindowVisibility(true))
-                .unwrap();
-            std::thread::sleep(std::time::Duration::from_millis(visible_time));
-            proxy
-                .send_event(ReemapWindowEvent::SetWindowVisibility(false))
-                .unwrap();
-        }
-    });
-
-    let proxy = event_loop.create_proxy();
     tray_icon::TrayIconEvent::set_event_handler(Some(move |event| {
         proxy
-            .send_event(ReemapWindowEvent::TrayIconEvent(event))
+            .send_event(ReemapGuiEvent::TrayIconEvent(event))
             .expect("event loop should exist");
     }));
 
     let proxy = event_loop.create_proxy();
     tray_icon::menu::MenuEvent::set_event_handler(Some(move |event| {
         proxy
-            .send_event(ReemapWindowEvent::TrayMenuEvent(event))
+            .send_event(ReemapGuiEvent::TrayMenuEvent(event))
             .expect("event loop should exist");
     }));
 
