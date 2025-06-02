@@ -165,7 +165,11 @@ enum ReemapGuiEvent {
     TrayMenuEvent(tray_icon::menu::MenuEvent),
 }
 
-struct GlowApp {
+trait TrayApp: Default {
+    fn update(&mut self, ctx: &egui::Context);
+}
+
+struct GlowApp<T: TrayApp> {
     proxy: winit::event_loop::EventLoopProxy<ReemapGuiEvent>,
     gl_window: Option<GlutinWindowContext>,
     gl: Option<Arc<glow::Context>>,
@@ -173,9 +177,10 @@ struct GlowApp {
     repaint_delay: std::time::Duration,
     clear_color: [f32; 3],
     tray_icon: Option<TrayIcon>,
+    app_data: T,
 }
 
-impl GlowApp {
+impl<T: TrayApp> GlowApp<T> {
     fn new(proxy: winit::event_loop::EventLoopProxy<ReemapGuiEvent>) -> Self {
         Self {
             proxy,
@@ -185,6 +190,7 @@ impl GlowApp {
             repaint_delay: std::time::Duration::MAX,
             clear_color: [0.1, 0.1, 0.1],
             tray_icon: None,
+            app_data: T::default(),
         }
     }
 
@@ -201,7 +207,7 @@ impl GlowApp {
     }
 }
 
-impl winit::application::ApplicationHandler<ReemapGuiEvent> for GlowApp {
+impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for GlowApp<T> {
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
         let (gl_window, gl) = create_display(event_loop);
         let gl = std::sync::Arc::new(gl);
@@ -271,52 +277,45 @@ impl winit::application::ApplicationHandler<ReemapGuiEvent> for GlowApp {
         }
 
         if matches!(event, WindowEvent::RedrawRequested) {
-            let mut quit = false;
-            let mut dummy = false;
-            let mut my_string = String::new();
-
             self.egui_glow.as_mut().unwrap().run(
                 self.gl_window.as_mut().unwrap().window(),
-                |egui_ctx| {
-                    catppuccin_egui::set_theme(&egui_ctx, catppuccin_egui::MACCHIATO);
-                    egui::SidePanel::left("my_side_panel").show(egui_ctx, |ui| {
-                        ui.heading("Hello World!");
+                |cc| self.app_data.update(cc),
+                // |egui_ctx| {
+                //     catppuccin_egui::set_theme(&egui_ctx, catppuccin_egui::MACCHIATO);
+                //     egui::SidePanel::left("my_side_panel").show(egui_ctx, |ui| {
+                //         ui.heading("Hello World!");
 
-                        ui.checkbox(&mut dummy, "Hello, checkbox!");
-                        let _response = ui.add(egui::TextEdit::singleline(&mut my_string));
-                        if ui.button("Quit").clicked() {
-                            quit = true;
-                        }
-                        ui.color_edit_button_rgb(self.clear_color.as_mut().try_into().unwrap());
-                    });
-                },
+                //         ui.checkbox(&mut dummy, "Hello, checkbox!");
+                //         let _response = ui.add(egui::TextEdit::singleline(&mut my_string));
+                //         if ui.button("Quit").clicked() {
+                //             quit = true;
+                //         }
+                //         ui.color_edit_button_rgb(self.clear_color.as_mut().try_into().unwrap());
+                //     });
+                // },
             );
 
-            if quit {
-                event_loop.exit();
+            event_loop.set_control_flow(if self.repaint_delay.is_zero() {
+                self.gl_window.as_mut().unwrap().window().request_redraw();
+                winit::event_loop::ControlFlow::Poll
+            } else if let Some(repaint_after_instant) =
+                std::time::Instant::now().checked_add(self.repaint_delay)
+            {
+                winit::event_loop::ControlFlow::WaitUntil(repaint_after_instant)
             } else {
-                event_loop.set_control_flow(if self.repaint_delay.is_zero() {
-                    self.gl_window.as_mut().unwrap().window().request_redraw();
-                    winit::event_loop::ControlFlow::Poll
-                } else if let Some(repaint_after_instant) =
-                    std::time::Instant::now().checked_add(self.repaint_delay)
-                {
-                    winit::event_loop::ControlFlow::WaitUntil(repaint_after_instant)
-                } else {
-                    winit::event_loop::ControlFlow::Wait
-                });
-            }
+                winit::event_loop::ControlFlow::Wait
+            });
 
-            unsafe {
-                use glow::HasContext as _;
-                self.gl.as_mut().unwrap().clear_color(
-                    self.clear_color[0],
-                    self.clear_color[1],
-                    self.clear_color[2],
-                    1.0,
-                );
-                self.gl.as_mut().unwrap().clear(glow::COLOR_BUFFER_BIT);
-            }
+            // unsafe {
+            //     use glow::HasContext as _;
+            //     self.gl.as_mut().unwrap().clear_color(
+            //         self.clear_color[0],
+            //         self.clear_color[1],
+            //         self.clear_color[2],
+            //         1.0,
+            //     );
+            //     self.gl.as_mut().unwrap().clear(glow::COLOR_BUFFER_BIT);
+            // }
 
             self.egui_glow
                 .as_mut()
@@ -423,6 +422,24 @@ fn load_icon(path: &std::path::Path) -> tray_icon::Icon {
     tray_icon::Icon::from_rgba(icon_rgba, icon_width, icon_height).expect("failed to open icon")
 }
 
+#[derive(Default)]
+struct MyTrayApp {
+    text: String,
+}
+impl TrayApp for MyTrayApp {
+    fn update(&mut self, egui_ctx: &egui::Context) {
+        catppuccin_egui::set_theme(egui_ctx, catppuccin_egui::MACCHIATO);
+        egui::CentralPanel::default().show(egui_ctx, |ui| {
+            ui.heading("Hello World!");
+            if ui.button("Send text").clicked() {
+                println!("Works!");
+                self.text.push_str(" More!");
+            }
+            ui.label(format!("{}", self.text));
+        });
+    }
+}
+
 pub fn run() {
     let event_loop = winit::event_loop::EventLoop::<ReemapGuiEvent>::with_user_event()
         .build()
@@ -443,6 +460,6 @@ pub fn run() {
     }));
 
     let proxy = event_loop.create_proxy();
-    let mut app = GlowApp::new(proxy);
+    let mut app = GlowApp::<MyTrayApp>::new(proxy);
     event_loop.run_app(&mut app).expect("failed to run app");
 }
