@@ -158,11 +158,17 @@ impl GlutinWindowContext {
 }
 
 #[derive(Debug)]
-pub enum ReemapGuiEvent {
+enum ReemapGuiEvent {
     Redraw(std::time::Duration),
     SetWindowVisibility(bool),
     TrayIconEvent(tray_icon::TrayIconEvent),
     TrayMenuEvent(tray_icon::menu::MenuEvent),
+}
+
+#[derive(Debug)]
+struct ReemapTrayMenuIDs {
+    configure_id: tray_icon::menu::MenuId,
+    exit_id: tray_icon::menu::MenuId,
 }
 
 struct GlowApp {
@@ -224,11 +230,12 @@ impl winit::application::ApplicationHandler<ReemapGuiEvent> for GlowApp {
 
         let tray_menu = {
             let menu = tray_icon::menu::Menu::new();
-            let item1 = tray_icon::menu::MenuItem::new("item1", true, None);
-            dbg!(item1.id());
-            if let Err(err) = menu.append(&item1) {
-                println!("{err:?}");
-            }
+            let configure_btn =
+                tray_icon::menu::MenuItem::with_id("MENU_ID_CONFIGURE", "Configure", true, None);
+            let exit_btn = tray_icon::menu::MenuItem::with_id("MENU_ID_EXIT", "Exit", true, None);
+            menu.append_items(&[&configure_btn, &exit_btn])
+                .expect("could not initialize tray menu");
+
             menu
         };
 
@@ -360,9 +367,21 @@ impl winit::application::ApplicationHandler<ReemapGuiEvent> for GlowApp {
                     gl_window.window().set_minimized(false);
                 }
             }
-            ReemapGuiEvent::TrayMenuEvent(other) => {
-                dbg!(other);
-            }
+            ReemapGuiEvent::TrayMenuEvent(tray_icon::menu::MenuEvent {
+                id: tray_icon::menu::MenuId(id),
+            }) => match id.as_str() {
+                "MENU_ID_CONFIGURE" => {
+                    self.set_visible(true, event_loop);
+                    if let Some(ref gl_window) = self.gl_window {
+                        gl_window.window().set_minimized(false);
+                    }
+                }
+                "MENU_ID_EXIT" => event_loop.exit(),
+                _ => {
+                    #[cfg(debug_assertions)]
+                    panic!("unrecognized menu ID")
+                }
+            },
             _ => (),
         }
     }
