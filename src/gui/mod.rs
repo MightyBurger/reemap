@@ -1,6 +1,9 @@
 // The following code is from here:
 // https://github.com/emilk/egui/blob/main/crates/egui_glow/examples/pure_glow.rs
 
+mod glutin_ctx;
+mod reemapp;
+
 use glutin_ctx::GlutinWindowContext;
 
 const TITLE: &'static str = "Reemap";
@@ -9,8 +12,6 @@ const SIZE: winit::dpi::LogicalSize<f64> = winit::dpi::LogicalSize {
     height: 600.0,
 };
 const START_VISIBLE: bool = true;
-
-mod glutin_ctx;
 
 use std::sync::Arc;
 use tray_icon::TrayIcon;
@@ -256,24 +257,6 @@ fn load_icon(path: &std::path::Path) -> tray_icon::Icon {
     tray_icon::Icon::from_rgba(icon_rgba, icon_width, icon_height).expect("failed to open icon")
 }
 
-#[derive(Default)]
-struct MyTrayApp {
-    text: String,
-}
-impl TrayApp for MyTrayApp {
-    fn update(&mut self, egui_ctx: &egui::Context) {
-        catppuccin_egui::set_theme(egui_ctx, catppuccin_egui::MACCHIATO);
-        egui::CentralPanel::default().show(egui_ctx, |ui| {
-            ui.heading("Hello World!");
-            if ui.button("Send text").clicked() {
-                println!("Works!");
-                self.text.push_str(" More!");
-            }
-            ui.label(format!("{}", self.text));
-        });
-    }
-}
-
 pub fn run() {
     let event_loop = winit::event_loop::EventLoop::<ReemapGuiEvent>::with_user_event()
         .build()
@@ -294,6 +277,6 @@ pub fn run() {
     }));
 
     let proxy = event_loop.create_proxy();
-    let mut app = GlowApp::<MyTrayApp>::new(proxy);
+    let mut app = GlowApp::<reemapp::ReemApp>::new(proxy);
     event_loop.run_app(&mut app).expect("failed to run app");
 }

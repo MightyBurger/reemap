@@ -2540,6 +2540,7 @@ dependencies = [
  "num-derive",
  "num-traits",
  "strum",
+ "thiserror 2.0.12",
  "tray-icon",
  "windows",
  "winit",

@@ -27,3 +27,4 @@ image = "0.25.6"
 catppuccin-egui = { version = "5.5.0", default-features = false, features = [
     "egui31",
 ] }
+thiserror = "2.0.12"
