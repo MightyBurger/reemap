@@ -1,5 +1,8 @@
 use super::config::{LayerType, ProfileState, RemapPolicy};
 
+use crate::buttons::key::KeyButton;
+use crate::buttons::mouse::MouseButton;
+use crate::buttons::wheel::MouseWheelButton;
 use crate::buttons::{Button, HoldButton, TapButton};
 use crate::config::BaseRemapPolicy;
 
@@ -11,6 +14,32 @@ use windows::Win32::UI::WindowsAndMessaging;
 
 use enum_map::EnumMap;
 
+pub unsafe fn set_mouse_hook() -> Result<WindowsAndMessaging::HHOOK, windows::core::Error> {
+    use Foundation::{LPARAM, LRESULT, WPARAM};
+    use WindowsAndMessaging::{SetWindowsHookExW, WH_MOUSE_LL};
+    let idhook = WH_MOUSE_LL;
+    let lpfn = Some(mouse_hook as unsafe extern "system" fn(i32, WPARAM, LPARAM) -> LRESULT);
+    let hmod = None;
+    let dwthreadid = 0;
+    unsafe { SetWindowsHookExW(idhook, lpfn, hmod, dwthreadid) }
+}
+
+pub unsafe fn set_keybd_hook() -> Result<WindowsAndMessaging::HHOOK, windows::core::Error> {
+    use Foundation::{LPARAM, LRESULT, WPARAM};
+    use WindowsAndMessaging::{SetWindowsHookExW, WH_KEYBOARD_LL};
+    let idhook = WH_KEYBOARD_LL;
+    let lpfn = Some(keybd_hook as unsafe extern "system" fn(i32, WPARAM, LPARAM) -> LRESULT);
+    let hmod = None;
+    let dwthreadid = 0;
+    unsafe { SetWindowsHookExW(idhook, lpfn, hmod, dwthreadid) }
+}
+
+// pub unsafe fn unhook_mouse_hook(
+//     hhk: WindowsAndMessaging::HHOOK,
+// ) -> Result<(), windows::core::Error> {
+//     unsafe { WindowsAndMessaging::UnhookWindowsHookEx(hhk) }
+// }
+
 // This is a LowLevelKeyboardProc.
 // https://learn.microsoft.com/en-us/windows/win32/winmsg/lowlevelkeyboardproc
 #[allow(non_snake_case)]
@@ -19,36 +48,47 @@ unsafe extern "system" fn keybd_hook(
     wParam: Foundation::WPARAM,
     lParam: Foundation::LPARAM,
 ) -> Foundation::LRESULT {
+    use WindowsAndMessaging as WM;
     // From the above docs: If nCode is less than zero, this callback must call CallNextHookEx
     // and return the result.
     if nCode < 0 {
         unsafe {
-            return WindowsAndMessaging::CallNextHookEx(None, nCode, wParam, lParam);
+            return WM::CallNextHookEx(None, nCode, wParam, lParam);
         }
     }
 
-    let hookstruct: WindowsAndMessaging::MSLLHOOKSTRUCT =
-        unsafe { *(lParam.0 as *const WindowsAndMessaging::MSLLHOOKSTRUCT) };
+    let hookstruct: WM::KBDLLHOOKSTRUCT = unsafe { *(lParam.0 as *const WM::KBDLLHOOKSTRUCT) };
 
     // Filter out any synthesized inputs to:
     //  1.  Avoid responding to our own inputs (note: could also do this with dwExtraInfo)
     //  2.  Avoid responding to inputs from something like AHK; this could create a loop depending
     //      on how Reemap and AHK are configured
-    if hookstruct.flags & WindowsAndMessaging::LLMHF_INJECTED != 0 {
+    if hookstruct.flags.contains(WM::LLKHF_INJECTED) {
         unsafe {
-            return WindowsAndMessaging::CallNextHookEx(None, nCode, wParam, lParam);
+            return WM::CallNextHookEx(None, nCode, wParam, lParam);
         }
     }
 
+    // If we don't know about this button, let's just forward it along uninterrupted.
+    let Some(key) = KeyButton::from_vk(hookstruct.vkCode as u8) else {
+        unsafe {
+            return WM::CallNextHookEx(None, nCode, wParam, lParam);
+        }
+    };
+
     // Convert to an input and call the function.
     // If it's intercepted, do not let this message pass on.
-    todo!()
-    // if intercept(Input::Key(KeyInput::A)) {
-    //     return Foundation::LRESULT(1);
-    // }
-    // unsafe {
-    //     return WindowsAndMessaging::CallNextHookEx(None, nCode, wParam, lParam);
-    // }
+
+    if hookstruct.flags.contains(WM::LLKHF_UP) {
+        if intercept_hold_up_input(HoldButton::from(key)) {
+            return Foundation::LRESULT(1);
+        }
+    } else {
+        if intercept_hold_down_input(HoldButton::from(key)) {
+            return Foundation::LRESULT(1);
+        }
+    }
+    unsafe { WM::CallNextHookEx(None, nCode, wParam, lParam) }
 }
 
 // This is a LowLevelMouseProc.
@@ -59,43 +99,154 @@ unsafe extern "system" fn mouse_hook(
     wParam: Foundation::WPARAM,
     lParam: Foundation::LPARAM,
 ) -> Foundation::LRESULT {
+    use WindowsAndMessaging as WM;
     // From the above docs: If nCode is less than zero, this callback must call CallNextHookEx
     // and return the result.
     if nCode < 0 {
         unsafe {
-            return WindowsAndMessaging::CallNextHookEx(None, nCode, wParam, lParam);
+            return WM::CallNextHookEx(None, nCode, wParam, lParam);
         }
     }
 
-    let hookstruct: WindowsAndMessaging::MSLLHOOKSTRUCT =
-        unsafe { *(lParam.0 as *const WindowsAndMessaging::MSLLHOOKSTRUCT) };
+    let hookstruct: WM::MSLLHOOKSTRUCT = unsafe { *(lParam.0 as *const WM::MSLLHOOKSTRUCT) };
 
     // Filter out any synthesized inputs to:
     //  1.  Avoid responding to our own inputs (note: could also do this with dwExtraInfo)
     //  2.  Avoid responding to inputs from something like AHK; this could create a loop depending
     //      on how Reemap and AHK are configured
-    if hookstruct.flags & WindowsAndMessaging::LLMHF_INJECTED != 0 {
+    if hookstruct.flags & WM::LLMHF_INJECTED != 0 {
         unsafe {
-            return WindowsAndMessaging::CallNextHookEx(None, nCode, wParam, lParam);
+            return WM::CallNextHookEx(None, nCode, wParam, lParam);
         }
     }
 
-    // Convert to an input and call the function.
-    // If it's intercepted, do not let this message pass on.
-    todo!()
-    // if intercept(Input::Mouse(MouseButtonInput::Left)) {
-    //     return Foundation::LRESULT(1);
-    // }
-    // unsafe {
-    //     return WindowsAndMessaging::CallNextHookEx(None, nCode, wParam, lParam);
-    // }
-}
+    enum Action {
+        Down,
+        Up,
+    }
+    enum MouseOrWheel {
+        Mouse { button: MouseButton, action: Action },
+        Wheel(MouseWheelButton),
+    }
+    use Action::{Down, Up};
+    use MouseOrWheel::{Mouse, Wheel};
 
-/// The active layer toggles.
-// #[derive(Debug, Default, Clone, PartialEq, Eq)]
-// pub struct CurrentLayerToggles {
-//     layers: HashMap<config::LayerCondition, usize>,
-// }
+    let button: MouseOrWheel = match wParam.0 as u32 {
+        WM::WM_LBUTTONDOWN => Mouse {
+            button: MouseButton::Left,
+            action: Down,
+        },
+        WM::WM_LBUTTONUP => Mouse {
+            button: MouseButton::Left,
+            action: Up,
+        },
+        WM::WM_MBUTTONDOWN => Mouse {
+            button: MouseButton::Middle,
+            action: Down,
+        },
+        WM::WM_MBUTTONUP => Mouse {
+            button: MouseButton::Middle,
+            action: Up,
+        },
+        WM::WM_RBUTTONDOWN => Mouse {
+            button: MouseButton::Right,
+            action: Down,
+        },
+        WM::WM_RBUTTONUP => Mouse {
+            button: MouseButton::Right,
+            action: Up,
+        },
+        WM::WM_XBUTTONDOWN => {
+            let higher_word: u16 = ((hookstruct.mouseData & 0xFF00) >> 16) as u16;
+            match higher_word {
+                WM::XBUTTON1 => Mouse {
+                    button: MouseButton::X1,
+                    action: Down,
+                },
+                WM::XBUTTON2 => Mouse {
+                    button: MouseButton::X2,
+                    action: Down,
+                },
+                _ => {
+                    // Malformed input; ignore it.
+                    unsafe {
+                        return WM::CallNextHookEx(None, nCode, wParam, lParam);
+                    }
+                }
+            }
+        }
+        WM::WM_XBUTTONUP => {
+            let higher_word: u16 = ((hookstruct.mouseData & 0xFF00) >> 16) as u16;
+            match higher_word {
+                WM::XBUTTON1 => Mouse {
+                    button: MouseButton::X1,
+                    action: Up,
+                },
+                WM::XBUTTON2 => Mouse {
+                    button: MouseButton::X2,
+                    action: Up,
+                },
+                _ => {
+                    // Malformed input; ignore it.
+                    unsafe {
+                        return WM::CallNextHookEx(None, nCode, wParam, lParam);
+                    }
+                }
+            }
+        }
+        WM::WM_MOUSEWHEEL => {
+            let higher_word: u16 = ((hookstruct.mouseData & 0xFF00) >> 16) as u16;
+            let higher_word_signed: i16 = higher_word as i16;
+            if higher_word_signed > 0 {
+                Wheel(MouseWheelButton::ScrollUp)
+            } else if higher_word_signed < 0 {
+                Wheel(MouseWheelButton::ScrollDown)
+            } else {
+                // Malformed input; ignore it.
+                unsafe {
+                    return WM::CallNextHookEx(None, nCode, wParam, lParam);
+                }
+            }
+        }
+        WM::WM_MOUSEHWHEEL => {
+            let higher_word: u16 = ((hookstruct.mouseData & 0xFF00) >> 16) as u16;
+            let higher_word_signed: i16 = higher_word as i16;
+            if higher_word_signed > 0 {
+                Wheel(MouseWheelButton::ScrollHorzRight)
+            } else if higher_word_signed < 0 {
+                Wheel(MouseWheelButton::ScrollHorzLeft)
+            } else {
+                // Malformed input; ignore it.
+                unsafe {
+                    return WM::CallNextHookEx(None, nCode, wParam, lParam);
+                }
+            }
+        }
+        _ => {
+            // A mouse event we don't care about.
+            // Forward it on.
+            unsafe {
+                return WM::CallNextHookEx(None, nCode, wParam, lParam);
+            }
+        }
+    };
+
+    let intercepted = match button {
+        Mouse {
+            button,
+            action: Down,
+        } => intercept_hold_down_input(HoldButton::from(button)),
+        Mouse { button, action: Up } => intercept_hold_up_input(HoldButton::from(button)),
+        Wheel(wheel) => intercept_tap_input(TapButton::from(wheel)),
+    };
+
+    if intercepted {
+        return Foundation::LRESULT(1);
+    }
+    unsafe {
+        return WM::CallNextHookEx(None, nCode, wParam, lParam);
+    }
+}
 
 /*
 
