@@ -1,7 +1,5 @@
 use windows::Win32::UI::Input::KeyboardAndMouse;
 
-use super::HoldInputType;
-
 #[derive(
     Debug,
     Clone,
@@ -51,35 +49,46 @@ pub enum KeyButton {
     Z = 0x5A,
 }
 
-impl From<KeyInput> for KeyButton {
-    fn from(value: KeyInput) -> Self {
-        value.button
+impl KeyButton {
+    pub fn from_vk(vk: u8) -> Option<Self> {
+        use num_traits::FromPrimitive;
+        Self::from_u8(vk)
     }
-}
-
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct KeyInput {
-    pub button: KeyButton,
-    pub input_type: HoldInputType,
-}
-
-impl KeyInput {
-    pub fn keydown_from(button: KeyButton) -> Self {
-        Self {
-            button,
-            input_type: HoldInputType::Down,
+    pub fn to_vk(&self) -> u8 {
+        use num_traits::ToPrimitive;
+        self.to_u8()
+            .expect("button should always be convertable to virtual key code")
+    }
+    pub fn to_keydown_input(&self) -> KeyboardAndMouse::INPUT {
+        use KeyboardAndMouse as KBM;
+        let vk = self.to_vk();
+        KBM::INPUT {
+            r#type: KBM::INPUT_KEYBOARD,
+            Anonymous: KBM::INPUT_0 {
+                ki: KBM::KEYBDINPUT {
+                    wVk: KBM::VIRTUAL_KEY(vk as u16),
+                    wScan: 0,
+                    dwFlags: KBM::KEYBD_EVENT_FLAGS(0),
+                    time: 0,
+                    dwExtraInfo: 0,
+                },
+            },
         }
     }
-    pub fn keyup_from(button: KeyButton) -> Self {
-        Self {
-            button,
-            input_type: HoldInputType::Up,
+    pub fn to_keyup_input(&self) -> KeyboardAndMouse::INPUT {
+        use KeyboardAndMouse as KBM;
+        let vk = self.to_vk();
+        KBM::INPUT {
+            r#type: KBM::INPUT_KEYBOARD,
+            Anonymous: KBM::INPUT_0 {
+                ki: KBM::KEYBDINPUT {
+                    wVk: KBM::VIRTUAL_KEY(vk as u16),
+                    wScan: 0,
+                    dwFlags: KBM::KEYEVENTF_KEYUP,
+                    time: 0,
+                    dwExtraInfo: 0,
+                },
+            },
         }
-    }
-}
-
-impl From<KeyInput> for KeyboardAndMouse::INPUT {
-    fn from(value: KeyInput) -> Self {
-        todo!()
     }
 }

@@ -145,28 +145,11 @@
 */
 
 pub mod key;
-use key::{KeyButton, KeyInput};
+use key::KeyButton;
 pub mod mouse;
-use mouse::{MouseButton, MouseInput};
+use mouse::MouseButton;
 pub mod wheel;
-use wheel::{MouseWheelButton, MouseWheelInput};
-
-use thiserror::Error;
-use windows::Win32::UI::{Input::KeyboardAndMouse, WindowsAndMessaging};
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum HoldInputType {
-    Down,
-    Up,
-}
-
-#[derive(Error, Debug)]
-pub enum InputParseError {
-    #[error("Unknown virtual key code")]
-    UnknownVK,
-    #[error("Unknown mouse message")]
-    UnknownMouseMessage,
-}
+use wheel::MouseWheelButton;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -188,15 +171,6 @@ impl From<MouseButton> for HoldButton {
     }
 }
 
-impl From<HoldInput> for HoldButton {
-    fn from(value: HoldInput) -> Self {
-        match value {
-            HoldInput::Key(key) => Self::Key(key.button),
-            HoldInput::Mouse(mouse) => Self::Mouse(mouse.button),
-        }
-    }
-}
-
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, enum_map::Enum)]
 pub enum TapButton {
     Wheel(MouseWheelButton),
@@ -208,15 +182,6 @@ impl From<MouseWheelButton> for TapButton {
     }
 }
 
-impl From<TapInput> for TapButton {
-    fn from(value: TapInput) -> Self {
-        match value {
-            TapInput::Wheel(wheel) => Self::Wheel(wheel.button),
-        }
-    }
-}
-
-/// Any input, including ones that only have a distinct event (scrolling)
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, enum_map::Enum)]
 pub enum Button {
     Key(KeyButton),
@@ -255,71 +220,6 @@ impl From<TapButton> for Button {
     fn from(value: TapButton) -> Self {
         match value {
             TapButton::Wheel(wheel) => Self::Wheel(wheel),
-        }
-    }
-}
-
-impl From<Input> for Button {
-    fn from(value: Input) -> Self {
-        match value {
-            Input::Key(key) => Self::Key(key.button),
-            Input::Mouse(mouse) => Self::Mouse(mouse.button),
-            Input::Wheel(wheel) => Self::Wheel(wheel.button),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub enum HoldInput {
-    Key(KeyInput),
-    Mouse(MouseInput),
-}
-
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub enum TapInput {
-    Wheel(MouseWheelInput),
-}
-
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Input {
-    Key(KeyInput),
-    Mouse(MouseInput),
-    Wheel(MouseWheelInput),
-}
-
-impl Input {
-    pub fn send(&self) {
-        todo!()
-    }
-    pub fn send_batch(inputs: &[Self]) {
-        todo!()
-    }
-}
-
-impl From<KeyInput> for Input {
-    fn from(value: KeyInput) -> Self {
-        Self::Key(value)
-    }
-}
-
-impl From<MouseInput> for Input {
-    fn from(value: MouseInput) -> Self {
-        Self::Mouse(value)
-    }
-}
-
-impl From<MouseWheelInput> for Input {
-    fn from(value: MouseWheelInput) -> Self {
-        Self::Wheel(value)
-    }
-}
-
-impl From<Input> for KeyboardAndMouse::INPUT {
-    fn from(value: Input) -> Self {
-        match value {
-            Input::Key(key) => Self::from(key),
-            Input::Mouse(mouse) => Self::from(mouse),
-            Input::Wheel(wheel) => Self::from(wheel),
         }
     }
 }

@@ -1,47 +1,45 @@
 use windows::Win32::UI::Input::KeyboardAndMouse;
 
 #[derive(
-    Debug,
-    Clone,
-    Copy,
-    Hash,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    enum_map::Enum,
-    strum::EnumIter,
-    num_derive::FromPrimitive,
-    num_derive::ToPrimitive,
+    Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, enum_map::Enum, strum::EnumIter,
 )]
-#[repr(u8)]
 pub enum MouseWheelButton {
     ScrollUp,
     ScrollDown,
-    ScrollHorzLeft,
     ScrollHorzRight,
+    ScrollHorzLeft,
 }
 
-impl From<MouseWheelInput> for MouseWheelButton {
-    fn from(value: MouseWheelInput) -> Self {
-        value.button
-    }
-}
+impl MouseWheelButton {
+    // note: not an impl From<> to be consistent with the other button types
+    pub fn to_input(&self) -> KeyboardAndMouse::INPUT {
+        use KeyboardAndMouse as KBM;
+        use windows::Win32::UI::WindowsAndMessaging as WM;
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct MouseWheelInput {
-    pub button: MouseWheelButton,
-}
+        // This is gross. The function takes in an unsigned number, but we need
+        // a signed one. Bear with me.
+        let plus_click: u32 = WM::WHEEL_DELTA;
+        let minus_click: u32 = -(WM::WHEEL_DELTA as i32) as u32;
 
-// note: intentionally not an impl From<> to be consistent with other button-to-input conversions
-impl MouseWheelInput {
-    pub fn wheel_from(button: MouseWheelButton) -> Self {
-        Self { button }
-    }
-}
+        let (dw_flags, mouse_data): (KBM::MOUSE_EVENT_FLAGS, u32) = match self {
+            Self::ScrollUp => (KBM::MOUSEEVENTF_WHEEL, plus_click),
+            Self::ScrollDown => (KBM::MOUSEEVENTF_WHEEL, minus_click),
+            Self::ScrollHorzRight => (KBM::MOUSEEVENTF_HWHEEL, plus_click),
+            Self::ScrollHorzLeft => (KBM::MOUSEEVENTF_HWHEEL, minus_click),
+        };
 
-impl From<MouseWheelInput> for KeyboardAndMouse::INPUT {
-    fn from(value: MouseWheelInput) -> Self {
-        todo!()
+        KBM::INPUT {
+            r#type: KBM::INPUT_MOUSE,
+            Anonymous: KBM::INPUT_0 {
+                mi: KBM::MOUSEINPUT {
+                    dx: 0,
+                    dy: 0,
+                    mouseData: mouse_data,
+                    dwFlags: dw_flags,
+                    time: 0,
+                    dwExtraInfo: 0,
+                },
+            },
+        }
     }
 }

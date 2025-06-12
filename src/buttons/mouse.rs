@@ -1,58 +1,67 @@
-use super::HoldInputType;
 use windows::Win32::UI::Input::KeyboardAndMouse;
 
 #[derive(
-    Debug,
-    Clone,
-    Copy,
-    Hash,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    enum_map::Enum,
-    strum::EnumIter,
-    num_derive::FromPrimitive,
-    num_derive::ToPrimitive,
+    Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, enum_map::Enum, strum::EnumIter,
 )]
-#[repr(u8)]
 pub enum MouseButton {
     Left,
-    Right,
     Middle,
+    Right,
     X1,
     X2,
 }
 
-impl From<MouseInput> for MouseButton {
-    fn from(value: MouseInput) -> Self {
-        value.button
-    }
-}
+impl MouseButton {
+    pub fn to_mousedown_input(&self) -> KeyboardAndMouse::INPUT {
+        use KeyboardAndMouse as KBM;
+        use windows::Win32::UI::WindowsAndMessaging as WM;
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct MouseInput {
-    pub button: MouseButton,
-    pub input_type: HoldInputType,
-}
+        let (dw_flags, mouse_data): (KBM::MOUSE_EVENT_FLAGS, u32) = match self {
+            Self::Left => (KBM::MOUSEEVENTF_LEFTDOWN, 0),
+            Self::Middle => (KBM::MOUSEEVENTF_MIDDLEDOWN, 0),
+            Self::Right => (KBM::MOUSEEVENTF_RIGHTDOWN, 0),
+            Self::X1 => (KBM::MOUSEEVENTF_XDOWN, WM::XBUTTON1 as u32),
+            Self::X2 => (KBM::MOUSEEVENTF_XDOWN, WM::XBUTTON2 as u32),
+        };
 
-impl MouseInput {
-    pub fn mousedown_from(button: MouseButton) -> Self {
-        Self {
-            button,
-            input_type: HoldInputType::Down,
+        KBM::INPUT {
+            r#type: KBM::INPUT_MOUSE,
+            Anonymous: KBM::INPUT_0 {
+                mi: KBM::MOUSEINPUT {
+                    dx: 0,
+                    dy: 0,
+                    mouseData: mouse_data,
+                    dwFlags: dw_flags,
+                    time: 0,
+                    dwExtraInfo: 0,
+                },
+            },
         }
     }
-    pub fn mouseup_from(button: MouseButton) -> Self {
-        Self {
-            button,
-            input_type: HoldInputType::Up,
-        }
-    }
-}
+    pub fn to_mouseup_input(&self) -> KeyboardAndMouse::INPUT {
+        use KeyboardAndMouse as KBM;
+        use windows::Win32::UI::WindowsAndMessaging as WM;
 
-impl From<MouseInput> for KeyboardAndMouse::INPUT {
-    fn from(value: MouseInput) -> Self {
-        todo!()
+        let (dw_flags, mouse_data): (KBM::MOUSE_EVENT_FLAGS, u32) = match self {
+            Self::Left => (KBM::MOUSEEVENTF_LEFTUP, 0),
+            Self::Middle => (KBM::MOUSEEVENTF_MIDDLEUP, 0),
+            Self::Right => (KBM::MOUSEEVENTF_RIGHTUP, 0),
+            Self::X1 => (KBM::MOUSEEVENTF_XUP, WM::XBUTTON1 as u32),
+            Self::X2 => (KBM::MOUSEEVENTF_XUP, WM::XBUTTON2 as u32),
+        };
+
+        KBM::INPUT {
+            r#type: KBM::INPUT_MOUSE,
+            Anonymous: KBM::INPUT_0 {
+                mi: KBM::MOUSEINPUT {
+                    dx: 0,
+                    dy: 0,
+                    mouseData: mouse_data,
+                    dwFlags: dw_flags,
+                    time: 0,
+                    dwExtraInfo: 0,
+                },
+            },
+        }
     }
 }

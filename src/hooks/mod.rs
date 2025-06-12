@@ -1,9 +1,6 @@
 use super::config::{LayerType, ProfileState, RemapPolicy};
 
-use crate::buttons::key::KeyInput;
-use crate::buttons::mouse::MouseInput;
-use crate::buttons::wheel::MouseWheelInput;
-use crate::buttons::{Button, HoldButton, Input, TapButton};
+use crate::buttons::{Button, HoldButton, TapButton};
 use crate::config::BaseRemapPolicy;
 
 use std::sync::Mutex;
@@ -227,17 +224,15 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
         // Already held (key repeat), and there is a remap.
         // Let's intercept it and repeat any keyboard keys this remap targets.
         HoldButtonState::HeldWithRemap(targets) => {
-            let target_keys: Vec<Input> = targets
+            let target_keys: Vec<KeyboardAndMouse::INPUT> = targets
                 .iter()
                 .filter_map(|btn| match btn {
-                    Button::Key(key) => Some(key),
+                    Button::Key(key) => Some(key.to_keydown_input()),
                     _ => None,
                 })
-                .map(|key| KeyInput::keydown_from(*key))
-                .map(|keydown| Input::from(keydown))
                 .collect();
 
-            Input::send_batch(&target_keys);
+            send_input_batch(&target_keys);
             return true;
         }
 
@@ -277,15 +272,15 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
         match &layer.policy[Button::from(hold_button)] {
             RemapPolicy::Defer => {}
             RemapPolicy::Remap(output) => {
-                let target_buttons: Vec<Input> = output
+                let target_buttons: Vec<KeyboardAndMouse::INPUT> = output
                     .iter()
                     .map(|button| match button {
-                        Button::Key(key) => Input::from(KeyInput::keydown_from(*key)),
-                        Button::Mouse(mouse) => Input::from(MouseInput::mousedown_from(*mouse)),
-                        Button::Wheel(wheel) => Input::from(MouseWheelInput::wheel_from(*wheel)),
+                        Button::Key(key) => key.to_keydown_input(),
+                        Button::Mouse(mouse) => mouse.to_mousedown_input(),
+                        Button::Wheel(wheel) => wheel.to_input(),
                     })
                     .collect();
-                Input::send_batch(&target_buttons);
+                send_input_batch(&target_buttons);
                 return true;
             }
             RemapPolicy::NoRemap => {
@@ -295,15 +290,15 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
     }
     match &hook_local.profile.base.policy[Button::from(hold_button)] {
         BaseRemapPolicy::Remap(output) => {
-            let target_buttons: Vec<Input> = output
+            let target_buttons: Vec<KeyboardAndMouse::INPUT> = output
                 .iter()
                 .map(|button| match button {
-                    Button::Key(key) => Input::from(KeyInput::keydown_from(*key)),
-                    Button::Mouse(mouse) => Input::from(MouseInput::mousedown_from(*mouse)),
-                    Button::Wheel(wheel) => Input::from(MouseWheelInput::wheel_from(*wheel)),
+                    Button::Key(key) => key.to_keydown_input(),
+                    Button::Mouse(mouse) => mouse.to_mousedown_input(),
+                    Button::Wheel(wheel) => wheel.to_input(),
                 })
                 .collect();
-            Input::send_batch(&target_buttons);
+            send_input_batch(&target_buttons);
             return true;
         }
         BaseRemapPolicy::NoRemap => {
@@ -345,16 +340,16 @@ fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
 
         // This button down was intercepted, so let's intercept the button up the same way.
         HoldButtonState::HeldWithRemap(targets) => {
-            let target_keys: Vec<Input> = targets
+            let target_buttons: Vec<KeyboardAndMouse::INPUT> = targets
                 .iter()
                 .filter_map(|button| match button {
-                    Button::Key(key) => Some(Input::from(KeyInput::keyup_from(*key))),
-                    Button::Mouse(mouse) => Some(Input::from(MouseInput::mouseup_from(*mouse))),
+                    Button::Key(key) => Some(key.to_keyup_input()),
+                    Button::Mouse(mouse) => Some(mouse.to_mouseup_input()),
                     Button::Wheel(_wheel) => None, // Wheel input only sent on down press
                 })
                 .collect();
 
-            Input::send_batch(&target_keys);
+            send_input_batch(&target_buttons);
             return true;
         }
     }
@@ -383,25 +378,19 @@ fn intercept_tap_input(tap_button: TapButton) -> bool {
         match &layer.policy[Button::from(tap_button)] {
             RemapPolicy::Defer => {}
             RemapPolicy::Remap(output) => {
-                let target_buttons: Vec<Input> = output
+                let target_buttons: Vec<KeyboardAndMouse::INPUT> = output
                     .iter()
                     .flat_map(|button| match button {
-                        Button::Key(key) => vec![
-                            Input::from(KeyInput::keydown_from(*key)),
-                            Input::from(KeyInput::keyup_from(*key)),
-                        ]
-                        .into_iter(),
-                        Button::Mouse(mouse) => vec![
-                            Input::from(MouseInput::mousedown_from(*mouse)),
-                            Input::from(MouseInput::mouseup_from(*mouse)),
-                        ]
-                        .into_iter(),
-                        Button::Wheel(wheel) => {
-                            vec![Input::from(MouseWheelInput::wheel_from(*wheel))].into_iter()
+                        Button::Key(key) => {
+                            vec![key.to_keydown_input(), key.to_keyup_input()].into_iter()
                         }
+                        Button::Mouse(mouse) => {
+                            vec![mouse.to_mousedown_input(), mouse.to_mouseup_input()].into_iter()
+                        }
+                        Button::Wheel(wheel) => vec![wheel.to_input()].into_iter(),
                     })
                     .collect();
-                Input::send_batch(&target_buttons);
+                send_input_batch(&target_buttons);
                 return true;
             }
             RemapPolicy::NoRemap => {
@@ -411,29 +400,37 @@ fn intercept_tap_input(tap_button: TapButton) -> bool {
     }
     match &hook_local.profile.base.policy[Button::from(tap_button)] {
         BaseRemapPolicy::Remap(output) => {
-            let target_buttons: Vec<Input> = output
+            let target_buttons: Vec<KeyboardAndMouse::INPUT> = output
                 .iter()
                 .flat_map(|button| match button {
-                    Button::Key(key) => vec![
-                        Input::from(KeyInput::keydown_from(*key)),
-                        Input::from(KeyInput::keyup_from(*key)),
-                    ]
-                    .into_iter(),
-                    Button::Mouse(mouse) => vec![
-                        Input::from(MouseInput::mousedown_from(*mouse)),
-                        Input::from(MouseInput::mouseup_from(*mouse)),
-                    ]
-                    .into_iter(),
-                    Button::Wheel(wheel) => {
-                        vec![Input::from(MouseWheelInput::wheel_from(*wheel))].into_iter()
+                    Button::Key(key) => {
+                        vec![key.to_keydown_input(), key.to_keyup_input()].into_iter()
                     }
+                    Button::Mouse(mouse) => {
+                        vec![mouse.to_mousedown_input(), mouse.to_mouseup_input()].into_iter()
+                    }
+                    Button::Wheel(wheel) => vec![wheel.to_input()].into_iter(),
                 })
                 .collect();
-            Input::send_batch(&target_buttons);
+            send_input_batch(&target_buttons);
             return true;
         }
         BaseRemapPolicy::NoRemap => {
             return false;
         }
+    }
+}
+
+fn send_input(input: &KeyboardAndMouse::INPUT) {
+    let cbsize = std::mem::size_of::<KeyboardAndMouse::INPUT>() as i32;
+    unsafe {
+        KeyboardAndMouse::SendInput(&[*input], cbsize);
+    }
+}
+
+fn send_input_batch(input: &[KeyboardAndMouse::INPUT]) {
+    let cbsize = std::mem::size_of::<KeyboardAndMouse::INPUT>() as i32;
+    unsafe {
+        KeyboardAndMouse::SendInput(input, cbsize);
     }
 }
