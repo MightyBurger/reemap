@@ -1,4 +1,7 @@
-use super::config::{LayerType, ProfileState, RemapPolicy};
+// pub mod input;
+// use windows::Win32::UI::WindowsAndMessaging;
+
+use crate::config::{Config, LayerType, Profile, RemapPolicy};
 
 use crate::buttons::key::KeyButton;
 use crate::buttons::mouse::MouseButton;
@@ -9,12 +12,154 @@ use crate::config::BaseRemapPolicy;
 use std::sync::Mutex;
 
 use windows::Win32::Foundation;
+use windows::Win32::System::Threading;
 use windows::Win32::UI::Input::KeyboardAndMouse;
 use windows::Win32::UI::WindowsAndMessaging;
 
 use enum_map::EnumMap;
 
-pub unsafe fn set_mouse_hook() -> Result<WindowsAndMessaging::HHOOK, windows::core::Error> {
+// The main way to launch the hook thread. Pass in a std::thread::scope, and this function
+// will spawn the thread to handle all the hooks involved in Reemap. It will return a proxy to the
+// thread.
+pub fn spawn_scoped<'scope, 'env>(s: &'scope std::thread::Scope<'scope, 'env>) -> HookthreadProxy {
+    let (oneshot_sender, oneshot_receiver) = oneshot::channel();
+    s.spawn(|| {
+        run(oneshot_sender);
+    });
+    oneshot_receiver.recv().unwrap()
+}
+
+static RUNNING: Mutex<bool> = Mutex::new(false);
+
+// Run the hook thread and return a proxy through the oneshot.
+// Panics if the hook thread is already running.
+pub fn run(sender: oneshot::Sender<HookthreadProxy>) {
+    use WindowsAndMessaging as WM;
+    use num_traits::FromPrimitive;
+
+    let mut running = RUNNING.lock().unwrap();
+    if *running {
+        panic!("Attempted to start hook thread while it was already running");
+    } else {
+        *running = true;
+    }
+    std::mem::drop(running);
+
+    // Force Windows to create a message queue for this thread. We want to have one before we
+    // give out our thread ID, which other threads use to post messages to.
+    unsafe {
+        let mut lpmsg_unused = WM::MSG::default();
+        let _ = WM::PeekMessageW(&mut lpmsg_unused, None, 0, 0, WM::PM_NOREMOVE);
+    }
+
+    // Create a proxy and give it back to whoever spawned us.
+    let thread_id = unsafe { Threading::GetCurrentThreadId() };
+    let proxy = HookthreadProxy { thread_id };
+    sender.send(proxy).unwrap();
+
+    unsafe {
+        set_mouse_hook().unwrap();
+        set_keybd_hook().unwrap();
+    }
+    let mut lpmsg = WM::MSG::default();
+    unsafe {
+        loop {
+            let bret = WM::GetMessageW(&mut lpmsg, None, 0, 0);
+            if !bret.as_bool() {
+                break;
+            }
+            if bret.0 == -1 {
+                // TODO handle the error instead of just quitting
+                break;
+            }
+            match HookMessage::from_u32(lpmsg.message) {
+                Some(HookMessage::Quit) => {
+                    WM::PostQuitMessage(0);
+                }
+                Some(HookMessage::Update) => {
+                    let Foundation::WPARAM(raw_usize) = lpmsg.wParam;
+                    let raw = raw_usize as *mut Config;
+                    let config_boxed = Box::from_raw(raw);
+                    let config = *config_boxed;
+
+                    let mut hook_local = HOOKLOCAL.lock().expect("mutex poisoned");
+                    let hook_local = hook_local
+                        .as_mut()
+                        .expect("local data should have been initialized");
+                    hook_local.config = config;
+                }
+                None => {
+                    let _ = WM::TranslateMessage(&lpmsg);
+                    let _ = WM::DispatchMessageA(&lpmsg);
+                }
+            }
+        }
+    }
+
+    let mut running = RUNNING.lock().unwrap();
+    *running = false;
+}
+
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    num_derive::FromPrimitive,
+    num_derive::ToPrimitive,
+)]
+#[repr(u32)]
+enum HookMessage {
+    Quit = WindowsAndMessaging::WM_APP,
+    Update = WindowsAndMessaging::WM_APP + 1,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct HookthreadProxy {
+    thread_id: u32,
+}
+
+impl HookthreadProxy {
+    pub fn quit(&self) {
+        use num_traits::ToPrimitive;
+        unsafe {
+            WindowsAndMessaging::PostThreadMessageW(
+                self.thread_id,
+                HookMessage::Quit
+                    .to_u32()
+                    .expect("msg should always be representable as u32"),
+                Foundation::WPARAM(0),
+                Foundation::LPARAM(0),
+            )
+            .expect("could not send to hookthread");
+        }
+    }
+    pub fn update(&self, config: Config) {
+        use num_traits::ToPrimitive;
+
+        let config_boxed = Box::new(config);
+        let raw = Box::into_raw(config_boxed);
+        let raw_usize = raw as usize;
+
+        unsafe {
+            WindowsAndMessaging::PostThreadMessageW(
+                self.thread_id,
+                HookMessage::Update
+                    .to_u32()
+                    .expect("msg should always be representable as u32"),
+                Foundation::WPARAM(raw_usize),
+                Foundation::LPARAM(0),
+            )
+            .expect("could not send to hookthread");
+        }
+    }
+}
+
+unsafe fn set_mouse_hook() -> Result<WindowsAndMessaging::HHOOK, windows::core::Error> {
     use Foundation::{LPARAM, LRESULT, WPARAM};
     use WindowsAndMessaging::{SetWindowsHookExW, WH_MOUSE_LL};
     let idhook = WH_MOUSE_LL;
@@ -24,7 +169,7 @@ pub unsafe fn set_mouse_hook() -> Result<WindowsAndMessaging::HHOOK, windows::co
     unsafe { SetWindowsHookExW(idhook, lpfn, hmod, dwthreadid) }
 }
 
-pub unsafe fn set_keybd_hook() -> Result<WindowsAndMessaging::HHOOK, windows::core::Error> {
+unsafe fn set_keybd_hook() -> Result<WindowsAndMessaging::HHOOK, windows::core::Error> {
     use Foundation::{LPARAM, LRESULT, WPARAM};
     use WindowsAndMessaging::{SetWindowsHookExW, WH_KEYBOARD_LL};
     let idhook = WH_KEYBOARD_LL;
@@ -348,10 +493,10 @@ impl Default for HoldButtonState {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 struct HookLocalData {
     button_state: EnumMap<HoldButton, HoldButtonState>,
-    profile: ProfileState,
+    config: Config,
 }
 
 static HOOKLOCAL: Mutex<Option<HookLocalData>> = Mutex::new(None);
@@ -393,7 +538,7 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
 
     // Step 2
     // Update layers
-    for layer in hook_local.profile.layers.iter_mut() {
+    for layer in hook_local.config.get_active_profile_mut().layers.iter_mut() {
         // Only update layers for which this button is a condition.
         if layer.condition.contains(&hold_button) {
             // All conditions met?
@@ -413,8 +558,10 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
     }
 
     // Step 3
+    // Identify the appropriate remap and apply it. At the same time, set button_state.
     for layer in hook_local
-        .profile
+        .config
+        .get_active_profile_mut()
         .layers
         .iter()
         .filter(|layer| layer.enabled)
@@ -432,14 +579,17 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
                     })
                     .collect();
                 send_input_batch(&target_buttons);
+                hook_local.button_state[hold_button] =
+                    HoldButtonState::HeldWithRemap(output.clone());
                 return true;
             }
             RemapPolicy::NoRemap => {
+                hook_local.button_state[hold_button] = HoldButtonState::HeldNoRemap;
                 return false;
             }
         }
     }
-    match &hook_local.profile.base.policy[Button::from(hold_button)] {
+    match &hook_local.config.get_active_profile_mut().base.policy[Button::from(hold_button)] {
         BaseRemapPolicy::Remap(output) => {
             let target_buttons: Vec<KeyboardAndMouse::INPUT> = output
                 .iter()
@@ -450,9 +600,11 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
                 })
                 .collect();
             send_input_batch(&target_buttons);
+            hook_local.button_state[hold_button] = HoldButtonState::HeldWithRemap(output.clone());
             return true;
         }
         BaseRemapPolicy::NoRemap => {
+            hook_local.button_state[hold_button] = HoldButtonState::HeldNoRemap;
             return false;
         }
     }
@@ -468,7 +620,7 @@ fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
 
     // Step 1
     // Update layers
-    for layer in hook_local.profile.layers.iter_mut() {
+    for layer in hook_local.config.get_active_profile_mut().layers.iter_mut() {
         // Only update layers for which this button is a condition.
         // These layers are no longer active.
         if layer.condition.contains(&hold_button) {
@@ -483,11 +635,9 @@ fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
     // See what this button was mapped to.
     // Note we never consult the profile. The original decision of what a button maps to is only
     // made when the button is first pressed.
-    match &hook_local.button_state[hold_button] {
+    let remapped = match &hook_local.button_state[hold_button] {
         // This button down was not intercepted, so let's not intercept the button up.
-        HoldButtonState::HeldNoRemap | HoldButtonState::NotHeld => {
-            return false;
-        }
+        HoldButtonState::HeldNoRemap | HoldButtonState::NotHeld => false,
 
         // This button down was intercepted, so let's intercept the button up the same way.
         HoldButtonState::HeldWithRemap(targets) => {
@@ -501,9 +651,13 @@ fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
                 .collect();
 
             send_input_batch(&target_buttons);
-            return true;
+            true
         }
-    }
+    };
+
+    // Step 3
+    hook_local.button_state[hold_button] = HoldButtonState::NotHeld;
+    remapped
 }
 
 // Returns "true" if the input is intercepted.
@@ -520,7 +674,8 @@ fn intercept_tap_input(tap_button: TapButton) -> bool {
         .expect("local data should have been initialized");
 
     for layer in hook_local
-        .profile
+        .config
+        .get_active_profile_mut()
         .layers
         .iter()
         .filter(|layer| layer.enabled)
@@ -549,7 +704,7 @@ fn intercept_tap_input(tap_button: TapButton) -> bool {
             }
         }
     }
-    match &hook_local.profile.base.policy[Button::from(tap_button)] {
+    match &hook_local.config.get_active_profile_mut().base.policy[Button::from(tap_button)] {
         BaseRemapPolicy::Remap(output) => {
             let target_buttons: Vec<KeyboardAndMouse::INPUT> = output
                 .iter()
@@ -572,12 +727,12 @@ fn intercept_tap_input(tap_button: TapButton) -> bool {
     }
 }
 
-fn send_input(input: &KeyboardAndMouse::INPUT) {
-    let cbsize = std::mem::size_of::<KeyboardAndMouse::INPUT>() as i32;
-    unsafe {
-        KeyboardAndMouse::SendInput(&[*input], cbsize);
-    }
-}
+// fn send_input(input: &KeyboardAndMouse::INPUT) {
+//     let cbsize = std::mem::size_of::<KeyboardAndMouse::INPUT>() as i32;
+//     unsafe {
+//         KeyboardAndMouse::SendInput(&[*input], cbsize);
+//     }
+// }
 
 fn send_input_batch(input: &[KeyboardAndMouse::INPUT]) {
     let cbsize = std::mem::size_of::<KeyboardAndMouse::INPUT>() as i32;

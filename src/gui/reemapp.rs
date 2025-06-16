@@ -1,9 +1,11 @@
-// Thought the name was clever. Don't get too mad, please.
+use crate::hooks;
 
-#[derive(Default)]
+// Thought the name was clever. Don't get too mad, please.
 pub struct ReemApp {
-    text: String,
+    pub text: String,
+    pub hookthread_proxy: hooks::HookthreadProxy,
 }
+
 impl crate::gui::TrayApp for ReemApp {
     fn update(&mut self, egui_ctx: &egui::Context) {
         catppuccin_egui::set_theme(egui_ctx, catppuccin_egui::MACCHIATO);

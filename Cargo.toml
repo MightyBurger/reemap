@@ -13,6 +13,7 @@ windows = { version = "0.61.1", features = [
     "Win32_UI_Input_KeyboardAndMouse",
     "Win32_UI_WindowsAndMessaging",
     "Win32_UI_Accessibility",
+    "Win32_System_Threading",
 ] }
 egui = "0.31.1"
 glow = "0.16.0"
@@ -28,3 +29,4 @@ catppuccin-egui = { version = "5.5.0", default-features = false, features = [
     "egui31",
 ] }
 thiserror = "2.0.12"
+oneshot = { version = "0.1.11", default-features = false, features = ["std"] }

@@ -16,6 +16,8 @@ const START_VISIBLE: bool = true;
 use std::sync::Arc;
 use tray_icon::TrayIcon;
 
+use crate::hooks;
+
 #[derive(Debug)]
 enum ReemapGuiEvent {
     Redraw(std::time::Duration),
@@ -24,7 +26,7 @@ enum ReemapGuiEvent {
     TrayMenuEvent(tray_icon::menu::MenuEvent),
 }
 
-trait TrayApp: Default {
+trait TrayApp {
     fn update(&mut self, ctx: &egui::Context);
 }
 
@@ -39,7 +41,7 @@ struct GlowApp<T: TrayApp> {
 }
 
 impl<T: TrayApp> GlowApp<T> {
-    fn new(proxy: winit::event_loop::EventLoopProxy<ReemapGuiEvent>) -> Self {
+    fn new(proxy: winit::event_loop::EventLoopProxy<ReemapGuiEvent>, app_data: T) -> Self {
         Self {
             proxy,
             gl_window: None,
@@ -47,7 +49,7 @@ impl<T: TrayApp> GlowApp<T> {
             egui_glow: None,
             repaint_delay: std::time::Duration::MAX,
             tray_icon: None,
-            app_data: T::default(),
+            app_data,
         }
     }
 
@@ -257,7 +259,7 @@ fn load_icon(path: &std::path::Path) -> tray_icon::Icon {
     tray_icon::Icon::from_rgba(icon_rgba, icon_width, icon_height).expect("failed to open icon")
 }
 
-pub fn run() {
+pub fn run(hookthread_proxy: hooks::HookthreadProxy) {
     let event_loop = winit::event_loop::EventLoop::<ReemapGuiEvent>::with_user_event()
         .build()
         .unwrap();
@@ -276,7 +278,13 @@ pub fn run() {
             .expect("event loop should exist");
     }));
 
-    let proxy = event_loop.create_proxy();
-    let mut app = GlowApp::<reemapp::ReemApp>::new(proxy);
+    let event_loop_proxy = event_loop.create_proxy();
+    let mut app = GlowApp::<reemapp::ReemApp>::new(
+        event_loop_proxy,
+        reemapp::ReemApp {
+            text: String::new(),
+            hookthread_proxy,
+        },
+    );
     event_loop.run_app(&mut app).expect("failed to run app");
 }
