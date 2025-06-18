@@ -2,7 +2,7 @@
 // https://github.com/emilk/egui/blob/main/crates/egui_glow/examples/pure_glow.rs
 
 mod glutin_ctx;
-mod reemapp;
+pub mod reemapp;
 
 use glutin_ctx::GlutinWindowContext;
 
@@ -16,8 +16,6 @@ const START_VISIBLE: bool = true;
 use std::sync::Arc;
 use tray_icon::TrayIcon;
 
-use crate::hooks;
-
 #[derive(Debug)]
 enum ReemapGuiEvent {
     Redraw(std::time::Duration),
@@ -26,7 +24,7 @@ enum ReemapGuiEvent {
     TrayMenuEvent(tray_icon::menu::MenuEvent),
 }
 
-trait TrayApp {
+pub trait TrayApp {
     fn update(&mut self, ctx: &egui::Context);
 }
 
@@ -259,7 +257,10 @@ fn load_icon(path: &std::path::Path) -> tray_icon::Icon {
     tray_icon::Icon::from_rgba(icon_rgba, icon_width, icon_height).expect("failed to open icon")
 }
 
-pub fn run(hookthread_proxy: hooks::HookthreadProxy) {
+pub fn run<T>(app: T)
+where
+    T: TrayApp,
+{
     let event_loop = winit::event_loop::EventLoop::<ReemapGuiEvent>::with_user_event()
         .build()
         .unwrap();
@@ -279,13 +280,10 @@ pub fn run(hookthread_proxy: hooks::HookthreadProxy) {
     }));
 
     let event_loop_proxy = event_loop.create_proxy();
-    let mut app = GlowApp::<reemapp::ReemApp>::new(
-        event_loop_proxy,
-        reemapp::ReemApp {
-            text: String::new(),
-            hookthread_proxy,
-            config: reemapp::ConfigUI::default(),
-        },
-    );
-    event_loop.run_app(&mut app).expect("failed to run app");
+
+    let mut glow_app = GlowApp::new(event_loop_proxy, app);
+
+    event_loop
+        .run_app(&mut glow_app)
+        .expect("failed to run app");
 }
