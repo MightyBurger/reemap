@@ -51,7 +51,7 @@ pub enum LayerType {
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Layer {
-    pub enabled: bool,
+    pub active: bool,
     pub layer_type: LayerType,
     pub condition: Vec<HoldButton>,
     pub policy: EnumMap<Button, RemapPolicy>,

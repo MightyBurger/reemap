@@ -284,6 +284,7 @@ pub fn run(hookthread_proxy: hooks::HookthreadProxy) {
         reemapp::ReemApp {
             text: String::new(),
             hookthread_proxy,
+            config: reemapp::ConfigUI::default(),
         },
     );
     event_loop.run_app(&mut app).expect("failed to run app");
