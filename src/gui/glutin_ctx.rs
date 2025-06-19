@@ -25,7 +25,7 @@ impl GlutinWindowContext {
             .with_title(crate::gui::TITLE)
             .with_fullscreen(None)
             .with_maximized(false)
-            .with_window_level(winit::window::WindowLevel::AlwaysOnTop)
+            // .with_window_level(winit::window::WindowLevel::AlwaysOnTop)
             // .with_theme(Some(winit::window::Theme::Dark))
             .with_visible(false);
 

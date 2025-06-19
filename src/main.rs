@@ -13,9 +13,9 @@ fn main() {
 
         // Run the GUI. It will be ran on this thread, the main thread.
         let app = gui::reemapp::ReemApp {
-            text: String::new(),
             hookthread_proxy,
             config: gui::reemapp::ConfigUI::default(),
+            gui_local: gui::reemapp::GuiLocal::default(),
         };
         gui::run(app);
 

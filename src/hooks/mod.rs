@@ -75,6 +75,7 @@ pub fn run(sender: oneshot::Sender<HookthreadProxy>) {
                     WM::PostQuitMessage(0);
                 }
                 Some(HookMessage::Update) => {
+                    println!("Updating configuration!");
                     let Foundation::WPARAM(raw_usize) = lpmsg.wParam;
                     let raw = raw_usize as *mut Config;
                     let config_boxed = Box::from_raw(raw);
