@@ -192,6 +192,7 @@ impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for Glow
             }) => {
                 self.set_visible(true, event_loop);
                 if let Some(ref gl_window) = self.gl_window {
+                    gl_window.window().focus_window();
                     gl_window.window().set_minimized(false);
                 }
             }
@@ -201,6 +202,7 @@ impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for Glow
                 "MENU_ID_CONFIGURE" => {
                     self.set_visible(true, event_loop);
                     if let Some(ref gl_window) = self.gl_window {
+                        gl_window.window().focus_window();
                         gl_window.window().set_minimized(false);
                     }
                 }
