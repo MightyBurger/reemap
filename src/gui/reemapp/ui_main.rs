@@ -1,3 +1,4 @@
+use super::GuiMenu;
 use super::ReemApp;
 
 pub fn ui_main(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp) {
@@ -6,8 +7,11 @@ pub fn ui_main(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp) {
             args.gui_local.new_profile_modal_open = true;
         }
         ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+            ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                ui.heading("Profiles");
+            });
+            ui.add_space(super::SPACING);
             egui::Frame::new()
-                // .fill(egui::Color32::RED)
                 .stroke(egui::Stroke {
                     width: 1.0,
                     color: egui::Color32::DARK_GRAY,
@@ -53,13 +57,20 @@ pub fn ui_main(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp) {
         });
     });
 }
+
 fn profiles_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
+    enum ProfileSelect {
+        None,
+        Default,
+        Other(usize),
+    }
     use egui_extras::{Column, TableBuilder};
     let header_height = 12.0;
     let row_height = 20.0;
     let btn_size = [20.0, 20.0];
     let mut pointing_hand = false;
     let mut to_delete = None;
+    let mut profile_select = ProfileSelect::None;
     TableBuilder::new(ui)
         .id_salt("Profiles Table")
         .striped(true)
@@ -115,7 +126,7 @@ fn profiles_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
                     pointing_hand = true;
                 }
                 if row.response().clicked() {
-                    println!("Clicked on default row");
+                    profile_select = ProfileSelect::Default;
                 }
             });
             // let profiles_len = args.config.profiles.len();
@@ -159,7 +170,7 @@ fn profiles_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
                         pointing_hand = true;
                     }
                     if row.response().clicked() {
-                        println!("Clicked on row {i}");
+                        profile_select = ProfileSelect::Other(i);
                     }
                 });
             }
@@ -169,6 +180,13 @@ fn profiles_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
         });
     if let Some(to_delete) = to_delete {
         args.config.profiles.remove(to_delete);
+    }
+    match profile_select {
+        ProfileSelect::None => (),
+        ProfileSelect::Default => {
+            args.gui_local.menu = GuiMenu::DefaultProfileMenu;
+        }
+        ProfileSelect::Other(i) => args.gui_local.menu = GuiMenu::ProfileMenu { profile_idx: i },
     }
     if pointing_hand {
         ui.ctx()

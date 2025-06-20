@@ -10,11 +10,40 @@ use crate::hooks;
 
 use enum_map::EnumMap;
 
+const SPACING: f32 = 8.0;
+
 // Thought the name was clever. Don't get too mad, please.
 pub struct ReemApp {
     pub hookthread_proxy: hooks::HookthreadProxy,
     pub config: ConfigUI,
     pub gui_local: GuiLocal,
+}
+
+impl ReemApp {
+    fn get_open_profile_ui(&mut self) -> Option<&mut ProfileUI> {
+        match self.gui_local.menu {
+            GuiMenu::MainMenu => None,
+            GuiMenu::DefaultProfileMenu => None,
+            GuiMenu::ProfileMenu { profile_idx } => Some(&mut self.config.profiles[profile_idx]),
+            GuiMenu::BaseLayerMenu { profile_idx } => Some(&mut self.config.profiles[profile_idx]),
+            GuiMenu::LayerMenu {
+                profile_idx,
+                layer_idx: _,
+            } => Some(&mut self.config.profiles[profile_idx]),
+        }
+    }
+    fn get_open_profile_ui_idx(&self) -> Option<usize> {
+        match self.gui_local.menu {
+            GuiMenu::MainMenu => None,
+            GuiMenu::DefaultProfileMenu => None,
+            GuiMenu::ProfileMenu { profile_idx } => Some(profile_idx),
+            GuiMenu::BaseLayerMenu { profile_idx } => Some(profile_idx),
+            GuiMenu::LayerMenu {
+                profile_idx,
+                layer_idx: _,
+            } => Some(profile_idx),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -37,9 +66,7 @@ impl Default for GuiLocal {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum GuiMenu {
     MainMenu,
-    DefaultProfileMenu {
-        profile_idx: usize,
-    },
+    DefaultProfileMenu,
     ProfileMenu {
         profile_idx: usize,
     },
@@ -187,7 +214,8 @@ impl crate::gui::TrayApp for ReemApp {
             let menu = self.gui_local.menu.clone();
             match menu {
                 GuiMenu::MainMenu => ui_main(ctx, ui, self),
-                _ => todo!(),
+                GuiMenu::ProfileMenu { profile_idx } => ui_profile(ctx, ui, self),
+                _ => (),
             }
         });
     }
