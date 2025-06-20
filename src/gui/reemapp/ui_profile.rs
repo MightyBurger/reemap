@@ -1,6 +1,6 @@
 use super::ReemApp;
 
-pub fn ui_main(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp) {
+pub fn ui_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp) {
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
         if ui.button("Add Profile").clicked() {
             args.gui_local.new_profile_modal_open = true;
@@ -59,7 +59,6 @@ fn profiles_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
     let row_height = 20.0;
     let btn_size = [20.0, 20.0];
     let mut pointing_hand = false;
-    let mut to_delete = None;
     TableBuilder::new(ui)
         .id_salt("Profiles Table")
         .striped(true)
@@ -134,9 +133,7 @@ fn profiles_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
                     });
                     row.col(|ui| {
                         ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-                            if ui.add_sized(btn_size, egui::Button::new("✖")).clicked() {
-                                to_delete = Some(i);
-                            };
+                            ui.add_sized(btn_size, egui::Button::new("✖"));
                         });
                     });
                     row.col(|ui| {
@@ -167,9 +164,6 @@ fn profiles_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
             //     args.config.profiles.swap(a, b);
             // }
         });
-    if let Some(to_delete) = to_delete {
-        args.config.profiles.remove(to_delete);
-    }
     if pointing_hand {
         ui.ctx()
             .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);

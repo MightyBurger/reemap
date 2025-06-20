@@ -1,6 +1,9 @@
 mod ui_main;
 use ui_main::ui_main;
 
+mod ui_profile;
+use ui_profile::ui_profile;
+
 use crate::buttons;
 use crate::config;
 use crate::hooks;
