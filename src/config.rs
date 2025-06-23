@@ -27,11 +27,42 @@ impl Default for BaseRemapPolicy {
     }
 }
 
+impl std::fmt::Display for BaseRemapPolicy {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::NoRemap => write!(f, "(do not remap)"),
+            Self::Remap(maps) => {
+                if maps.len() == 0 {
+                    return write!(f, "(block input)");
+                }
+                let outstr: String = maps.iter().map(|btn| format!("{btn}\n")).collect();
+                write!(f, "{outstr}")
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum RemapPolicy {
     Defer,
     NoRemap,
     Remap(Vec<Button>),
+}
+
+impl std::fmt::Display for RemapPolicy {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Defer => write!(f, "(defer to next layer)"),
+            Self::NoRemap => write!(f, "(do not remap)"),
+            Self::Remap(maps) => {
+                if maps.len() == 0 {
+                    return write!(f, "(block input)");
+                }
+                let outstr: String = maps.iter().map(|btn| format!("{btn}\n")).collect();
+                write!(f, "{outstr}")
+            }
+        }
+    }
 }
 
 impl Default for RemapPolicy {
