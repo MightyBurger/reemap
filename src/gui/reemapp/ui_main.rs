@@ -21,41 +21,11 @@ pub fn ui_main(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp) {
                 .show(ui, |ui| {
                     profiles_table_ui(ui, args);
                 });
-
-            if args.gui_local.new_profile_modal_open {
-                let mut ok = false;
-                let mut cancel = false;
-                let modal = egui::Modal::new(egui::Id::new("New Profile Modal")).show(ctx, |ui| {
-                    ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
-                        ui.label("Profile Name");
-                        ui.text_edit_singleline(&mut args.gui_local.new_profile.name);
-                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            if ui.button("Cancel").clicked() {
-                                cancel = true;
-                            }
-                            if ui.button("OK").clicked() {
-                                ok = true;
-                            }
-                        });
-                    });
-                });
-                if ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
-                    ok = true;
-                }
-                if modal.should_close() {
-                    cancel = true;
-                }
-                if ok {
-                    args.config
-                        .profiles
-                        .push(args.gui_local.new_profile.clone());
-                    args.gui_local.new_profile_modal_open = false;
-                } else if cancel {
-                    args.gui_local.new_profile_modal_open = false;
-                }
-            }
         });
     });
+    if args.gui_local.new_profile_modal_open {
+        new_profile_modal(ctx, ui, args);
+    }
 }
 
 fn profiles_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
@@ -191,5 +161,38 @@ fn profiles_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
     if pointing_hand {
         ui.ctx()
             .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+    }
+}
+
+fn new_profile_modal(ctx: &egui::Context, _ui: &mut egui::Ui, args: &mut ReemApp) {
+    let mut ok = false;
+    let mut cancel = false;
+    let modal = egui::Modal::new(egui::Id::new("New Profile Modal")).show(ctx, |ui| {
+        ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
+            ui.label("Profile Name");
+            ui.text_edit_singleline(&mut args.gui_local.new_profile.name);
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if ui.button("Cancel").clicked() {
+                    cancel = true;
+                }
+                if ui.button("OK").clicked() {
+                    ok = true;
+                }
+            });
+        });
+    });
+    if ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
+        ok = true;
+    }
+    if modal.should_close() {
+        cancel = true;
+    }
+    if ok {
+        args.config
+            .profiles
+            .push(args.gui_local.new_profile.clone());
+        args.gui_local.new_profile_modal_open = false;
+    } else if cancel {
+        args.gui_local.new_profile_modal_open = false;
     }
 }

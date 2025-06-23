@@ -413,7 +413,7 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
 
     // Step 2
     // Update layers
-    for layer in hook_local.config.get_active_profile_mut().layers.iter_mut() {
+    for layer in hook_local.config.get_active_layers_mut().iter_mut() {
         // Only update layers for which this button is a condition.
         if layer.condition.contains(&hold_button) {
             // All conditions met?
@@ -436,8 +436,7 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
     // Identify the appropriate remap and apply it. At the same time, set button_state.
     for layer in hook_local
         .config
-        .get_active_profile_mut()
-        .layers
+        .get_active_layers()
         .iter()
         .filter(|layer| layer.active)
         .rev()
@@ -464,7 +463,7 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
             }
         }
     }
-    match &hook_local.config.get_active_profile_mut().base.policy[Button::from(hold_button)] {
+    match &hook_local.config.get_active_base_layer().policy[Button::from(hold_button)] {
         BaseRemapPolicy::Remap(output) => {
             let target_buttons: Vec<KeyboardAndMouse::INPUT> = output
                 .iter()
@@ -527,7 +526,7 @@ fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
 
     // Step 1
     // Update layers
-    for layer in hook_local.config.get_active_profile_mut().layers.iter_mut() {
+    for layer in hook_local.config.get_active_layers_mut().iter_mut() {
         // Only update layers for which this button is a condition.
         // These layers are no longer active.
         if layer.condition.contains(&hold_button) {
@@ -614,8 +613,7 @@ fn intercept_tap_input(tap_button: TapButton) -> bool {
 
     for layer in hook_local
         .config
-        .get_active_profile_mut()
-        .layers
+        .get_active_layers()
         .iter()
         .filter(|layer| layer.active)
         .rev()
@@ -643,7 +641,7 @@ fn intercept_tap_input(tap_button: TapButton) -> bool {
             }
         }
     }
-    match &hook_local.config.get_active_profile_mut().base.policy[Button::from(tap_button)] {
+    match &hook_local.config.get_active_base_layer().policy[Button::from(tap_button)] {
         BaseRemapPolicy::Remap(output) => {
             let target_buttons: Vec<KeyboardAndMouse::INPUT> = output
                 .iter()

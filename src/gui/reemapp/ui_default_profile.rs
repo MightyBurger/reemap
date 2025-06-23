@@ -1,11 +1,11 @@
 use super::GuiMenu;
 use super::ReemApp;
 
-pub fn ui_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp) {
+pub fn ui_default_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp) {
     let mut profiles_breadcrumb_clicked = false;
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
         if ui.button("Add Layer").clicked() {
-            args.gui_local.new_layer_modal_open = true;
+            args.gui_local.new_default_layer_modal_open = true;
         }
         ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
             ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
@@ -21,12 +21,8 @@ pub fn ui_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp) {
                     profiles_breadcrumb_clicked = true;
                 }
                 ui.heading(" > ");
-                ui.heading(format!("{}", &args.get_open_profile_ui().unwrap().name));
+                ui.heading("Default Profile");
             });
-            ui.add_space(super::SPACING);
-
-            ui.label("Profile Name");
-            ui.text_edit_singleline(&mut args.get_open_profile_ui().unwrap().name);
             ui.add_space(super::SPACING);
 
             egui::Frame::new()
@@ -37,18 +33,18 @@ pub fn ui_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp) {
                 .inner_margin(4.0)
                 .corner_radius(4.0)
                 .show(ui, |ui| {
-                    layers_table_ui(ui, args);
+                    default_layers_table_ui(ui, args);
                 });
         });
     });
     if profiles_breadcrumb_clicked {
         args.gui_local.menu = GuiMenu::MainMenu;
     }
-    if args.gui_local.new_layer_modal_open {
-        new_layer_modal(ctx, ui, args);
+    if args.gui_local.new_default_layer_modal_open {
+        new_default_layer_modal(ctx, ui, args);
     }
 }
-fn layers_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
+fn default_layers_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
     enum LayerSelect {
         None,
         Base,
@@ -62,7 +58,7 @@ fn layers_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
     let mut to_delete = None;
     let mut layer_select = LayerSelect::None;
     TableBuilder::new(ui)
-        .id_salt("Layers Table")
+        .id_salt("Default Layers Table")
         .striped(true)
         .auto_shrink(false)
         .sense(egui::Sense::click_and_drag())
@@ -121,13 +117,7 @@ fn layers_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
             });
             // let profiles_len = args.config.profiles.len();
             // let mut to_swap: Option<(usize, usize)> = None;
-            for (i, layer) in args
-                .get_open_profile_ui()
-                .unwrap()
-                .layers
-                .iter_mut()
-                .enumerate()
-            {
+            for (i, layer) in args.config.default.layers.iter_mut().enumerate() {
                 // let first = i == 0;
                 // let last = i == profiles_len - 1;
                 body.row(row_height, |mut row| {
@@ -175,29 +165,29 @@ fn layers_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
             // }
         });
     if let Some(to_delete) = to_delete {
-        args.get_open_profile_ui().unwrap().layers.remove(to_delete);
+        args.config.default.layers.remove(to_delete);
     }
-    match layer_select {
-        LayerSelect::None => (),
-        LayerSelect::Base => {
-            args.gui_local.menu = GuiMenu::BaseLayerMenu {
-                profile_idx: args.get_open_profile_ui_idx().unwrap(),
-            };
-        }
-        LayerSelect::Other(i) => {
-            args.gui_local.menu = GuiMenu::LayerMenu {
-                profile_idx: args.get_open_profile_ui_idx().unwrap(),
-                layer_idx: i,
-            }
-        }
-    }
+    // match layer_select {
+    //     LayerSelect::None => (),
+    //     LayerSelect::Base => {
+    //         args.gui_local.menu = GuiMenu::BaseLayerMenu {
+    //             profile_idx: args.TODO_REMOVE_profile_ui_idx().unwrap(),
+    //         };
+    //     }
+    //     LayerSelect::Other(i) => {
+    //         args.gui_local.menu = GuiMenu::LayerMenu {
+    //             profile_idx: args.TODO_REMOVE_profile_ui_idx().unwrap(),
+    //             layer_idx: i,
+    //         }
+    //     }
+    // }
     if pointing_hand {
         ui.ctx()
             .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
     }
 }
 
-fn new_layer_modal(ctx: &egui::Context, _ui: &mut egui::Ui, args: &mut ReemApp) {
+fn new_default_layer_modal(ctx: &egui::Context, _ui: &mut egui::Ui, args: &mut ReemApp) {
     let mut ok = false;
     let mut cancel = false;
     let modal = egui::Modal::new(egui::Id::new("New Layer Modal")).show(ctx, |ui| {
@@ -222,9 +212,9 @@ fn new_layer_modal(ctx: &egui::Context, _ui: &mut egui::Ui, args: &mut ReemApp) 
     }
     if ok {
         let new_layer = args.gui_local.new_layer.clone();
-        args.get_open_profile_ui().unwrap().layers.push(new_layer);
-        args.gui_local.new_layer_modal_open = false;
+        args.config.default.layers.push(new_layer);
+        args.gui_local.new_default_layer_modal_open = false;
     } else if cancel {
-        args.gui_local.new_layer_modal_open = false;
+        args.gui_local.new_default_layer_modal_open = false;
     }
 }

@@ -13,6 +13,8 @@ use enum_map::EnumMap;
 
 */
 
+// -------------------- Remaps --------------------
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum BaseRemapPolicy {
     NoRemap,
@@ -38,6 +40,8 @@ impl Default for RemapPolicy {
     }
 }
 
+// -------------------- Layers --------------------
+
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BaseLayer {
     pub policy: EnumMap<Button, BaseRemapPolicy>,
@@ -57,6 +61,8 @@ pub struct Layer {
     pub policy: EnumMap<Button, RemapPolicy>,
 }
 
+// -------------------- Profiles --------------------
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ProfileCondition {
     OriBF,
@@ -65,27 +71,55 @@ pub enum ProfileCondition {
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Profile {
+pub struct DefaultProfile {
     pub base: BaseLayer,
     pub layers: Vec<Layer>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Profile {
+    pub base: BaseLayer,
+    pub layers: Vec<Layer>,
+    pub condition: ProfileCondition,
+}
+
+// -------------------- Config --------------------
+
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Config {
-    pub default: Profile,
+    pub default: DefaultProfile,
     pub profiles: Vec<Profile>,
     pub profile_conditions: Vec<ProfileCondition>,
     pub active_profile: Option<usize>,
 }
 
 impl Config {
-    pub fn get_active_profile_mut(&mut self) -> &mut Profile {
+    pub fn get_active_base_layer_mut(&mut self) -> &mut BaseLayer {
         if let Some(active_profile_idx) = self.active_profile {
-            self.profiles
-                .get_mut(active_profile_idx)
-                .expect("active profile idx should always be valid")
+            &mut self.profiles[active_profile_idx].base
         } else {
-            &mut self.default
+            &mut self.default.base
+        }
+    }
+    pub fn get_active_base_layer(&self) -> &BaseLayer {
+        if let Some(active_profile_idx) = self.active_profile {
+            &self.profiles[active_profile_idx].base
+        } else {
+            &self.default.base
+        }
+    }
+    pub fn get_active_layers_mut(&mut self) -> &mut Vec<Layer> {
+        if let Some(active_profile_idx) = self.active_profile {
+            &mut self.profiles[active_profile_idx].layers
+        } else {
+            &mut self.default.layers
+        }
+    }
+    pub fn get_active_layers(&self) -> &Vec<Layer> {
+        if let Some(active_profile_idx) = self.active_profile {
+            &self.profiles[active_profile_idx].layers
+        } else {
+            &self.default.layers
         }
     }
 }
