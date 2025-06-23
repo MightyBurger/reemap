@@ -23,6 +23,10 @@ pub fn ui_default_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut Ree
                 ui.heading(" > ");
                 ui.heading("Default Profile");
             });
+            ui.separator();
+            ui.add_space(super::SPACING);
+
+            ui.label("The default profile is active when no other profile is active.");
             ui.add_space(super::SPACING);
 
             egui::Frame::new()

@@ -7,6 +7,9 @@ use ui_profile::ui_profile;
 mod ui_default_profile;
 use ui_default_profile::ui_default_profile;
 
+mod ui_profile_layer;
+use ui_profile_layer::ui_profile_layer;
+
 use crate::buttons;
 use crate::config;
 use crate::hooks;
@@ -20,39 +23,6 @@ pub struct ReemApp {
     pub hookthread_proxy: hooks::HookthreadProxy,
     pub config: ConfigUI,
     pub gui_local: GuiLocal,
-}
-
-impl ReemApp {
-    fn get_open_profile_ui(&mut self) -> Option<&mut ProfileUI> {
-        match self.gui_local.menu {
-            GuiMenu::MainMenu => None,
-            GuiMenu::DefaultProfileMenu => None,
-            GuiMenu::DefaultProfileBaseLayerMenu => None,
-            GuiMenu::DefaultProfileLayerMenu { .. } => None,
-            GuiMenu::ProfileMenu { profile_idx } => Some(&mut self.config.profiles[profile_idx]),
-            GuiMenu::ProfileBaseLayerMenu { profile_idx } => {
-                Some(&mut self.config.profiles[profile_idx])
-            }
-            GuiMenu::ProfileLayerMenu {
-                profile_idx,
-                layer_idx: _,
-            } => Some(&mut self.config.profiles[profile_idx]),
-        }
-    }
-    fn get_open_profile_ui_idx(&self) -> Option<usize> {
-        match self.gui_local.menu {
-            GuiMenu::MainMenu => None,
-            GuiMenu::DefaultProfileMenu => None,
-            GuiMenu::DefaultProfileBaseLayerMenu => None,
-            GuiMenu::DefaultProfileLayerMenu { layer_idx: _ } => None,
-            GuiMenu::ProfileMenu { profile_idx } => Some(profile_idx),
-            GuiMenu::ProfileBaseLayerMenu { profile_idx } => Some(profile_idx),
-            GuiMenu::ProfileLayerMenu {
-                profile_idx,
-                layer_idx: _,
-            } => Some(profile_idx),
-        }
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -295,7 +265,11 @@ impl crate::gui::TrayApp for ReemApp {
             match menu {
                 GuiMenu::MainMenu => ui_main(ctx, ui, self),
                 GuiMenu::DefaultProfileMenu => ui_default_profile(ctx, ui, self),
-                GuiMenu::ProfileMenu { .. } => ui_profile(ctx, ui, self),
+                GuiMenu::ProfileMenu { profile_idx } => ui_profile(ctx, ui, self, profile_idx),
+                GuiMenu::ProfileLayerMenu {
+                    profile_idx,
+                    layer_idx,
+                } => ui_profile_layer(ctx, ui, self, profile_idx, layer_idx),
                 _ => (),
             }
         });
