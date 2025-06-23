@@ -132,18 +132,23 @@ impl Default for LayerUI {
             layer_type: config::LayerType::Modifier,
             condition: Vec::new(),
             policy: EnumMap::default(),
-            name: String::new(),
+            name: String::from("New Layer"),
         }
     }
 }
 
-impl From<LayerUI> for config::Layer {
-    fn from(value: LayerUI) -> Self {
-        Self {
-            active: false,
-            layer_type: value.layer_type,
-            condition: value.condition,
-            policy: value.policy,
+impl TryFrom<LayerUI> for config::Layer {
+    type Error = ();
+    fn try_from(value: LayerUI) -> Result<Self, ()> {
+        if !value.enabled {
+            Err(())
+        } else {
+            Ok(Self {
+                active: false,
+                layer_type: value.layer_type,
+                condition: value.condition,
+                policy: value.policy,
+            })
         }
     }
 }
@@ -172,7 +177,7 @@ impl From<DefaultProfileUI> for config::DefaultProfile {
             layers: value
                 .layers
                 .into_iter()
-                .map(|layer_ui| layer_ui.into())
+                .filter_map(|layer_ui| layer_ui.try_into().ok())
                 .collect(),
         }
     }
@@ -203,16 +208,21 @@ impl Default for ProfileUI {
     }
 }
 
-impl From<ProfileUI> for config::Profile {
-    fn from(value: ProfileUI) -> Self {
-        Self {
-            base: value.base,
-            layers: value
-                .layers
-                .into_iter()
-                .map(|layer_ui| layer_ui.into())
-                .collect(),
-            condition: value.condition,
+impl TryFrom<ProfileUI> for config::Profile {
+    type Error = ();
+    fn try_from(value: ProfileUI) -> Result<Self, ()> {
+        if !value.enabled {
+            Err(())
+        } else {
+            Ok(Self {
+                base: value.base,
+                layers: value
+                    .layers
+                    .into_iter()
+                    .filter_map(|layer_ui| layer_ui.try_into().ok())
+                    .collect(),
+                condition: value.condition,
+            })
         }
     }
 }
@@ -234,7 +244,7 @@ impl From<ConfigUI> for config::Config {
                 .profiles
                 .iter()
                 .cloned()
-                .map(|profiles_ui| profiles_ui.into())
+                .filter_map(|profiles_ui| profiles_ui.try_into().ok())
                 .collect(),
             profile_conditions: value
                 .profiles
