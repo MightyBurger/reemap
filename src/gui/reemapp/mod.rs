@@ -27,9 +27,13 @@ impl ReemApp {
         match self.gui_local.menu {
             GuiMenu::MainMenu => None,
             GuiMenu::DefaultProfileMenu => None,
+            GuiMenu::DefaultProfileBaseLayerMenu => None,
+            GuiMenu::DefaultProfileLayerMenu { .. } => None,
             GuiMenu::ProfileMenu { profile_idx } => Some(&mut self.config.profiles[profile_idx]),
-            GuiMenu::BaseLayerMenu { profile_idx } => Some(&mut self.config.profiles[profile_idx]),
-            GuiMenu::LayerMenu {
+            GuiMenu::ProfileBaseLayerMenu { profile_idx } => {
+                Some(&mut self.config.profiles[profile_idx])
+            }
+            GuiMenu::ProfileLayerMenu {
                 profile_idx,
                 layer_idx: _,
             } => Some(&mut self.config.profiles[profile_idx]),
@@ -39,9 +43,11 @@ impl ReemApp {
         match self.gui_local.menu {
             GuiMenu::MainMenu => None,
             GuiMenu::DefaultProfileMenu => None,
+            GuiMenu::DefaultProfileBaseLayerMenu => None,
+            GuiMenu::DefaultProfileLayerMenu { layer_idx: _ } => None,
             GuiMenu::ProfileMenu { profile_idx } => Some(profile_idx),
-            GuiMenu::BaseLayerMenu { profile_idx } => Some(profile_idx),
-            GuiMenu::LayerMenu {
+            GuiMenu::ProfileBaseLayerMenu { profile_idx } => Some(profile_idx),
+            GuiMenu::ProfileLayerMenu {
                 profile_idx,
                 layer_idx: _,
             } => Some(profile_idx),
@@ -74,17 +80,22 @@ impl Default for GuiLocal {
     }
 }
 
+// All the possible menus the GUI can be in at any point in time.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum GuiMenu {
     MainMenu,
     DefaultProfileMenu,
+    DefaultProfileBaseLayerMenu,
+    DefaultProfileLayerMenu {
+        layer_idx: usize,
+    },
     ProfileMenu {
         profile_idx: usize,
     },
-    BaseLayerMenu {
+    ProfileBaseLayerMenu {
         profile_idx: usize,
     },
-    LayerMenu {
+    ProfileLayerMenu {
         profile_idx: usize,
         layer_idx: usize,
     },

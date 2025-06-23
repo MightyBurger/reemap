@@ -167,20 +167,15 @@ fn default_layers_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
     if let Some(to_delete) = to_delete {
         args.config.default.layers.remove(to_delete);
     }
-    // match layer_select {
-    //     LayerSelect::None => (),
-    //     LayerSelect::Base => {
-    //         args.gui_local.menu = GuiMenu::BaseLayerMenu {
-    //             profile_idx: args.TODO_REMOVE_profile_ui_idx().unwrap(),
-    //         };
-    //     }
-    //     LayerSelect::Other(i) => {
-    //         args.gui_local.menu = GuiMenu::LayerMenu {
-    //             profile_idx: args.TODO_REMOVE_profile_ui_idx().unwrap(),
-    //             layer_idx: i,
-    //         }
-    //     }
-    // }
+    match layer_select {
+        LayerSelect::None => (),
+        LayerSelect::Base => {
+            args.gui_local.menu = GuiMenu::DefaultProfileBaseLayerMenu;
+        }
+        LayerSelect::Other(i) => {
+            args.gui_local.menu = GuiMenu::DefaultProfileLayerMenu { layer_idx: i };
+        }
+    }
     if pointing_hand {
         ui.ctx()
             .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);

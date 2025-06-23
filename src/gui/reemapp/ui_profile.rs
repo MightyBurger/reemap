@@ -180,12 +180,12 @@ fn layers_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
     match layer_select {
         LayerSelect::None => (),
         LayerSelect::Base => {
-            args.gui_local.menu = GuiMenu::BaseLayerMenu {
+            args.gui_local.menu = GuiMenu::ProfileBaseLayerMenu {
                 profile_idx: args.get_open_profile_ui_idx().unwrap(),
             };
         }
         LayerSelect::Other(i) => {
-            args.gui_local.menu = GuiMenu::LayerMenu {
+            args.gui_local.menu = GuiMenu::ProfileLayerMenu {
                 profile_idx: args.get_open_profile_ui_idx().unwrap(),
                 layer_idx: i,
             }
