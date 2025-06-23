@@ -43,3 +43,14 @@ impl MouseWheelButton {
         }
     }
 }
+
+impl std::fmt::Display for MouseWheelButton {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::ScrollUp => write!(f, "Scroll Up"),
+            Self::ScrollDown => write!(f, "Scroll Down"),
+            Self::ScrollHorzRight => write!(f, "Scroll Right"),
+            Self::ScrollHorzLeft => write!(f, "Scroll Left"),
+        }
+    }
+}

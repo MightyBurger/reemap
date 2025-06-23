@@ -153,6 +153,8 @@ use wheel::MouseWheelButton;
 
 // -------------------------------------------------------------------------------------------------
 
+// -------------------- Hold Button --------------------
+
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, enum_map::Enum)]
 pub enum HoldButton {
     Key(KeyButton),
@@ -171,6 +173,17 @@ impl From<MouseButton> for HoldButton {
     }
 }
 
+impl std::fmt::Display for HoldButton {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Key(key_button) => write!(f, "{key_button}"),
+            Self::Mouse(mouse_button) => write!(f, "{mouse_button}"),
+        }
+    }
+}
+
+// -------------------- Tap Button --------------------
+
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, enum_map::Enum)]
 pub enum TapButton {
     Wheel(MouseWheelButton),
@@ -181,6 +194,16 @@ impl From<MouseWheelButton> for TapButton {
         Self::Wheel(value)
     }
 }
+
+impl std::fmt::Display for TapButton {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Wheel(mouse_wheel_button) => write!(f, "{mouse_wheel_button}"),
+        }
+    }
+}
+
+// -------------------- Button --------------------
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, enum_map::Enum)]
 pub enum Button {
@@ -220,6 +243,16 @@ impl From<TapButton> for Button {
     fn from(value: TapButton) -> Self {
         match value {
             TapButton::Wheel(wheel) => Self::Wheel(wheel),
+        }
+    }
+}
+
+impl std::fmt::Display for Button {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Key(key_button) => write!(f, "{key_button}"),
+            Self::Mouse(mouse_button) => write!(f, "{mouse_button}"),
+            Self::Wheel(mouse_wheel_button) => write!(f, "{mouse_wheel_button}"),
         }
     }
 }

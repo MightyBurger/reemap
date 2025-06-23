@@ -14,9 +14,6 @@ pub fn ui_profile_layer(
     }
     let mut clicked = None;
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-        if ui.button("Add Layer").clicked() {
-            args.gui_local.new_layer_modal_open = true;
-        }
         ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
             ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
                 let profiles_breadcrumb_response = ui.add(
@@ -85,7 +82,7 @@ pub fn ui_profile_layer(
         }
     }
 }
-// fn layers_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
+// fn remaps_table(ui: &mut egui::Ui, args: &mut ReemApp) {
 //     enum LayerSelect {
 //         None,
 //         Base,

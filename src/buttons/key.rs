@@ -92,3 +92,41 @@ impl KeyButton {
         }
     }
 }
+
+impl std::fmt::Display for KeyButton {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::LeftShift => write!(f, "Left Shift"),
+            Self::RightShift => write!(f, "Right Shift"),
+            Self::Space => write!(f, "Space"),
+            Self::LeftCtrl => write!(f, "Left Ctrl"),
+            Self::RightCtrl => write!(f, "Right Ctrl"),
+            Self::A => write!(f, "A"),
+            Self::B => write!(f, "B"),
+            Self::C => write!(f, "C"),
+            Self::D => write!(f, "D"),
+            Self::E => write!(f, "E"),
+            Self::F => write!(f, "F"),
+            Self::G => write!(f, "G"),
+            Self::H => write!(f, "H"),
+            Self::I => write!(f, "I"),
+            Self::J => write!(f, "J"),
+            Self::K => write!(f, "K"),
+            Self::L => write!(f, "L"),
+            Self::M => write!(f, "M"),
+            Self::N => write!(f, "N"),
+            Self::O => write!(f, "O"),
+            Self::P => write!(f, "P"),
+            Self::Q => write!(f, "Q"),
+            Self::R => write!(f, "R"),
+            Self::S => write!(f, "S"),
+            Self::T => write!(f, "T"),
+            Self::U => write!(f, "U"),
+            Self::V => write!(f, "V"),
+            Self::W => write!(f, "W"),
+            Self::X => write!(f, "X"),
+            Self::Y => write!(f, "Y"),
+            Self::Z => write!(f, "Z"),
+        }
+    }
+}
