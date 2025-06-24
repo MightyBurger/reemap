@@ -3,7 +3,7 @@ use crate::buttons;
 use strum::IntoEnumIterator;
 
 pub fn ui_profile_layer(
-    _ctx: &egui::Context,
+    ctx: &egui::Context,
     ui: &mut egui::Ui,
     args: &mut ReemApp,
     profile_idx: usize,
@@ -28,7 +28,48 @@ pub fn ui_profile_layer(
                 });
         });
     });
+    if let Some(button) = args.gui_local.new_remap_modal_open {
+        new_remap_modal(ctx, ui, args, profile_idx, layer_idx, button);
+    }
 }
+
+fn new_remap_modal(
+    ctx: &egui::Context,
+    _ui: &mut egui::Ui,
+    args: &mut ReemApp,
+    profile_idx: usize,
+    layer_idx: usize,
+    button: buttons::Button,
+) {
+    let mut ok = false;
+    let mut cancel = false;
+    let modal = egui::Modal::new(egui::Id::new("New Remap Modal")).show(ctx, |ui| {
+        ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
+            ui.label("New modal TODO.");
+            ui.label(format!("{}", button));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if ui.button("Cancel").clicked() {
+                    cancel = true;
+                }
+                if ui.button("OK").clicked() {
+                    ok = true;
+                }
+            });
+        });
+    });
+    if ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
+        ok = true;
+    }
+    if modal.should_close() {
+        cancel = true;
+    }
+    if ok {
+        args.gui_local.new_remap_modal_open = None;
+    } else if cancel {
+        args.gui_local.new_remap_modal_open = None;
+    }
+}
+
 fn remaps_table(ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize, layer_idx: usize) {
     use egui_extras::{Column, TableBuilder};
     let header_height = 12.0;
@@ -81,7 +122,9 @@ fn remaps_table(ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize, layer
                 });
             }
         });
-    // todo: handle button_select
+    if matches!(button_select, Some(_)) {
+        args.gui_local.new_remap_modal_open = button_select;
+    }
     if pointing_hand {
         ui.ctx()
             .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);

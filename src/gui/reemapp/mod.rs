@@ -37,6 +37,8 @@ pub struct GuiLocal {
     new_layer: LayerUI,
     new_default_layer_modal_open: bool,
     new_default_layer: config::DefaultProfile,
+    new_remap_modal_open: Option<buttons::Button>,
+    new_remap: config::RemapPolicy,
 }
 
 impl Default for GuiLocal {
@@ -49,11 +51,15 @@ impl Default for GuiLocal {
             new_layer: LayerUI::default(),
             new_default_layer_modal_open: false,
             new_default_layer: config::DefaultProfile::default(),
+            new_remap_modal_open: None,
+            new_remap: config::RemapPolicy::default(),
         }
     }
 }
 
 // All the possible menus the GUI can be in at any point in time.
+// Sure, you could break this into some sort of tree of nested enums.
+// But this app has limited scope, and sometimes just solving the problem directly is easier.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum GuiMenu {
     MainMenu,
