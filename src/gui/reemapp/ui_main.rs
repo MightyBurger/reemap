@@ -7,9 +7,6 @@ pub fn ui_main(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp) {
             args.gui_local.new_profile_modal_open = true;
         }
         ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-            ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                ui.heading("Profiles");
-            });
             ui.add_space(super::SPACING);
             egui::Frame::new()
                 .stroke(egui::Stroke {

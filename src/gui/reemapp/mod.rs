@@ -10,6 +10,9 @@ use ui_default_profile::ui_default_profile;
 mod ui_profile_layer;
 use ui_profile_layer::ui_profile_layer;
 
+mod breadcrumb;
+use breadcrumb::breadcrumb;
+
 use crate::buttons;
 use crate::config;
 use crate::hooks;
@@ -261,17 +264,24 @@ impl crate::gui::TrayApp for ReemApp {
             });
         });
         egui::CentralPanel::default().show(ctx, |ui| {
-            let menu = self.gui_local.menu.clone();
-            match menu {
-                GuiMenu::MainMenu => ui_main(ctx, ui, self),
-                GuiMenu::DefaultProfileMenu => ui_default_profile(ctx, ui, self),
-                GuiMenu::ProfileMenu { profile_idx } => ui_profile(ctx, ui, self, profile_idx),
-                GuiMenu::ProfileLayerMenu {
-                    profile_idx,
-                    layer_idx,
-                } => ui_profile_layer(ctx, ui, self, profile_idx, layer_idx),
-                _ => (),
-            }
+            ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
+                breadcrumb(ctx, ui, self);
+
+                ui.separator();
+                ui.add_space(SPACING);
+
+                let menu = self.gui_local.menu.clone();
+                match menu {
+                    GuiMenu::MainMenu => ui_main(ctx, ui, self),
+                    GuiMenu::DefaultProfileMenu => ui_default_profile(ctx, ui, self),
+                    GuiMenu::ProfileMenu { profile_idx } => ui_profile(ctx, ui, self, profile_idx),
+                    GuiMenu::ProfileLayerMenu {
+                        profile_idx,
+                        layer_idx,
+                    } => ui_profile_layer(ctx, ui, self, profile_idx, layer_idx),
+                    _ => (),
+                }
+            });
         });
     }
 }

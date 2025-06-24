@@ -2,30 +2,11 @@ use super::GuiMenu;
 use super::ReemApp;
 
 pub fn ui_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize) {
-    let mut profiles_breadcrumb_clicked = false;
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
         if ui.button("Add Layer").clicked() {
             args.gui_local.new_layer_modal_open = true;
         }
         ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-            ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                let profiles_breadcrumb_response = ui.add(
-                    egui::Label::new(egui::RichText::new("Profiles").heading())
-                        .sense(egui::Sense::click()),
-                );
-                if profiles_breadcrumb_response.hovered() {
-                    ui.ctx()
-                        .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
-                }
-                if profiles_breadcrumb_response.clicked() {
-                    profiles_breadcrumb_clicked = true;
-                }
-                ui.heading(" > ");
-                ui.heading(format!("{}", &args.config.profiles[profile_idx].name));
-            });
-            ui.separator();
-            ui.add_space(super::SPACING);
-
             ui.label("Profile Name");
             ui.text_edit_singleline(&mut args.config.profiles[profile_idx].name);
             ui.add_space(super::SPACING);
@@ -42,9 +23,6 @@ pub fn ui_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp, pr
                 });
         });
     });
-    if profiles_breadcrumb_clicked {
-        args.gui_local.menu = GuiMenu::MainMenu;
-    }
     if args.gui_local.new_layer_modal_open {
         new_layer_modal(ctx, ui, args, profile_idx);
     }

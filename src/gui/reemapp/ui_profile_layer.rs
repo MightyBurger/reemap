@@ -1,64 +1,20 @@
-use super::GuiMenu;
 use super::ReemApp;
 use crate::buttons;
 use strum::IntoEnumIterator;
 
 pub fn ui_profile_layer(
-    ctx: &egui::Context,
+    _ctx: &egui::Context,
     ui: &mut egui::Ui,
     args: &mut ReemApp,
     profile_idx: usize,
     layer_idx: usize,
 ) {
-    enum BreadcrumbClick {
-        ClickedProfiles,
-        ClickedOpenProfile,
-    }
-    let mut clicked = None;
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
+        // TODO: if nothing needs to be at the bottom, remove the bottom_up layout.
         ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-            ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                let profiles_breadcrumb_response = ui.add(
-                    egui::Label::new(egui::RichText::new("Profiles").heading())
-                        .sense(egui::Sense::click()),
-                );
-                if profiles_breadcrumb_response.hovered() {
-                    ui.ctx()
-                        .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
-                }
-                if profiles_breadcrumb_response.clicked() {
-                    clicked = Some(BreadcrumbClick::ClickedProfiles);
-                }
-
-                ui.heading(" > ");
-
-                let openprofile_breadcrumb_response = ui.add(
-                    egui::Label::new(
-                        egui::RichText::new(format!("{}", &args.config.profiles[profile_idx].name))
-                            .heading(),
-                    )
-                    .sense(egui::Sense::click()),
-                );
-                if openprofile_breadcrumb_response.hovered() {
-                    ui.ctx()
-                        .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
-                }
-                if openprofile_breadcrumb_response.clicked() {
-                    clicked = Some(BreadcrumbClick::ClickedOpenProfile);
-                }
-
-                ui.heading(" > ");
-                ui.heading(format!(
-                    "{}",
-                    &args.config.profiles[profile_idx].layers[layer_idx].name
-                ));
-            });
-            ui.separator();
+            ui.label("Layer Name");
+            ui.text_edit_singleline(&mut args.config.profiles[profile_idx].layers[layer_idx].name);
             ui.add_space(super::SPACING);
-
-            // ui.label("Profile Name");
-            // ui.text_edit_singleline(&mut args.get_open_profile_ui_mut().unwrap().name);
-            // ui.add_space(super::SPACING);
 
             egui::Frame::new()
                 .stroke(egui::Stroke {
@@ -72,17 +28,6 @@ pub fn ui_profile_layer(
                 });
         });
     });
-    match clicked {
-        None => (),
-        Some(BreadcrumbClick::ClickedProfiles) => {
-            args.gui_local.menu = GuiMenu::MainMenu;
-        }
-        Some(BreadcrumbClick::ClickedOpenProfile) => {
-            args.gui_local.menu = GuiMenu::ProfileMenu {
-                profile_idx: profile_idx,
-            }
-        }
-    }
 }
 fn remaps_table(ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize, layer_idx: usize) {
     use egui_extras::{Column, TableBuilder};

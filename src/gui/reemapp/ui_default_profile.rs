@@ -2,30 +2,11 @@ use super::GuiMenu;
 use super::ReemApp;
 
 pub fn ui_default_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp) {
-    let mut profiles_breadcrumb_clicked = false;
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
         if ui.button("Add Layer").clicked() {
             args.gui_local.new_default_layer_modal_open = true;
         }
         ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-            ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                let profiles_breadcrumb_response = ui.add(
-                    egui::Label::new(egui::RichText::new("Profiles").heading())
-                        .sense(egui::Sense::click()),
-                );
-                if profiles_breadcrumb_response.hovered() {
-                    ui.ctx()
-                        .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
-                }
-                if profiles_breadcrumb_response.clicked() {
-                    profiles_breadcrumb_clicked = true;
-                }
-                ui.heading(" > ");
-                ui.heading("Default Profile");
-            });
-            ui.separator();
-            ui.add_space(super::SPACING);
-
             ui.label("The default profile is active when no other profile is active.");
             ui.add_space(super::SPACING);
 
@@ -41,9 +22,6 @@ pub fn ui_default_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut Ree
                 });
         });
     });
-    if profiles_breadcrumb_clicked {
-        args.gui_local.menu = GuiMenu::MainMenu;
-    }
     if args.gui_local.new_default_layer_modal_open {
         new_default_layer_modal(ctx, ui, args);
     }
