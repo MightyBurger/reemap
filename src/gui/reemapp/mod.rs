@@ -13,6 +13,8 @@ use ui_profile_layer::ui_profile_layer;
 mod breadcrumb;
 use breadcrumb::breadcrumb;
 
+mod new_remap_modal;
+
 use crate::buttons;
 use crate::config;
 use crate::hooks;
@@ -81,9 +83,7 @@ pub struct GuiLocal {
     new_layer: LayerUI,
     new_default_layer_modal_open: bool,
     new_default_layer: config::DefaultProfile,
-    new_remap_modal_open: Option<buttons::Button>,
-    new_remap_policy: RemapPolicyUI,
-    new_remap_outputs: Vec<buttons::Button>,
+    new_remap_modal: NewRemapModalOpts,
 }
 
 impl Default for GuiLocal {
@@ -96,9 +96,24 @@ impl Default for GuiLocal {
             new_layer: LayerUI::default(),
             new_default_layer_modal_open: false,
             new_default_layer: config::DefaultProfile::default(),
-            new_remap_modal_open: None,
-            new_remap_policy: RemapPolicyUI::default(),
-            new_remap_outputs: Vec::new(),
+            new_remap_modal: NewRemapModalOpts::default(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct NewRemapModalOpts {
+    modal_open: Option<buttons::Button>,
+    policy: RemapPolicyUI,
+    outputs: Vec<buttons::Button>,
+}
+
+impl Default for NewRemapModalOpts {
+    fn default() -> Self {
+        Self {
+            modal_open: None,
+            policy: RemapPolicyUI::default(),
+            outputs: Vec::new(),
         }
     }
 }
