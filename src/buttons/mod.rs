@@ -176,8 +176,8 @@ impl From<MouseButton> for HoldButton {
 impl std::fmt::Display for HoldButton {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Key(key_button) => write!(f, "{key_button}"),
-            Self::Mouse(mouse_button) => write!(f, "{mouse_button}"),
+            Self::Key(key_button) => write!(f, "Key :: {key_button}"),
+            Self::Mouse(mouse_button) => write!(f, "Mouse :: {mouse_button}"),
         }
     }
 }
@@ -198,7 +198,7 @@ impl From<MouseWheelButton> for TapButton {
 impl std::fmt::Display for TapButton {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Wheel(mouse_wheel_button) => write!(f, "{mouse_wheel_button}"),
+            Self::Wheel(mouse_wheel_button) => write!(f, "Wheel :: {mouse_wheel_button}"),
         }
     }
 }
@@ -250,9 +250,9 @@ impl From<TapButton> for Button {
 impl std::fmt::Display for Button {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Key(key_button) => write!(f, "{key_button}"),
-            Self::Mouse(mouse_button) => write!(f, "{mouse_button}"),
-            Self::Wheel(mouse_wheel_button) => write!(f, "{mouse_wheel_button}"),
+            Self::Key(key_button) => write!(f, "Key :: {key_button}"),
+            Self::Mouse(mouse_button) => write!(f, "Mouse :: {mouse_button}"),
+            Self::Wheel(mouse_wheel_button) => write!(f, "Wheel :: {mouse_wheel_button}"),
         }
     }
 }
