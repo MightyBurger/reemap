@@ -1,5 +1,6 @@
 use crate::buttons::{Button, HoldButton};
 use enum_map::EnumMap;
+use itertools::Itertools;
 
 /*
     There is one config. The config contains multiple profiles. Each profile contains multiple
@@ -58,7 +59,11 @@ impl std::fmt::Display for RemapPolicy {
                 if maps.len() == 0 {
                     return write!(f, "(block input)");
                 }
-                let outstr: String = maps.iter().map(|btn| format!("{btn}\n")).collect();
+                let outstr: String = itertools::Itertools::intersperse(
+                    maps.iter().map(|btn| format!("{btn}")),
+                    String::from(", "),
+                )
+                .collect();
                 write!(f, "{outstr}")
             }
         }

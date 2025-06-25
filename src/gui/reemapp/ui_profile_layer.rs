@@ -86,8 +86,19 @@ fn remaps_table(ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize, layer
                 });
             }
         });
-    if matches!(button_select, Some(_)) {
-        args.gui_local.new_remap_modal_open = button_select;
+    if let Some(button) = button_select {
+        args.gui_local.new_remap_modal_open = Some(button);
+        args.gui_local.new_remap_policy =
+            match args.config.profiles[profile_idx].layers[layer_idx].policy[button] {
+                config::RemapPolicy::Defer => RemapPolicyUI::Defer,
+                config::RemapPolicy::NoRemap => RemapPolicyUI::NoRemap,
+                config::RemapPolicy::Remap(_) => RemapPolicyUI::Remap,
+            };
+        args.gui_local.new_remap_outputs =
+            match args.config.profiles[profile_idx].layers[layer_idx].policy[button] {
+                config::RemapPolicy::Defer | config::RemapPolicy::NoRemap => Vec::new(),
+                config::RemapPolicy::Remap(ref output) => output.clone(),
+            };
     }
     if pointing_hand {
         ui.ctx()
@@ -297,7 +308,6 @@ fn new_remap_modal(
                     config::RemapPolicy::Remap(args.gui_local.new_remap_outputs.clone())
                 }
             };
-        println!("success");
         args.gui_local.new_remap_modal_open = None;
     } else if cancel {
         args.gui_local.new_remap_modal_open = None;

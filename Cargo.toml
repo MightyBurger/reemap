@@ -31,3 +31,4 @@ catppuccin-egui = { version = "5.5.0", default-features = false, features = [
 thiserror = "2.0.12"
 oneshot = { version = "0.1.11", default-features = false, features = ["std"] }
 egui_extras = "0.31.1"
+itertools = "0.14.0"
