@@ -1,22 +1,18 @@
+use crate::buttons;
 use crate::config;
-use crate::gui::reemapp::ui_remap_tables::{ui_available_remaps_table, ui_single_remap_table};
-use crate::gui::reemapp::{LayerUI, NewRemapModalOpts};
-use crate::{buttons, gui::reemapp::RemapPolicyUI};
+use crate::gui::reemapp::ui_remap_tables::ui_available_remaps_table;
+use crate::gui::reemapp::ui_remap_tables::ui_single_remap_table;
+use crate::gui::reemapp::{BaseRemapPolicyUI, NewBaseRemapModalOpts};
 use strum::IntoEnumIterator;
 
-pub fn ui_layer(
+pub fn ui_base_layer(
     ctx: &egui::Context,
     ui: &mut egui::Ui,
-    layer: &mut LayerUI,
-    new_remap_modal: &mut NewRemapModalOpts,
+    layer: &mut config::BaseLayer,
+    new_remap_modal: &mut NewBaseRemapModalOpts,
 ) {
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-        // TODO: if nothing needs to be at the bottom, remove the bottom_up layout.
         ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-            ui.label("Layer Name");
-            ui.text_edit_singleline(&mut layer.name);
-            ui.add_space(super::SPACING);
-
             egui::Frame::new()
                 .stroke(egui::Stroke {
                     width: 1.0,
@@ -25,20 +21,20 @@ pub fn ui_layer(
                 .inner_margin(4.0)
                 .corner_radius(4.0)
                 .show(ui, |ui| {
-                    ui_remaps_table(ui, layer, new_remap_modal);
+                    ui_base_remaps_table(ui, layer, new_remap_modal);
                 });
         });
     });
     if let Some(button) = new_remap_modal.modal_open {
         let policy = &mut layer.policy[button];
-        ui_new_remap_modal(ctx, ui, new_remap_modal, button, policy);
+        ui_new_base_remap_modal(ctx, ui, new_remap_modal, button, policy);
     }
 }
 
-pub fn ui_remaps_table(
+pub fn ui_base_remaps_table(
     ui: &mut egui::Ui,
-    layer: &mut LayerUI,
-    new_remap_modal: &mut NewRemapModalOpts,
+    layer: &mut config::BaseLayer,
+    new_remap_modal: &mut NewBaseRemapModalOpts,
 ) {
     use egui_extras::{Column, TableBuilder};
     let header_height = 12.0;
@@ -46,7 +42,7 @@ pub fn ui_remaps_table(
     let mut pointing_hand = false;
     let mut button_select = None;
     TableBuilder::new(ui)
-        .id_salt("Remaps Table")
+        .id_salt("Base Remaps Table")
         .striped(true)
         .auto_shrink(false)
         .sense(egui::Sense::click_and_drag())
@@ -91,13 +87,12 @@ pub fn ui_remaps_table(
     if let Some(button) = button_select {
         new_remap_modal.modal_open = Some(button);
         new_remap_modal.policy = match layer.policy[button] {
-            config::RemapPolicy::Defer => RemapPolicyUI::Defer,
-            config::RemapPolicy::NoRemap => RemapPolicyUI::NoRemap,
-            config::RemapPolicy::Remap(_) => RemapPolicyUI::Remap,
+            config::BaseRemapPolicy::NoRemap => BaseRemapPolicyUI::NoRemap,
+            config::BaseRemapPolicy::Remap(_) => BaseRemapPolicyUI::Remap,
         };
         new_remap_modal.outputs = match layer.policy[button] {
-            config::RemapPolicy::Defer | config::RemapPolicy::NoRemap => Vec::new(),
-            config::RemapPolicy::Remap(ref output) => output.clone(),
+            config::BaseRemapPolicy::NoRemap => Vec::new(),
+            config::BaseRemapPolicy::Remap(ref output) => output.clone(),
         };
     }
     if pointing_hand {
@@ -106,12 +101,12 @@ pub fn ui_remaps_table(
     }
 }
 
-fn ui_new_remap_modal(
+fn ui_new_base_remap_modal(
     ctx: &egui::Context,
     _ui: &mut egui::Ui,
-    modal_opts: &mut NewRemapModalOpts,
+    modal_opts: &mut NewBaseRemapModalOpts,
     button: buttons::Button,
-    policy: &mut config::RemapPolicy,
+    policy: &mut config::BaseRemapPolicy,
 ) {
     let mut ok = false;
     let mut cancel = false;
@@ -123,9 +118,12 @@ fn ui_new_remap_modal(
             egui::ComboBox::from_label("Policy")
                 .selected_text(format!("{}", &modal_opts.policy))
                 .show_ui(ui, |ui| {
-                    ui.selectable_value(&mut modal_opts.policy, RemapPolicyUI::Defer, "Defer");
-                    ui.selectable_value(&mut modal_opts.policy, RemapPolicyUI::NoRemap, "No Remap");
-                    ui.selectable_value(&mut modal_opts.policy, RemapPolicyUI::Remap, "Remap");
+                    ui.selectable_value(
+                        &mut modal_opts.policy,
+                        BaseRemapPolicyUI::NoRemap,
+                        "No Remap",
+                    );
+                    ui.selectable_value(&mut modal_opts.policy, BaseRemapPolicyUI::Remap, "Remap");
                 });
 
             ui.add_space(super::SPACING);
@@ -143,8 +141,8 @@ fn ui_new_remap_modal(
                 ui.separator();
                 ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
                     let enable_tables = match modal_opts.policy {
-                        RemapPolicyUI::Defer | RemapPolicyUI::NoRemap => false,
-                        RemapPolicyUI::Remap => true,
+                        BaseRemapPolicyUI::NoRemap => false,
+                        BaseRemapPolicyUI::Remap => true,
                     };
                     ui.add_enabled_ui(enable_tables, |ui| {
                         ui.columns_const(|[col_1, col_2]| {
@@ -182,9 +180,8 @@ fn ui_new_remap_modal(
     }
     if ok {
         *policy = match modal_opts.policy {
-            RemapPolicyUI::Defer => config::RemapPolicy::Defer,
-            RemapPolicyUI::NoRemap => config::RemapPolicy::NoRemap,
-            RemapPolicyUI::Remap => config::RemapPolicy::Remap(modal_opts.outputs.clone()),
+            BaseRemapPolicyUI::NoRemap => config::BaseRemapPolicy::NoRemap,
+            BaseRemapPolicyUI::Remap => config::BaseRemapPolicy::Remap(modal_opts.outputs.clone()),
         };
         modal_opts.modal_open = None;
     } else if cancel {

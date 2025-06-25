@@ -10,6 +10,11 @@ use ui_default_profile::ui_default_profile;
 mod ui_layer;
 use ui_layer::ui_layer;
 
+mod ui_base_layer;
+use ui_base_layer::ui_base_layer;
+
+mod ui_remap_tables;
+
 mod breadcrumb;
 use breadcrumb::breadcrumb;
 
@@ -84,6 +89,7 @@ pub struct GuiLocal {
     new_default_layer_modal_open: bool,
     new_default_layer: config::DefaultProfile,
     new_remap_modal: NewRemapModalOpts,
+    new_base_remap_modal: NewBaseRemapModalOpts,
 }
 
 impl Default for GuiLocal {
@@ -97,6 +103,7 @@ impl Default for GuiLocal {
             new_default_layer_modal_open: false,
             new_default_layer: config::DefaultProfile::default(),
             new_remap_modal: NewRemapModalOpts::default(),
+            new_base_remap_modal: NewBaseRemapModalOpts::default(),
         }
     }
 }
@@ -113,6 +120,23 @@ impl Default for NewRemapModalOpts {
         Self {
             modal_open: None,
             policy: RemapPolicyUI::default(),
+            outputs: Vec::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct NewBaseRemapModalOpts {
+    modal_open: Option<buttons::Button>,
+    policy: BaseRemapPolicyUI,
+    outputs: Vec<buttons::Button>,
+}
+
+impl Default for NewBaseRemapModalOpts {
+    fn default() -> Self {
+        Self {
+            modal_open: None,
+            policy: BaseRemapPolicyUI::default(),
             outputs: Vec::new(),
         }
     }
@@ -341,11 +365,19 @@ impl crate::gui::TrayApp for ReemApp {
                 match menu {
                     GuiMenu::MainMenu => ui_main(ctx, ui, self),
                     GuiMenu::DefaultProfileMenu => ui_default_profile(ctx, ui, self),
+                    GuiMenu::DefaultProfileBaseLayerMenu => {
+                        let layer = &mut self.config.default.base;
+                        ui_base_layer(ctx, ui, layer, &mut self.gui_local.new_base_remap_modal);
+                    }
                     GuiMenu::DefaultProfileLayerMenu { layer_idx } => {
                         let layer = &mut self.config.default.layers[layer_idx];
                         ui_layer(ctx, ui, layer, &mut self.gui_local.new_remap_modal);
                     }
                     GuiMenu::ProfileMenu { profile_idx } => ui_profile(ctx, ui, self, profile_idx),
+                    GuiMenu::ProfileBaseLayerMenu { profile_idx } => {
+                        let layer = &mut self.config.profiles[profile_idx].base;
+                        ui_base_layer(ctx, ui, layer, &mut self.gui_local.new_base_remap_modal);
+                    }
                     GuiMenu::ProfileLayerMenu {
                         profile_idx,
                         layer_idx,
@@ -353,7 +385,6 @@ impl crate::gui::TrayApp for ReemApp {
                         let layer = &mut self.config.profiles[profile_idx].layers[layer_idx];
                         ui_layer(ctx, ui, layer, &mut self.gui_local.new_remap_modal);
                     }
-                    _ => (),
                 }
             });
         });
