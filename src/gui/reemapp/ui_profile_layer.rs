@@ -94,6 +94,44 @@ fn remaps_table(ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize, layer
     }
 }
 
+fn single_remap_table(ui: &mut egui::Ui, remaps: &mut Vec<buttons::Button>) {
+    use egui_extras::{Column, TableBuilder};
+    let header_height = 12.0;
+    let row_height = 20.0;
+    let btn_size = [20.0, 20.0];
+    let mut pointing_hand = false;
+    TableBuilder::new(ui)
+        .id_salt("Single Remap Table")
+        .striped(true)
+        .auto_shrink(false)
+        .sense(egui::Sense::click_and_drag())
+        .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
+        .column(Column::exact(120.0)) // Enabled
+        .column(Column::remainder()) // Profile Name
+        .header(header_height, |mut header| {
+            header.col(|ui| {
+                ui.strong("Input");
+            });
+            header.col(|ui| {
+                ui.strong("Output");
+            });
+        })
+        .body(|mut body| {
+            for button in remaps.iter_mut() {
+                body.row(row_height, |mut row| {
+                    row.col(|ui| {
+                        ui.style_mut().interaction.selectable_labels = false;
+                        ui.label(format!("{button}"));
+                    });
+                });
+            }
+        });
+    if pointing_hand {
+        ui.ctx()
+            .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+    }
+}
+
 fn new_remap_modal(
     ctx: &egui::Context,
     _ui: &mut egui::Ui,
@@ -163,43 +201,5 @@ fn new_remap_modal(
         args.gui_local.new_remap_modal_open = None;
     } else if cancel {
         args.gui_local.new_remap_modal_open = None;
-    }
-}
-
-fn single_remap_table(ui: &mut egui::Ui, remaps: &mut Vec<buttons::Button>) {
-    use egui_extras::{Column, TableBuilder};
-    let header_height = 12.0;
-    let row_height = 20.0;
-    let btn_size = [20.0, 20.0];
-    let mut pointing_hand = false;
-    TableBuilder::new(ui)
-        .id_salt("Single Remap Table")
-        .striped(true)
-        .auto_shrink(false)
-        .sense(egui::Sense::click_and_drag())
-        .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
-        .column(Column::exact(120.0)) // Enabled
-        .column(Column::remainder()) // Profile Name
-        .header(header_height, |mut header| {
-            header.col(|ui| {
-                ui.strong("Input");
-            });
-            header.col(|ui| {
-                ui.strong("Output");
-            });
-        })
-        .body(|mut body| {
-            for button in remaps.iter_mut() {
-                body.row(row_height, |mut row| {
-                    row.col(|ui| {
-                        ui.style_mut().interaction.selectable_labels = false;
-                        ui.label(format!("{button}"));
-                    });
-                });
-            }
-        });
-    if pointing_hand {
-        ui.ctx()
-            .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
     }
 }
