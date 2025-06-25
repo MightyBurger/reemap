@@ -28,6 +28,50 @@ pub struct ReemApp {
     pub gui_local: GuiLocal,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+enum BaseRemapPolicyUI {
+    NoRemap,
+    Remap,
+}
+
+impl Default for BaseRemapPolicyUI {
+    fn default() -> Self {
+        Self::NoRemap
+    }
+}
+
+impl std::fmt::Display for BaseRemapPolicyUI {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::NoRemap => write!(f, "No Remap"),
+            Self::Remap => write!(f, "Remap"),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+enum RemapPolicyUI {
+    Defer,
+    NoRemap,
+    Remap,
+}
+
+impl Default for RemapPolicyUI {
+    fn default() -> Self {
+        Self::Defer
+    }
+}
+
+impl std::fmt::Display for RemapPolicyUI {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Defer => write!(f, "Defer"),
+            Self::NoRemap => write!(f, "No Remap"),
+            Self::Remap => write!(f, "Remap"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct GuiLocal {
     menu: GuiMenu,
@@ -38,7 +82,8 @@ pub struct GuiLocal {
     new_default_layer_modal_open: bool,
     new_default_layer: config::DefaultProfile,
     new_remap_modal_open: Option<buttons::Button>,
-    new_remap: config::RemapPolicy,
+    new_remap_policy: RemapPolicyUI,
+    new_remap_outputs: Vec<buttons::Button>,
 }
 
 impl Default for GuiLocal {
@@ -52,7 +97,8 @@ impl Default for GuiLocal {
             new_default_layer_modal_open: false,
             new_default_layer: config::DefaultProfile::default(),
             new_remap_modal_open: None,
-            new_remap: config::RemapPolicy::default(),
+            new_remap_policy: RemapPolicyUI::default(),
+            new_remap_outputs: Vec::new(),
         }
     }
 }

@@ -1,5 +1,5 @@
 use super::ReemApp;
-use crate::buttons;
+use crate::{buttons, gui::reemapp::RemapPolicyUI};
 use strum::IntoEnumIterator;
 
 pub fn ui_profile_layer(
@@ -33,43 +33,6 @@ pub fn ui_profile_layer(
     }
 }
 
-fn new_remap_modal(
-    ctx: &egui::Context,
-    _ui: &mut egui::Ui,
-    args: &mut ReemApp,
-    profile_idx: usize,
-    layer_idx: usize,
-    button: buttons::Button,
-) {
-    let mut ok = false;
-    let mut cancel = false;
-    let modal = egui::Modal::new(egui::Id::new("New Remap Modal")).show(ctx, |ui| {
-        ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
-            ui.label("New modal TODO.");
-            ui.label(format!("{}", button));
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if ui.button("Cancel").clicked() {
-                    cancel = true;
-                }
-                if ui.button("OK").clicked() {
-                    ok = true;
-                }
-            });
-        });
-    });
-    if ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
-        ok = true;
-    }
-    if modal.should_close() {
-        cancel = true;
-    }
-    if ok {
-        args.gui_local.new_remap_modal_open = None;
-    } else if cancel {
-        args.gui_local.new_remap_modal_open = None;
-    }
-}
-
 fn remaps_table(ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize, layer_idx: usize) {
     use egui_extras::{Column, TableBuilder};
     let header_height = 12.0;
@@ -78,7 +41,7 @@ fn remaps_table(ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize, layer
     let mut pointing_hand = false;
     let mut button_select = None;
     TableBuilder::new(ui)
-        .id_salt("Layers Table")
+        .id_salt("Remaps Table")
         .striped(true)
         .auto_shrink(false)
         .sense(egui::Sense::click_and_drag())
@@ -125,6 +88,116 @@ fn remaps_table(ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize, layer
     if matches!(button_select, Some(_)) {
         args.gui_local.new_remap_modal_open = button_select;
     }
+    if pointing_hand {
+        ui.ctx()
+            .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+    }
+}
+
+fn new_remap_modal(
+    ctx: &egui::Context,
+    _ui: &mut egui::Ui,
+    args: &mut ReemApp,
+    profile_idx: usize,
+    layer_idx: usize,
+    button: buttons::Button,
+) {
+    let mut ok = false;
+    let mut cancel = false;
+    let modal = egui::Modal::new(egui::Id::new("New Remap Modal")).show(ctx, |ui| {
+        ui.heading(format!("Remaps for {button}"));
+        ui.separator();
+        ui.add_space(super::SPACING);
+        ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
+            egui::ComboBox::from_label("Policy")
+                .selected_text(format!("{}", &args.gui_local.new_remap_policy))
+                .show_ui(ui, |ui| {
+                    ui.selectable_value(
+                        &mut args.gui_local.new_remap_policy,
+                        RemapPolicyUI::Defer,
+                        "Defer",
+                    );
+                    ui.selectable_value(
+                        &mut args.gui_local.new_remap_policy,
+                        RemapPolicyUI::NoRemap,
+                        "No Remap",
+                    );
+                    ui.selectable_value(
+                        &mut args.gui_local.new_remap_policy,
+                        RemapPolicyUI::Remap,
+                        "Remap",
+                    );
+                });
+
+            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::BOTTOM), |ui| {
+                    if ui.button("Cancel").clicked() {
+                        cancel = true;
+                    }
+                    if ui.button("OK").clicked() {
+                        ok = true;
+                    }
+                });
+                ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
+                    egui::Frame::new()
+                        .stroke(egui::Stroke {
+                            width: 1.0,
+                            color: egui::Color32::DARK_GRAY,
+                        })
+                        .inner_margin(4.0)
+                        .corner_radius(4.0)
+                        .show(ui, |ui| {
+                            single_remap_table(ui, &mut args.gui_local.new_remap_outputs);
+                        });
+                });
+            });
+        });
+    });
+    if ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
+        ok = true;
+    }
+    if modal.should_close() {
+        cancel = true;
+    }
+    if ok {
+        args.gui_local.new_remap_modal_open = None;
+    } else if cancel {
+        args.gui_local.new_remap_modal_open = None;
+    }
+}
+
+fn single_remap_table(ui: &mut egui::Ui, remaps: &mut Vec<buttons::Button>) {
+    use egui_extras::{Column, TableBuilder};
+    let header_height = 12.0;
+    let row_height = 20.0;
+    let btn_size = [20.0, 20.0];
+    let mut pointing_hand = false;
+    TableBuilder::new(ui)
+        .id_salt("Single Remap Table")
+        .striped(true)
+        .auto_shrink(false)
+        .sense(egui::Sense::click_and_drag())
+        .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
+        .column(Column::exact(120.0)) // Enabled
+        .column(Column::remainder()) // Profile Name
+        .header(header_height, |mut header| {
+            header.col(|ui| {
+                ui.strong("Input");
+            });
+            header.col(|ui| {
+                ui.strong("Output");
+            });
+        })
+        .body(|mut body| {
+            for button in remaps.iter_mut() {
+                body.row(row_height, |mut row| {
+                    row.col(|ui| {
+                        ui.style_mut().interaction.selectable_labels = false;
+                        ui.label(format!("{button}"));
+                    });
+                });
+            }
+        });
     if pointing_hand {
         ui.ctx()
             .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
