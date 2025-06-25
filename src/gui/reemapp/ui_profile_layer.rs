@@ -257,6 +257,8 @@ fn new_remap_modal(
                         ok = true;
                     }
                 });
+                ui.add_space(super::SPACING);
+                ui.separator();
                 ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
                     let enable_tables = match args.gui_local.new_remap_policy {
                         RemapPolicyUI::Defer | RemapPolicyUI::NoRemap => false,
