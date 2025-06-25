@@ -3,7 +3,7 @@ use crate::gui::reemapp::NewRemapModalOpts;
 use crate::{buttons, gui::reemapp::RemapPolicyUI};
 use strum::IntoEnumIterator;
 
-pub fn new_remap_modal(
+pub fn ui_new_remap_modal(
     ctx: &egui::Context,
     _ui: &mut egui::Ui,
     modal_opts: &mut NewRemapModalOpts,

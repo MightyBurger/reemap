@@ -7,13 +7,13 @@ use ui_profile::ui_profile;
 mod ui_default_profile;
 use ui_default_profile::ui_default_profile;
 
-mod ui_profile_layer;
-use ui_profile_layer::ui_profile_layer;
+mod ui_layer;
+use ui_layer::ui_layer;
 
 mod breadcrumb;
 use breadcrumb::breadcrumb;
 
-mod new_remap_modal;
+mod ui_new_remap_modal;
 
 use crate::buttons;
 use crate::config;
@@ -341,11 +341,18 @@ impl crate::gui::TrayApp for ReemApp {
                 match menu {
                     GuiMenu::MainMenu => ui_main(ctx, ui, self),
                     GuiMenu::DefaultProfileMenu => ui_default_profile(ctx, ui, self),
+                    GuiMenu::DefaultProfileLayerMenu { layer_idx } => {
+                        let layer = &mut self.config.default.layers[layer_idx];
+                        ui_layer(ctx, ui, layer, &mut self.gui_local.new_remap_modal);
+                    }
                     GuiMenu::ProfileMenu { profile_idx } => ui_profile(ctx, ui, self, profile_idx),
                     GuiMenu::ProfileLayerMenu {
                         profile_idx,
                         layer_idx,
-                    } => ui_profile_layer(ctx, ui, self, profile_idx, layer_idx),
+                    } => {
+                        let layer = &mut self.config.profiles[profile_idx].layers[layer_idx];
+                        ui_layer(ctx, ui, layer, &mut self.gui_local.new_remap_modal);
+                    }
                     _ => (),
                 }
             });
