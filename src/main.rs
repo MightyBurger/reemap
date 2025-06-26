@@ -4,6 +4,7 @@ mod buttons;
 mod config;
 mod gui;
 mod hooks;
+mod settings;
 
 fn main() {
     // Reminder: all threads are joined at the end of a std::thread::scope
@@ -17,7 +18,7 @@ fn main() {
         // Run the GUI. It will be ran on this thread, the main thread.
         let app = gui::reemapp::ReemApp {
             hookthread_proxy,
-            config: gui::settings::ConfigUI::default(),
+            config: settings::ConfigUI::default(),
             gui_local: gui::reemapp::GuiLocal::default(),
         };
         gui::run(app);

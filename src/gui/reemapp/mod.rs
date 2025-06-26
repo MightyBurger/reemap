@@ -14,7 +14,7 @@ use ui_layer::ui_layer;
 use ui_main::ui_main;
 use ui_profile::ui_profile;
 
-use crate::gui::settings;
+use crate::settings;
 
 use crate::buttons;
 use crate::config;
@@ -194,6 +194,16 @@ impl crate::gui::TrayApp for ReemApp {
                         if ui.button("Apply").clicked() {
                             self.hookthread_proxy
                                 .update(config::Config::from(self.config.clone()));
+                        }
+                        if ui.button("Test").clicked() {
+                            let teststr = ron::ser::to_string_pretty(
+                                &self.config,
+                                ron::ser::PrettyConfig::default(),
+                            );
+                            match teststr {
+                                Ok(a) => println!("{a}"),
+                                Err(e) => println!("{e}"),
+                            }
                         }
                     });
                 });
