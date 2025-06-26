@@ -1,37 +1,31 @@
-mod ui_main;
-use ui_main::ui_main;
-
-mod ui_profile;
-use ui_profile::ui_profile;
-
-mod ui_default_profile;
-use ui_default_profile::ui_default_profile;
-
-mod ui_layer;
-use ui_layer::ui_layer;
-
+mod breadcrumb;
 mod ui_base_layer;
-use ui_base_layer::ui_base_layer;
-
+mod ui_default_profile;
+mod ui_layer;
+mod ui_main;
+mod ui_new_remap_modal;
+mod ui_profile;
 mod ui_remap_tables;
 
-mod breadcrumb;
 use breadcrumb::breadcrumb;
+use ui_base_layer::ui_base_layer;
+use ui_default_profile::ui_default_profile;
+use ui_layer::ui_layer;
+use ui_main::ui_main;
+use ui_profile::ui_profile;
 
-mod ui_new_remap_modal;
+use crate::gui::settings;
 
 use crate::buttons;
 use crate::config;
 use crate::hooks;
-
-use enum_map::EnumMap;
 
 const SPACING: f32 = 8.0;
 
 // Thought the name was clever. Don't get too mad, please.
 pub struct ReemApp {
     pub hookthread_proxy: hooks::HookthreadProxy,
-    pub config: ConfigUI,
+    pub config: settings::ConfigUI,
     pub gui_local: GuiLocal,
 }
 
@@ -83,9 +77,9 @@ impl std::fmt::Display for RemapPolicyUI {
 pub struct GuiLocal {
     menu: GuiMenu,
     new_profile_modal_open: bool,
-    new_profile: ProfileUI,
+    new_profile: settings::ProfileUI,
     new_layer_modal_open: bool,
-    new_layer: LayerUI,
+    new_layer: settings::LayerUI,
     new_default_layer_modal_open: bool,
     new_default_layer: config::DefaultProfile,
     new_remap_modal: NewRemapModalOpts,
@@ -97,9 +91,9 @@ impl Default for GuiLocal {
         Self {
             menu: GuiMenu::default(),
             new_profile_modal_open: false,
-            new_profile: ProfileUI::default(),
+            new_profile: settings::ProfileUI::default(),
             new_layer_modal_open: false,
-            new_layer: LayerUI::default(),
+            new_layer: settings::LayerUI::default(),
             new_default_layer_modal_open: false,
             new_default_layer: config::DefaultProfile::default(),
             new_remap_modal: NewRemapModalOpts::default(),
@@ -168,155 +162,6 @@ pub enum GuiMenu {
 impl Default for GuiMenu {
     fn default() -> Self {
         Self::MainMenu
-    }
-}
-
-// -------------------- Layers (UI) --------------------
-
-// Like config::Layer, but with extra fields:
-//  enabled
-//  name
-// and without these fields:
-//  active
-// ("enabled" means the user clicked the checkbox for this layer. "active" means the layer is
-// currently in effect; for example, the user is holding down the required buttons.)
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct LayerUI {
-    pub layer_type: config::LayerType,
-    pub condition: Vec<buttons::HoldButton>,
-    pub policy: EnumMap<buttons::Button, config::RemapPolicy>,
-    pub enabled: bool,
-    pub name: String,
-}
-
-impl Default for LayerUI {
-    fn default() -> Self {
-        Self {
-            enabled: true,
-            layer_type: config::LayerType::Modifier,
-            condition: Vec::new(),
-            policy: EnumMap::default(),
-            name: String::from("New Layer"),
-        }
-    }
-}
-
-impl TryFrom<LayerUI> for config::Layer {
-    type Error = ();
-    fn try_from(value: LayerUI) -> Result<Self, ()> {
-        if !value.enabled {
-            Err(())
-        } else {
-            Ok(Self {
-                active: false,
-                layer_type: value.layer_type,
-                condition: value.condition,
-                policy: value.policy,
-            })
-        }
-    }
-}
-
-// -------------------- Profiles (UI) --------------------
-// Like config::Profile, but  uses Vec<LayerUI> instead of Vec<config::Layer>
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct DefaultProfileUI {
-    pub base: config::BaseLayer,
-    pub layers: Vec<LayerUI>,
-}
-
-impl Default for DefaultProfileUI {
-    fn default() -> Self {
-        Self {
-            base: config::BaseLayer::default(),
-            layers: Vec::new(),
-        }
-    }
-}
-
-impl From<DefaultProfileUI> for config::DefaultProfile {
-    fn from(value: DefaultProfileUI) -> Self {
-        Self {
-            base: value.base,
-            layers: value
-                .layers
-                .into_iter()
-                .filter_map(|layer_ui| layer_ui.try_into().ok())
-                .collect(),
-        }
-    }
-}
-
-// Like config::Profile, but with extra fields:
-//  enabled
-//  name
-// Also uses Vec<LayerUI> instead of Vec<config::Layer>
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ProfileUI {
-    pub base: config::BaseLayer,
-    pub layers: Vec<LayerUI>,
-    pub condition: config::ProfileCondition,
-    pub enabled: bool,
-    pub name: String,
-}
-
-impl Default for ProfileUI {
-    fn default() -> Self {
-        Self {
-            base: config::BaseLayer::default(),
-            layers: Vec::new(),
-            condition: config::ProfileCondition::OriBF,
-            enabled: true,
-            name: String::from("New Profile"),
-        }
-    }
-}
-
-impl TryFrom<ProfileUI> for config::Profile {
-    type Error = ();
-    fn try_from(value: ProfileUI) -> Result<Self, ()> {
-        if !value.enabled {
-            Err(())
-        } else {
-            Ok(Self {
-                base: value.base,
-                layers: value
-                    .layers
-                    .into_iter()
-                    .filter_map(|layer_ui| layer_ui.try_into().ok())
-                    .collect(),
-                condition: value.condition,
-            })
-        }
-    }
-}
-
-// -------------------- Config (UI) --------------------
-
-// Like config::Config, but instantiates ProfileUI instead of Profile and without active_profile
-#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ConfigUI {
-    pub default: DefaultProfileUI,
-    pub profiles: Vec<ProfileUI>,
-}
-
-impl From<ConfigUI> for config::Config {
-    fn from(value: ConfigUI) -> Self {
-        Self {
-            default: value.default.into(),
-            profiles: value
-                .profiles
-                .iter()
-                .cloned()
-                .filter_map(|profiles_ui| profiles_ui.try_into().ok())
-                .collect(),
-            profile_conditions: value
-                .profiles
-                .into_iter()
-                .map(|profiles_ui| profiles_ui.condition)
-                .collect(),
-            active_profile: None,
-        }
     }
 }
 

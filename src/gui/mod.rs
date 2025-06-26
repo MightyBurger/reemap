@@ -4,6 +4,8 @@
 mod glutin_ctx;
 pub mod reemapp;
 
+pub mod settings;
+
 use glutin_ctx::GlutinWindowContext;
 
 const TITLE: &'static str = "Reemap";

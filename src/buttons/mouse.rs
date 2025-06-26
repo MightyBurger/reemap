@@ -1,7 +1,19 @@
+use serde::{Deserialize, Serialize};
 use windows::Win32::UI::Input::KeyboardAndMouse;
 
 #[derive(
-    Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, enum_map::Enum, strum::EnumIter,
+    Debug,
+    Clone,
+    Copy,
+    Hash,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    enum_map::Enum,
+    strum::EnumIter,
+    Serialize,
+    Deserialize,
 )]
 pub enum MouseButton {
     Left,

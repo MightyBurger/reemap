@@ -1,7 +1,8 @@
+use crate::buttons;
 use crate::config;
 use crate::gui::reemapp::ui_remap_tables::{ui_available_remaps_table, ui_single_remap_table};
-use crate::gui::reemapp::{LayerUI, NewRemapModalOpts};
-use crate::{buttons, gui::reemapp::RemapPolicyUI};
+use crate::gui::reemapp::{NewRemapModalOpts, RemapPolicyUI};
+use crate::gui::settings::LayerUI;
 use strum::IntoEnumIterator;
 
 pub fn ui_layer(

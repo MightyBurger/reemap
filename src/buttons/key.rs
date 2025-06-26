@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use windows::Win32::UI::Input::KeyboardAndMouse;
 
 #[derive(
@@ -13,6 +14,8 @@ use windows::Win32::UI::Input::KeyboardAndMouse;
     strum::EnumIter,
     num_derive::FromPrimitive,
     num_derive::ToPrimitive,
+    Serialize,
+    Deserialize,
 )]
 #[repr(u8)]
 pub enum KeyButton {

@@ -1,5 +1,6 @@
 use crate::buttons::{Button, HoldButton};
 use enum_map::EnumMap;
+use serde::{Deserialize, Serialize};
 
 /*
     There is one config. The config contains multiple profiles. Each profile contains multiple
@@ -15,7 +16,7 @@ use enum_map::EnumMap;
 
 // -------------------- Remaps --------------------
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum BaseRemapPolicy {
     NoRemap,
     Remap(Vec<Button>),
@@ -46,7 +47,7 @@ impl std::fmt::Display for BaseRemapPolicy {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum RemapPolicy {
     Defer,
     NoRemap,
@@ -81,18 +82,18 @@ impl Default for RemapPolicy {
 
 // -------------------- Layers --------------------
 
-#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct BaseLayer {
     pub policy: EnumMap<Button, BaseRemapPolicy>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum LayerType {
     Modifier,
     Toggle,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct Layer {
     pub active: bool,
     pub layer_type: LayerType,
@@ -102,20 +103,20 @@ pub struct Layer {
 
 // -------------------- Profiles --------------------
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum ProfileCondition {
     OriBF,
     OriWotW,
     Other(String),
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct DefaultProfile {
     pub base: BaseLayer,
     pub layers: Vec<Layer>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct Profile {
     pub base: BaseLayer,
     pub layers: Vec<Layer>,
@@ -124,7 +125,7 @@ pub struct Profile {
 
 // -------------------- Config --------------------
 
-#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct Config {
     pub default: DefaultProfile,
     pub profiles: Vec<Profile>,

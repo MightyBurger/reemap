@@ -149,13 +149,16 @@ use key::KeyButton;
 pub mod mouse;
 use mouse::MouseButton;
 pub mod wheel;
+use serde::{Deserialize, Serialize};
 use wheel::MouseWheelButton;
 
 // -------------------------------------------------------------------------------------------------
 
 // -------------------- Hold Button --------------------
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, enum_map::Enum)]
+#[derive(
+    Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, enum_map::Enum, Serialize, Deserialize,
+)]
 pub enum HoldButton {
     Key(KeyButton),
     Mouse(MouseButton),
@@ -184,7 +187,9 @@ impl std::fmt::Display for HoldButton {
 
 // -------------------- Tap Button --------------------
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, enum_map::Enum)]
+#[derive(
+    Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, enum_map::Enum, Serialize, Deserialize,
+)]
 pub enum TapButton {
     Wheel(MouseWheelButton),
 }
@@ -205,7 +210,9 @@ impl std::fmt::Display for TapButton {
 
 // -------------------- Button --------------------
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, enum_map::Enum)]
+#[derive(
+    Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, enum_map::Enum, Serialize, Deserialize,
+)]
 pub enum Button {
     Key(KeyButton),
     Mouse(MouseButton),
