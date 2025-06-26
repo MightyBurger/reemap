@@ -3,7 +3,7 @@ pub mod input;
 
 use hooklocal::HOOKLOCAL;
 
-use crate::settings::Config;
+use crate::settings::Settings;
 
 use std::sync::Mutex;
 
@@ -77,15 +77,15 @@ pub fn run(sender: oneshot::Sender<HookthreadProxy>) {
                 Some(HookMessage::Update) => {
                     println!("Updating configuration!");
                     let Foundation::WPARAM(raw_usize) = lpmsg.wParam;
-                    let raw = raw_usize as *mut Config;
-                    let config_boxed = Box::from_raw(raw);
-                    let config = *config_boxed;
+                    let raw = raw_usize as *mut Settings;
+                    let settings_boxed = Box::from_raw(raw);
+                    let settings = *settings_boxed;
 
                     let mut hook_local = HOOKLOCAL.lock().expect("mutex poisoned");
                     let hook_local = hook_local
                         .as_mut()
                         .expect("local data should have been initialized");
-                    hook_local.config = config;
+                    hook_local.settings = settings;
                 }
                 None => {
                     let _ = WM::TranslateMessage(&lpmsg);
@@ -137,11 +137,11 @@ impl HookthreadProxy {
             .expect("could not send to hookthread");
         }
     }
-    pub fn update(&self, config: Config) {
+    pub fn update(&self, settings: Settings) {
         use num_traits::ToPrimitive;
 
-        let config_boxed = Box::new(config);
-        let raw = Box::into_raw(config_boxed);
+        let settings_boxed = Box::new(settings);
+        let raw = Box::into_raw(settings_boxed);
         let raw_usize = raw as usize;
 
         unsafe {

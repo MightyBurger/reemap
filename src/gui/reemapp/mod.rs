@@ -193,7 +193,7 @@ impl crate::gui::TrayApp for ReemApp {
                     ui.with_layout(right_to_left, |ui| {
                         if ui.button("Apply").clicked() {
                             self.hookthread_proxy
-                                .update(settings::Config::from(self.config.clone()));
+                                .update(settings::Settings::from(self.config.clone()));
                         }
                         if ui.button("Test").clicked() {
                             let teststr = ron::ser::to_string_pretty(

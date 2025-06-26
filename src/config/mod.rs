@@ -6,14 +6,14 @@ use serde::Serialize;
 
 // -------------------- Config (UI) --------------------
 
-// Like config::Config, but instantiates ProfileUI instead of Profile and without active_profile
+// Like config::Settings, but instantiates ProfileUI instead of Profile and without active_profile
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct ConfigUI {
     pub default: DefaultProfileUI,
     pub profiles: Vec<ProfileUI>,
 }
 
-impl From<ConfigUI> for settings::Config {
+impl From<ConfigUI> for settings::Settings {
     fn from(value: ConfigUI) -> Self {
         Self {
             default: value.default.into(),

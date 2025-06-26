@@ -362,22 +362,22 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
     // Change this such that you don't need to check it on every single key press.
     // Too much computation.
     let foreground = get_foreground_window();
-    hook_local.config.active_profile = None;
-    for (i, profile_condition) in hook_local.config.profile_conditions.iter().enumerate() {
+    hook_local.settings.active_profile = None;
+    for (i, profile_condition) in hook_local.settings.profile_conditions.iter().enumerate() {
         match profile_condition {
             ProfileCondition::OriBF => {
                 if foreground == "Ori And The Blind Forest: Definitive Edition" {
-                    hook_local.config.active_profile = Some(i);
+                    hook_local.settings.active_profile = Some(i);
                 }
             }
             ProfileCondition::OriWotW => {
                 if foreground == "OriAndTheWilloftheWisps" {
-                    hook_local.config.active_profile = Some(i);
+                    hook_local.settings.active_profile = Some(i);
                 }
             }
             ProfileCondition::Other(title) => {
                 if foreground == *title {
-                    hook_local.config.active_profile = Some(i);
+                    hook_local.settings.active_profile = Some(i);
                 }
             }
         }
@@ -413,7 +413,7 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
 
     // Step 2
     // Update layers
-    for layer in hook_local.config.get_active_layers_mut().iter_mut() {
+    for layer in hook_local.settings.get_active_layers_mut().iter_mut() {
         // Only update layers for which this button is a condition.
         if layer.condition.contains(&hold_button) {
             // All conditions met?
@@ -435,7 +435,7 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
     // Step 3
     // Identify the appropriate remap and apply it. At the same time, set button_state.
     for layer in hook_local
-        .config
+        .settings
         .get_active_layers()
         .iter()
         .filter(|layer| layer.active)
@@ -463,7 +463,7 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
             }
         }
     }
-    match &hook_local.config.get_active_base_layer().policy[Button::from(hold_button)] {
+    match &hook_local.settings.get_active_base_layer().policy[Button::from(hold_button)] {
         BaseRemapPolicy::Remap(output) => {
             let target_buttons: Vec<KeyboardAndMouse::INPUT> = output
                 .iter()
@@ -502,22 +502,22 @@ fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
     // Change this such that you don't need to check it on every single key press.
     // Too much computation.
     let foreground = get_foreground_window();
-    hook_local.config.active_profile = None;
-    for (i, profile_condition) in hook_local.config.profile_conditions.iter().enumerate() {
+    hook_local.settings.active_profile = None;
+    for (i, profile_condition) in hook_local.settings.profile_conditions.iter().enumerate() {
         match profile_condition {
             ProfileCondition::OriBF => {
                 if foreground == "Ori And The Blind Forest: Definitive Edition" {
-                    hook_local.config.active_profile = Some(i);
+                    hook_local.settings.active_profile = Some(i);
                 }
             }
             ProfileCondition::OriWotW => {
                 if foreground == "OriAndTheWilloftheWisps" {
-                    hook_local.config.active_profile = Some(i);
+                    hook_local.settings.active_profile = Some(i);
                 }
             }
             ProfileCondition::Other(title) => {
                 if foreground == *title {
-                    hook_local.config.active_profile = Some(i);
+                    hook_local.settings.active_profile = Some(i);
                 }
             }
         }
@@ -526,7 +526,7 @@ fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
 
     // Step 1
     // Update layers
-    for layer in hook_local.config.get_active_layers_mut().iter_mut() {
+    for layer in hook_local.settings.get_active_layers_mut().iter_mut() {
         // Only update layers for which this button is a condition.
         // These layers are no longer active.
         if layer.condition.contains(&hold_button) {
@@ -589,22 +589,22 @@ fn intercept_tap_input(tap_button: TapButton) -> bool {
     // Change this such that you don't need to check it on every single key press.
     // Too much computation.
     let foreground = get_foreground_window();
-    hook_local.config.active_profile = None;
-    for (i, profile_condition) in hook_local.config.profile_conditions.iter().enumerate() {
+    hook_local.settings.active_profile = None;
+    for (i, profile_condition) in hook_local.settings.profile_conditions.iter().enumerate() {
         match profile_condition {
             ProfileCondition::OriBF => {
                 if foreground == "Ori And The Blind Forest: Definitive Edition" {
-                    hook_local.config.active_profile = Some(i);
+                    hook_local.settings.active_profile = Some(i);
                 }
             }
             ProfileCondition::OriWotW => {
                 if foreground == "OriAndTheWilloftheWisps" {
-                    hook_local.config.active_profile = Some(i);
+                    hook_local.settings.active_profile = Some(i);
                 }
             }
             ProfileCondition::Other(title) => {
                 if foreground == *title {
-                    hook_local.config.active_profile = Some(i);
+                    hook_local.settings.active_profile = Some(i);
                 }
             }
         }
@@ -612,7 +612,7 @@ fn intercept_tap_input(tap_button: TapButton) -> bool {
     // END TODO
 
     for layer in hook_local
-        .config
+        .settings
         .get_active_layers()
         .iter()
         .filter(|layer| layer.active)
@@ -641,7 +641,7 @@ fn intercept_tap_input(tap_button: TapButton) -> bool {
             }
         }
     }
-    match &hook_local.config.get_active_base_layer().policy[Button::from(tap_button)] {
+    match &hook_local.settings.get_active_base_layer().policy[Button::from(tap_button)] {
         BaseRemapPolicy::Remap(output) => {
             let target_buttons: Vec<KeyboardAndMouse::INPUT> = output
                 .iter()
