@@ -3,6 +3,32 @@ use crate::settings;
 use enum_map::EnumMap;
 use serde::Deserialize;
 use serde::Serialize;
+use thiserror::Error;
+
+// -------------------- VersionedConfig --------------------
+// Preparing for the future when the Config struct may change.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(tag = "version")]
+pub enum VersionedConfig {
+    V1(ConfigUI),
+}
+
+// Even with future versions, this From<> will be from the latest Config to VersionedConfig.
+impl From<ConfigUI> for VersionedConfig {
+    fn from(value: ConfigUI) -> Self {
+        Self::V1(value)
+    }
+}
+
+// In future versions, this From<> will need a little more logic to do migration to the newest
+// config version. Right now, as there's only one version of the config, there are no migrations.
+impl From<VersionedConfig> for ConfigUI {
+    fn from(value: VersionedConfig) -> Self {
+        match value {
+            VersionedConfig::V1(config_ui) => config_ui,
+        }
+    }
+}
 
 // -------------------- Config (UI) --------------------
 
@@ -32,6 +58,20 @@ impl From<ConfigUI> for settings::Settings {
         }
     }
 }
+
+#[derive(Debug, Error)]
+pub enum ConfigUIError {
+    #[error("invalid format")]
+    InvalidFormat,
+    #[error("unsupported version")]
+    UnsupportedVersion,
+    #[error("error serializing or deserializing configuration: {0}")]
+    SerdeError(#[from] ron::Error),
+    #[error("error serializing or deserializing configuration: {0}")]
+    SerdeSpannedError(#[from] ron::error::SpannedError),
+}
+
+pub type ConfigUIResult<T> = Result<T, ConfigUIError>;
 
 // -------------------- Profiles (UI) --------------------
 // Like config::Profile, but  uses Vec<LayerUI> instead of Vec<config::Layer>

@@ -197,11 +197,19 @@ impl crate::gui::TrayApp for ReemApp {
                         }
                         if ui.button("Test").clicked() {
                             let teststr = ron::ser::to_string_pretty(
-                                &self.config,
-                                ron::ser::PrettyConfig::default(),
+                                &config::VersionedConfig::from(self.config.clone()),
+                                ron::ser::PrettyConfig::new(),
                             );
-                            match teststr {
+                            match &teststr {
                                 Ok(a) => println!("{a}"),
+                                Err(e) => println!("{e}"),
+                            }
+                            println!("----- Now trying to deserialize! -----");
+
+                            let new_config: Result<config::VersionedConfig, _> =
+                                ron::from_str(&teststr.unwrap());
+                            match &new_config {
+                                Ok(a) => println!("{a:#?}"),
                                 Err(e) => println!("{e}"),
                             }
                         }
