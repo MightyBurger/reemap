@@ -3,7 +3,7 @@ pub mod input;
 
 use hooklocal::HOOKLOCAL;
 
-use crate::config::Config;
+use crate::settings::Config;
 
 use std::sync::Mutex;
 

@@ -1,5 +1,5 @@
 use crate::buttons;
-use crate::config::Config;
+use crate::settings::Config;
 use enum_map::EnumMap;
 use std::sync::Mutex;
 

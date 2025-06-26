@@ -1,4 +1,4 @@
-use crate::config::{BaseRemapPolicy, LayerType, ProfileCondition, RemapPolicy};
+use crate::settings::{BaseRemapPolicy, LayerType, ProfileCondition, RemapPolicy};
 
 use crate::buttons::key::KeyButton;
 use crate::buttons::mouse::MouseButton;

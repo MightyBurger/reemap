@@ -1,8 +1,8 @@
 use crate::buttons;
-use crate::config;
+use crate::config::LayerUI;
 use crate::gui::reemapp::ui_remap_tables::{ui_available_remaps_table, ui_single_remap_table};
 use crate::gui::reemapp::{NewRemapModalOpts, RemapPolicyUI};
-use crate::settings::LayerUI;
+use crate::settings;
 use strum::IntoEnumIterator;
 
 pub fn ui_layer(
@@ -92,13 +92,13 @@ pub fn ui_remaps_table(
     if let Some(button) = button_select {
         new_remap_modal.modal_open = Some(button);
         new_remap_modal.policy = match layer.policy[button] {
-            config::RemapPolicy::Defer => RemapPolicyUI::Defer,
-            config::RemapPolicy::NoRemap => RemapPolicyUI::NoRemap,
-            config::RemapPolicy::Remap(_) => RemapPolicyUI::Remap,
+            settings::RemapPolicy::Defer => RemapPolicyUI::Defer,
+            settings::RemapPolicy::NoRemap => RemapPolicyUI::NoRemap,
+            settings::RemapPolicy::Remap(_) => RemapPolicyUI::Remap,
         };
         new_remap_modal.outputs = match layer.policy[button] {
-            config::RemapPolicy::Defer | config::RemapPolicy::NoRemap => Vec::new(),
-            config::RemapPolicy::Remap(ref output) => output.clone(),
+            settings::RemapPolicy::Defer | settings::RemapPolicy::NoRemap => Vec::new(),
+            settings::RemapPolicy::Remap(ref output) => output.clone(),
         };
     }
     if pointing_hand {
@@ -112,7 +112,7 @@ fn ui_new_remap_modal(
     _ui: &mut egui::Ui,
     modal_opts: &mut NewRemapModalOpts,
     button: buttons::Button,
-    policy: &mut config::RemapPolicy,
+    policy: &mut settings::RemapPolicy,
 ) {
     let mut ok = false;
     let mut cancel = false;
@@ -183,9 +183,9 @@ fn ui_new_remap_modal(
     }
     if ok {
         *policy = match modal_opts.policy {
-            RemapPolicyUI::Defer => config::RemapPolicy::Defer,
-            RemapPolicyUI::NoRemap => config::RemapPolicy::NoRemap,
-            RemapPolicyUI::Remap => config::RemapPolicy::Remap(modal_opts.outputs.clone()),
+            RemapPolicyUI::Defer => settings::RemapPolicy::Defer,
+            RemapPolicyUI::NoRemap => settings::RemapPolicy::NoRemap,
+            RemapPolicyUI::Remap => settings::RemapPolicy::Remap(modal_opts.outputs.clone()),
         };
         modal_opts.modal_open = None;
     } else if cancel {

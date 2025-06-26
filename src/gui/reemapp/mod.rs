@@ -14,18 +14,18 @@ use ui_layer::ui_layer;
 use ui_main::ui_main;
 use ui_profile::ui_profile;
 
-use crate::settings;
+use crate::config;
 
 use crate::buttons;
-use crate::config;
 use crate::hooks;
+use crate::settings;
 
 const SPACING: f32 = 8.0;
 
 // Thought the name was clever. Don't get too mad, please.
 pub struct ReemApp {
     pub hookthread_proxy: hooks::HookthreadProxy,
-    pub config: settings::ConfigUI,
+    pub config: config::ConfigUI,
     pub gui_local: GuiLocal,
 }
 
@@ -77,11 +77,11 @@ impl std::fmt::Display for RemapPolicyUI {
 pub struct GuiLocal {
     menu: GuiMenu,
     new_profile_modal_open: bool,
-    new_profile: settings::ProfileUI,
+    new_profile: config::ProfileUI,
     new_layer_modal_open: bool,
-    new_layer: settings::LayerUI,
+    new_layer: config::LayerUI,
     new_default_layer_modal_open: bool,
-    new_default_layer: config::DefaultProfile,
+    new_default_layer: settings::DefaultProfile,
     new_remap_modal: NewRemapModalOpts,
     new_base_remap_modal: NewBaseRemapModalOpts,
 }
@@ -91,11 +91,11 @@ impl Default for GuiLocal {
         Self {
             menu: GuiMenu::default(),
             new_profile_modal_open: false,
-            new_profile: settings::ProfileUI::default(),
+            new_profile: config::ProfileUI::default(),
             new_layer_modal_open: false,
-            new_layer: settings::LayerUI::default(),
+            new_layer: config::LayerUI::default(),
             new_default_layer_modal_open: false,
-            new_default_layer: config::DefaultProfile::default(),
+            new_default_layer: settings::DefaultProfile::default(),
             new_remap_modal: NewRemapModalOpts::default(),
             new_base_remap_modal: NewBaseRemapModalOpts::default(),
         }
@@ -193,7 +193,7 @@ impl crate::gui::TrayApp for ReemApp {
                     ui.with_layout(right_to_left, |ui| {
                         if ui.button("Apply").clicked() {
                             self.hookthread_proxy
-                                .update(config::Config::from(self.config.clone()));
+                                .update(settings::Config::from(self.config.clone()));
                         }
                         if ui.button("Test").clicked() {
                             let teststr = ron::ser::to_string_pretty(
