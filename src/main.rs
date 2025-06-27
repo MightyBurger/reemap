@@ -6,11 +6,152 @@ mod gui;
 mod hooks;
 mod settings;
 
+use etcetera::BaseStrategy;
+
+use crate::settings::Settings;
+
 fn main() {
+    /*
+        Initialization sequence:
+
+        1.  See if %APPDATA%\Reemap exists. It usually should, except on first launch.
+            If it doesn't exist, create the directory.
+            Now, %APPDATA%\Reemap certainly exists.
+
+        2.  See if %APPDATA%\Reemap\config.ron exists. It usually should, except on first launch.
+            If it doesn't exist, initialize it with a brand new (default) configuration.
+            Now, %APPDATA%\Reemap\config.ron certainly exists.
+
+        3.  Read %APPDATA%\Reemap\config.ron and try to parse it into a VersionedConfig struct.
+            If that fails, the configuration is probably corrupted. Rather than silently resetting
+            it, which may be a destructive action, offer the user the option to reset the
+            configuration.
+
+        4.  Convert VersionedConfig to ConfigUI. We want two copies: one to give to the hookthread,
+            and one to give to the UI thread.
+    */
+
+    // Open the configuration file, or create it if it doesn't already exist.
+
+    // Step 1
+    let mut reemap_dir = etcetera::choose_base_strategy().unwrap().config_dir();
+    reemap_dir.push("Reemap");
+    match reemap_dir.try_exists() {
+        Ok(true) => (),
+        Ok(false) => match std::fs::create_dir(&reemap_dir) {
+            Ok(()) => (),
+            Err(e) => {
+                native_dialog::DialogBuilder::message()
+                    .set_level(native_dialog::MessageLevel::Error)
+                    .set_title("Error creating directory")
+                    .set_text(format!(
+                        "Reemap could not create the configuration directory.\n{e}"
+                    ))
+                    .alert()
+                    .show()
+                    .unwrap();
+                return;
+            }
+        },
+        Err(e) => {
+            native_dialog::DialogBuilder::message()
+                .set_level(native_dialog::MessageLevel::Error)
+                .set_title("Error opening directory")
+                .set_text(format!(
+                    "Reemap could not open the configuration directory.\n{e}"
+                ))
+                .alert()
+                .show()
+                .unwrap();
+            return;
+        }
+    }
+
+    // Step 2
+    let config_path = reemap_dir.join("remaps.ron");
+    match config_path.try_exists() {
+        Ok(true) => (),
+        Ok(false) => {
+            let default_config = config::VersionedConfig::default();
+            let default_config =
+                ron::ser::to_string_pretty(&default_config, ron::ser::PrettyConfig::new()).unwrap();
+            match std::fs::write(&config_path, default_config) {
+                Ok(()) => (),
+                Err(e) => {
+                    native_dialog::DialogBuilder::message()
+                        .set_level(native_dialog::MessageLevel::Error)
+                        .set_title("Error creating file")
+                        .set_text(format!(
+                            "Reemap could not create the configuration file.\n{e}"
+                        ))
+                        .alert()
+                        .show()
+                        .unwrap();
+                    return;
+                }
+            }
+        }
+        Err(e) => {
+            native_dialog::DialogBuilder::message()
+                .set_level(native_dialog::MessageLevel::Error)
+                .set_title("Error opening config file")
+                .set_text(format!(
+                    "Reemap could not open the configuration file.\n{e}"
+                ))
+                .alert()
+                .show()
+                .unwrap();
+            return;
+        }
+    }
+
+    // Step 3
+    let config_str = match std::fs::read_to_string(&config_path) {
+        Ok(s) => s,
+        Err(e) => {
+            native_dialog::DialogBuilder::message()
+                .set_level(native_dialog::MessageLevel::Error)
+                .set_title("Error reading config file")
+                .set_text(format!(
+                    "Reemap could not read the configuration file.\n{e}"
+                ))
+                .alert()
+                .show()
+                .unwrap();
+            return;
+        }
+    };
+
+    let versioned_config: config::VersionedConfig = match ron::from_str(&config_str) {
+        Ok(c) => c,
+        Err(_) => {
+            let regenerate = native_dialog::DialogBuilder::message()
+                .set_level(native_dialog::MessageLevel::Warning)
+                .set_title("Corrupted configuration file")
+                .set_text(
+                    "Reemap could not parse the configuration file. This may happen if you \
+                use a configuration file created in a newer version of Reemap.\n\n\
+                Press Yes to continue with the default configuration. The configuration will be \
+                overwritten when you click \"Apply\" in Reemap.\n\n\
+                Press No to close Reemap.",
+                )
+                .confirm()
+                .show()
+                .unwrap();
+            if regenerate {
+                config::VersionedConfig::default()
+            } else {
+                return;
+            }
+        }
+    };
+
+    let config = config::ConfigUI::from(versioned_config);
+
     // Reminder: all threads are joined at the end of a std::thread::scope
     std::thread::scope(|s| {
         // Start the hook thread. It will be spawned as a separate thread.
-        let hookthread_proxy = hooks::spawn_scoped(s);
+        let hookthread_proxy = hooks::spawn_scoped(s, Settings::from(config.clone()));
 
         // Only here while testing the UI. TODO: remove
         hookthread_proxy.quit();
@@ -18,13 +159,15 @@ fn main() {
         // Run the GUI. It will be ran on this thread, the main thread.
         let app = gui::reemapp::ReemApp {
             hookthread_proxy,
-            config: config::ConfigUI::default(),
+            config,
             gui_local: gui::reemapp::GuiLocal::default(),
+            config_path: config_path,
         };
         gui::run(app);
 
         // At this point, the GUI closed and is done running.
         // We should close Reemap, so let's stop the hookthread.
+        // TODO: uncomment
         // hookthread_proxy.quit();
     });
 }

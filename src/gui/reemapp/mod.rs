@@ -7,6 +7,8 @@ mod ui_new_remap_modal;
 mod ui_profile;
 mod ui_remap_tables;
 
+use std::path::PathBuf;
+
 use breadcrumb::breadcrumb;
 use ui_base_layer::ui_base_layer;
 use ui_default_profile::ui_default_profile;
@@ -15,6 +17,7 @@ use ui_main::ui_main;
 use ui_profile::ui_profile;
 
 use crate::config;
+use etcetera::BaseStrategy;
 
 use crate::buttons;
 use crate::hooks;
@@ -27,6 +30,7 @@ pub struct ReemApp {
     pub hookthread_proxy: hooks::HookthreadProxy,
     pub config: config::ConfigUI,
     pub gui_local: GuiLocal,
+    pub config_path: PathBuf,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -192,10 +196,36 @@ impl crate::gui::TrayApp for ReemApp {
                     });
                     ui.with_layout(right_to_left, |ui| {
                         if ui.button("Apply").clicked() {
+                            // Two things happen on Apply.
+                            // 1. UI therad saves configuration to %APPDATA%
+                            // 2. UI thread sends config over to hookthread to update the remaps
+
+                            let config_str = ron::ser::to_string_pretty(
+                                &config::VersionedConfig::from(self.config.clone()),
+                                ron::ser::PrettyConfig::new(),
+                            )
+                            .unwrap();
+                            match std::fs::write(&self.config_path, config_str) {
+                                Ok(()) => (),
+                                Err(e) => {
+                                    native_dialog::DialogBuilder::message()
+                                        .set_level(native_dialog::MessageLevel::Error)
+                                        .set_title("Error writing file")
+                                        .set_text(format!(
+                                            "Reemap could not write to the configuration file.\n\n\
+                                            The applied remaps will take effect, but they will not be saved.\n\n\
+                                            {e}"
+                                        ))
+                                        .alert()
+                                        .show()
+                                        .unwrap();
+                                }
+                            }
+
                             self.hookthread_proxy
                                 .update(settings::Settings::from(self.config.clone()));
                         }
-                        if ui.button("Test").clicked() {
+                        if ui.button("Test Serde").clicked() {
                             let teststr = ron::ser::to_string_pretty(
                                 &config::VersionedConfig::from(self.config.clone()),
                                 ron::ser::PrettyConfig::new(),
@@ -212,6 +242,17 @@ impl crate::gui::TrayApp for ReemApp {
                                 Ok(a) => println!("{a:#?}"),
                                 Err(e) => println!("{e}"),
                             }
+                        }
+                        if ui.button("Test Path").clicked() {
+                            let strategy = etcetera::choose_base_strategy().unwrap();
+                            println!("config: {:?}", strategy.config_dir());
+                            println!("data: {:?}", strategy.data_dir());
+                            println!("cache: {:?}", strategy.cache_dir());
+                            println!("state: {:?}", strategy.state_dir());
+                            println!("runtime: {:?}", strategy.runtime_dir());
+                            let mut path = strategy.config_dir();
+                            path.push("Reemap\\config\\remaps.ron");
+                            println!("what I'm thinking: {:?}", path);
                         }
                     });
                 });

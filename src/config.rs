@@ -1,9 +1,11 @@
+// use std::io::Read;
+
 use crate::buttons;
 use crate::settings;
 use enum_map::EnumMap;
 use serde::Deserialize;
 use serde::Serialize;
-use thiserror::Error;
+// use thiserror::Error;
 
 // -------------------- VersionedConfig --------------------
 // Preparing for the future when the Config struct may change.
@@ -11,6 +13,12 @@ use thiserror::Error;
 #[serde(tag = "version")]
 pub enum VersionedConfig {
     V1(ConfigUI),
+}
+
+impl Default for VersionedConfig {
+    fn default() -> Self {
+        Self::V1(ConfigUI::default())
+    }
 }
 
 // Even with future versions, this From<> will be from the latest Config to VersionedConfig.
@@ -59,19 +67,36 @@ impl From<ConfigUI> for settings::Settings {
     }
 }
 
-#[derive(Debug, Error)]
-pub enum ConfigUIError {
-    #[error("invalid format")]
-    InvalidFormat,
-    #[error("unsupported version")]
-    UnsupportedVersion,
-    #[error("error serializing or deserializing configuration: {0}")]
-    SerdeError(#[from] ron::Error),
-    #[error("error serializing or deserializing configuration: {0}")]
-    SerdeSpannedError(#[from] ron::error::SpannedError),
-}
+// impl ConfigUI {
+//     fn save(&self, file: &mut std::fs::File) -> ConfigUIResult<()> {
+//         let config_str = ron::ser::to_string_pretty(
+//             &VersionedConfig::from(self.clone()),
+//             ron::ser::PrettyConfig::new(),
+//         )?;
 
-pub type ConfigUIResult<T> = Result<T, ConfigUIError>;
+//         // todo - write to file
+//         Ok(())
+//     }
+
+//     fn load(file: &mut std::fs::File) -> ConfigUIResult<Self> {
+//         let mut instr = String::new();
+//         file.read_to_string(&mut instr)?;
+//         let versioned_config: VersionedConfig = ron::from_str(&instr)?;
+//         Ok(ConfigUI::from(versioned_config))
+//     }
+// }
+
+// #[derive(Debug, Error)]
+// pub enum ConfigUIError {
+//     #[error("file error: {0}")]
+//     FileError(#[from] std::io::Error),
+//     #[error("error serializing or deserializing configuration: {0}")]
+//     SerdeError(#[from] ron::Error),
+//     #[error("error serializing or deserializing configuration: {0}")]
+//     SerdeSpannedError(#[from] ron::error::SpannedError),
+// }
+
+// pub type ConfigUIResult<T> = Result<T, ConfigUIError>;
 
 // -------------------- Profiles (UI) --------------------
 // Like config::Profile, but  uses Vec<LayerUI> instead of Vec<config::Layer>

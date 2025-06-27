@@ -14,17 +14,20 @@ use windows::Win32::UI::WindowsAndMessaging;
 // The main way to launch the hook thread. Pass in a std::thread::scope, and this function
 // will spawn the thread to handle all the hooks involved in Reemap. It will return a proxy to the
 // thread.
-pub fn spawn_scoped<'scope, 'env>(s: &'scope std::thread::Scope<'scope, 'env>) -> HookthreadProxy {
+pub fn spawn_scoped<'scope, 'env>(
+    s: &'scope std::thread::Scope<'scope, 'env>,
+    settings: Settings,
+) -> HookthreadProxy {
     let (oneshot_sender, oneshot_receiver) = oneshot::channel();
     s.spawn(|| {
-        run(oneshot_sender);
+        run(oneshot_sender, settings);
     });
     oneshot_receiver.recv().unwrap()
 }
 
 // Run the hook thread and return a proxy through the oneshot.
 // Panics if the hook thread is already running.
-pub fn run(sender: oneshot::Sender<HookthreadProxy>) {
+pub fn run(sender: oneshot::Sender<HookthreadProxy>, settings: Settings) {
     use WindowsAndMessaging as WM;
     use num_traits::FromPrimitive;
 
@@ -40,7 +43,7 @@ pub fn run(sender: oneshot::Sender<HookthreadProxy>) {
 
     // Initialize the persistent thread data.
     let mut hooklocal = HOOKLOCAL.lock().unwrap();
-    *hooklocal = Some(hooklocal::HookLocalData::default());
+    *hooklocal = Some(hooklocal::HookLocalData::init_settings(settings));
     std::mem::drop(hooklocal);
 
     // Force Windows to create a message queue for this thread. We want to have one before we

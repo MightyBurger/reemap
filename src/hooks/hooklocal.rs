@@ -35,3 +35,12 @@ pub struct HookLocalData {
     pub button_state: EnumMap<buttons::HoldButton, HoldButtonState>,
     pub settings: Settings,
 }
+
+impl HookLocalData {
+    pub fn init_settings(settings: Settings) -> Self {
+        Self {
+            settings,
+            ..Default::default()
+        }
+    }
+}
