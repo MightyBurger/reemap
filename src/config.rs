@@ -129,16 +129,16 @@ impl From<DefaultProfileUI> for settings::DefaultProfile {
 }
 
 // Like config::Profile, but with extra fields:
-//  enabled
 //  name
+//  enabled
 // Also uses Vec<LayerUI> instead of Vec<config::Layer>
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct ProfileUI {
+    pub name: String,
+    pub enabled: bool,
+    pub condition: settings::ProfileCondition,
     pub base: settings::BaseLayer,
     pub layers: Vec<LayerUI>,
-    pub condition: settings::ProfileCondition,
-    pub enabled: bool,
-    pub name: String,
 }
 
 impl Default for ProfileUI {
@@ -174,19 +174,19 @@ impl TryFrom<ProfileUI> for settings::Profile {
 
 // -------------------- Layers (UI) --------------------
 // Like config::Layer, but with extra fields:
-//  enabled
 //  name
+//  enabled
 // and without these fields:
 //  active
 // ("enabled" means the user clicked the checkbox for this layer. "active" means the layer is
 // currently in effect; for example, the user is holding down the required buttons.)
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct LayerUI {
+    pub name: String,
+    pub enabled: bool,
     pub layer_type: settings::LayerType,
     pub condition: Vec<buttons::HoldButton>,
     pub policy: EnumMap<buttons::Button, settings::RemapPolicy>,
-    pub enabled: bool,
-    pub name: String,
 }
 
 impl Default for LayerUI {
