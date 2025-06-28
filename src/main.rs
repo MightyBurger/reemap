@@ -4,11 +4,8 @@ mod buttons;
 mod config;
 mod gui;
 mod hooks;
-mod settings;
 
 use etcetera::BaseStrategy;
-
-use crate::settings::Settings;
 
 fn main() {
     /*
@@ -122,12 +119,12 @@ fn main() {
         }
     };
 
-    let config = config::ConfigUI::from(versioned_config);
+    let config = config::Config::from(versioned_config);
 
     // Reminder: all threads are joined at the end of a std::thread::scope
     std::thread::scope(|s| {
         // Start the hook thread. It will be spawned as a separate thread.
-        let hookthread_proxy = hooks::spawn_scoped(s, Settings::from(config.clone()));
+        let hookthread_proxy = hooks::spawn_scoped(s, config.clone());
 
         // Only here while testing the UI. TODO: remove
         // hookthread_proxy.quit();

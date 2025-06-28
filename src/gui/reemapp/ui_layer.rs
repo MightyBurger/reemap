@@ -1,18 +1,17 @@
 use crate::buttons;
-use crate::config::LayerUI;
+use crate::config;
 use crate::gui::reemapp::ui_remap_tables::{
     ui_available_layer_conditions_table, ui_available_remaps_table, ui_layer_condition_table,
     ui_remap_outputs_table,
 };
 use crate::gui::reemapp::{LayerConditionModalOpts, NewRemapModalOpts, RemapPolicyUI};
-use crate::settings;
 use smallvec::SmallVec;
 use strum::IntoEnumIterator;
 
 pub fn ui_layer(
     ctx: &egui::Context,
     ui: &mut egui::Ui,
-    layer: &mut LayerUI,
+    layer: &mut config::Layer,
     new_remap_modal: &mut NewRemapModalOpts,
     layer_condition_modal: &mut LayerConditionModalOpts,
 ) {
@@ -69,7 +68,7 @@ pub fn ui_layer(
 
 pub fn ui_remaps_table(
     ui: &mut egui::Ui,
-    layer: &mut LayerUI,
+    layer: &mut config::Layer,
     new_remap_modal: &mut NewRemapModalOpts,
 ) {
     use egui_extras::{Column, TableBuilder};
@@ -121,13 +120,13 @@ pub fn ui_remaps_table(
     if let Some(button) = button_select {
         new_remap_modal.modal_open = Some(button);
         new_remap_modal.policy = match layer.policy[button] {
-            settings::RemapPolicy::Defer => RemapPolicyUI::Defer,
-            settings::RemapPolicy::NoRemap => RemapPolicyUI::NoRemap,
-            settings::RemapPolicy::Remap(_) => RemapPolicyUI::Remap,
+            config::RemapPolicy::Defer => RemapPolicyUI::Defer,
+            config::RemapPolicy::NoRemap => RemapPolicyUI::NoRemap,
+            config::RemapPolicy::Remap(_) => RemapPolicyUI::Remap,
         };
         new_remap_modal.outputs = match layer.policy[button] {
-            settings::RemapPolicy::Defer | settings::RemapPolicy::NoRemap => SmallVec::new(),
-            settings::RemapPolicy::Remap(ref output) => output.clone(),
+            config::RemapPolicy::Defer | config::RemapPolicy::NoRemap => SmallVec::new(),
+            config::RemapPolicy::Remap(ref output) => output.clone(),
         };
     }
     if pointing_hand {
@@ -141,7 +140,7 @@ fn ui_new_remap_modal(
     _ui: &mut egui::Ui,
     modal_opts: &mut NewRemapModalOpts,
     button: buttons::Button,
-    policy: &mut settings::RemapPolicy,
+    policy: &mut config::RemapPolicy,
 ) {
     let mut ok = false;
     let mut cancel = false;
@@ -216,9 +215,9 @@ fn ui_new_remap_modal(
     }
     if ok {
         *policy = match modal_opts.policy {
-            RemapPolicyUI::Defer => settings::RemapPolicy::Defer,
-            RemapPolicyUI::NoRemap => settings::RemapPolicy::NoRemap,
-            RemapPolicyUI::Remap => settings::RemapPolicy::Remap(modal_opts.outputs.clone()),
+            RemapPolicyUI::Defer => config::RemapPolicy::Defer,
+            RemapPolicyUI::NoRemap => config::RemapPolicy::NoRemap,
+            RemapPolicyUI::Remap => config::RemapPolicy::Remap(modal_opts.outputs.clone()),
         };
         modal_opts.modal_open = None;
     } else if cancel {
@@ -231,7 +230,7 @@ fn ui_layer_condition_modal(
     _ui: &mut egui::Ui,
     modal_opts: &mut LayerConditionModalOpts,
     layer_name: &str,
-    layer_type: &mut settings::LayerType,
+    layer_type: &mut config::LayerType,
     condition: &mut Vec<buttons::HoldButton>,
 ) {
     let mut ok = false;
@@ -247,12 +246,12 @@ fn ui_layer_condition_modal(
                 .show_ui(ui, |ui| {
                     ui.selectable_value(
                         &mut modal_opts.layer_type,
-                        settings::LayerType::Modifier,
+                        config::LayerType::Modifier,
                         "Modifier",
                     );
                     ui.selectable_value(
                         &mut modal_opts.layer_type,
-                        settings::LayerType::Toggle,
+                        config::LayerType::Toggle,
                         "Toggle",
                     );
                 });
@@ -316,7 +315,7 @@ fn ui_layer_condition_modal(
 
 fn get_layer_condition_text(
     condition: &[buttons::HoldButton],
-    layer_type: &settings::LayerType,
+    layer_type: &config::LayerType,
 ) -> String {
     let condition_buttons_str: String = if condition.is_empty() {
         String::from("(no buttons set)")
@@ -328,10 +327,10 @@ fn get_layer_condition_text(
         .collect()
     };
     match layer_type {
-        settings::LayerType::Modifier => {
+        config::LayerType::Modifier => {
             format!("Active when these buttons are held: {condition_buttons_str}")
         }
-        settings::LayerType::Toggle => {
+        config::LayerType::Toggle => {
             format!("Toggled when these buttons are pressed: {condition_buttons_str}")
         }
     }

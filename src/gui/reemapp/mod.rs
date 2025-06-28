@@ -19,17 +19,16 @@ use ui_profile::ui_profile;
 use crate::config;
 
 use crate::buttons;
+use crate::config::Output;
 use crate::gui::reemapp::ui_status_bar::ui_status_bar;
 use crate::hooks;
-use crate::settings;
-use crate::settings::Output;
 
 const SPACING: f32 = 8.0;
 
 // Thought the name was clever. Don't get too mad, please.
 pub struct ReemApp {
     pub hookthread_proxy: hooks::HookthreadProxy,
-    pub config: config::ConfigUI,
+    pub config: config::Config,
     pub gui_local: GuiLocal,
     pub config_path: PathBuf,
 }
@@ -82,11 +81,11 @@ impl std::fmt::Display for RemapPolicyUI {
 pub struct GuiLocal {
     menu: GuiMenu,
     new_profile_modal_open: bool,
-    new_profile: config::ProfileUI,
+    new_profile: config::Profile,
     new_layer_modal_open: bool,
-    new_layer: config::LayerUI,
+    new_layer: config::Layer,
     new_default_layer_modal_open: bool,
-    new_default_layer: settings::DefaultProfile,
+    new_default_layer: config::DefaultProfile,
     new_remap_modal: NewRemapModalOpts,
     new_base_remap_modal: NewBaseRemapModalOpts,
     layer_condition_modal: LayerConditionModalOpts,
@@ -102,7 +101,7 @@ pub struct NewRemapModalOpts {
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct LayerConditionModalOpts {
     modal_open: bool,
-    layer_type: settings::LayerType,
+    layer_type: config::LayerType,
     condition: Vec<buttons::HoldButton>,
 }
 

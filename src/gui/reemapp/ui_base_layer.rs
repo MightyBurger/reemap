@@ -1,14 +1,14 @@
 use crate::buttons;
+use crate::config;
 use crate::gui::reemapp::ui_remap_tables::{ui_available_remaps_table, ui_remap_outputs_table};
 use crate::gui::reemapp::{BaseRemapPolicyUI, NewBaseRemapModalOpts};
-use crate::settings;
 use smallvec::SmallVec;
 use strum::IntoEnumIterator;
 
 pub fn ui_base_layer(
     ctx: &egui::Context,
     ui: &mut egui::Ui,
-    layer: &mut settings::BaseLayer,
+    layer: &mut config::BaseLayer,
     new_remap_modal: &mut NewBaseRemapModalOpts,
 ) {
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
@@ -33,7 +33,7 @@ pub fn ui_base_layer(
 
 pub fn ui_base_remaps_table(
     ui: &mut egui::Ui,
-    layer: &mut settings::BaseLayer,
+    layer: &mut config::BaseLayer,
     new_remap_modal: &mut NewBaseRemapModalOpts,
 ) {
     use egui_extras::{Column, TableBuilder};
@@ -85,12 +85,12 @@ pub fn ui_base_remaps_table(
     if let Some(button) = button_select {
         new_remap_modal.modal_open = Some(button);
         new_remap_modal.policy = match layer.policy[button] {
-            settings::BaseRemapPolicy::NoRemap => BaseRemapPolicyUI::NoRemap,
-            settings::BaseRemapPolicy::Remap(_) => BaseRemapPolicyUI::Remap,
+            config::BaseRemapPolicy::NoRemap => BaseRemapPolicyUI::NoRemap,
+            config::BaseRemapPolicy::Remap(_) => BaseRemapPolicyUI::Remap,
         };
         new_remap_modal.outputs = match layer.policy[button] {
-            settings::BaseRemapPolicy::NoRemap => SmallVec::new(),
-            settings::BaseRemapPolicy::Remap(ref output) => output.clone(),
+            config::BaseRemapPolicy::NoRemap => SmallVec::new(),
+            config::BaseRemapPolicy::Remap(ref output) => output.clone(),
         };
     }
     if pointing_hand {
@@ -104,7 +104,7 @@ fn ui_new_base_remap_modal(
     _ui: &mut egui::Ui,
     modal_opts: &mut NewBaseRemapModalOpts,
     button: buttons::Button,
-    policy: &mut settings::BaseRemapPolicy,
+    policy: &mut config::BaseRemapPolicy,
 ) {
     let mut ok = false;
     let mut cancel = false;
@@ -182,10 +182,8 @@ fn ui_new_base_remap_modal(
     }
     if ok {
         *policy = match modal_opts.policy {
-            BaseRemapPolicyUI::NoRemap => settings::BaseRemapPolicy::NoRemap,
-            BaseRemapPolicyUI::Remap => {
-                settings::BaseRemapPolicy::Remap(modal_opts.outputs.clone())
-            }
+            BaseRemapPolicyUI::NoRemap => config::BaseRemapPolicy::NoRemap,
+            BaseRemapPolicyUI::Remap => config::BaseRemapPolicy::Remap(modal_opts.outputs.clone()),
         };
         modal_opts.modal_open = None;
     } else if cancel {

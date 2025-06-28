@@ -1,4 +1,4 @@
-use crate::{buttons, settings::Output};
+use crate::{buttons, config::Output};
 use strum::IntoEnumIterator;
 
 pub fn ui_layer_condition_table(ui: &mut egui::Ui, remaps: &mut Vec<buttons::HoldButton>) {

@@ -1,5 +1,4 @@
 use crate::config;
-use crate::settings;
 
 pub fn ui_status_bar(_ctx: &egui::Context, ui: &mut egui::Ui, app: &mut super::ReemApp) {
     let left_to_right = egui::Layout {
@@ -49,8 +48,7 @@ pub fn ui_status_bar(_ctx: &egui::Context, ui: &mut egui::Ui, app: &mut super::R
                 }
             }
 
-            app.hookthread_proxy
-                .update(settings::Settings::from(app.config.clone()));
+            app.hookthread_proxy.update(app.config.clone());
         }
     });
 }

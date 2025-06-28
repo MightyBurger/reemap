@@ -1,7 +1,7 @@
 use crate::buttons;
-use crate::settings::Output;
-use crate::settings::Settings;
+use crate::config;
 use enum_map::EnumMap;
+use smallvec::SmallVec;
 use std::sync::Mutex;
 
 /*
@@ -18,30 +18,47 @@ use std::sync::Mutex;
 */
 pub static HOOKLOCAL: Mutex<Option<HookLocalData>> = Mutex::new(None);
 
+// -------------------- HookLocalData --------------------
+#[derive(Debug, Clone, Default)]
+pub struct HookLocalData {
+    pub config: config::Config,
+    pub button_state: EnumMap<buttons::HoldButton, HoldButtonState>,
+    pub active_profile: ActiveProfile,
+    pub active_layers: SmallVec<[bool; 8]>,
+}
+
+impl HookLocalData {
+    pub fn init_settings(config: config::Config) -> Self {
+        Self {
+            config,
+            ..Default::default()
+        }
+    }
+}
+
+// -------------------- ActiveProfile --------------------
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum ActiveProfile {
+    Default,
+    Other(usize),
+}
+
+impl Default for ActiveProfile {
+    fn default() -> Self {
+        Self::Default
+    }
+}
+
+// -------------------- HoldButtonState --------------------
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum HoldButtonState {
     NotHeld,
     HeldNoRemap,
-    HeldWithRemap(Output),
+    HeldWithRemap(config::Output),
 }
 
 impl Default for HoldButtonState {
     fn default() -> Self {
         Self::NotHeld
-    }
-}
-
-#[derive(Debug, Clone, Default)]
-pub struct HookLocalData {
-    pub button_state: EnumMap<buttons::HoldButton, HoldButtonState>,
-    pub settings: Settings,
-}
-
-impl HookLocalData {
-    pub fn init_settings(settings: Settings) -> Self {
-        Self {
-            settings,
-            ..Default::default()
-        }
     }
 }

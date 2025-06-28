@@ -1,11 +1,12 @@
-use crate::settings::{BaseRemapPolicy, LayerType, ProfileCondition, RemapPolicy};
+// use crate::settings::{BaseRemapPolicy, LayerType, ProfileCondition, RemapPolicy};
+use crate::config::{BaseRemapPolicy, LayerType, ProfileCondition, RemapPolicy};
 
 use crate::buttons::key::KeyButton;
 use crate::buttons::mouse::MouseButton;
 use crate::buttons::wheel::MouseWheelButton;
 use crate::buttons::{Button, HoldButton, TapButton};
 
-use crate::hooks::hooklocal::{HOOKLOCAL, HoldButtonState};
+use crate::hooks::hooklocal::{ActiveProfile, HOOKLOCAL, HoldButtonState};
 
 use windows::Win32::Foundation;
 use windows::Win32::UI::Input::KeyboardAndMouse;
@@ -354,26 +355,41 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
         .as_mut()
         .expect("local data should have been initialized");
 
+    let current_base = match hook_local.active_profile {
+        ActiveProfile::Default => &hook_local.config.default.base,
+        ActiveProfile::Other(i) => &hook_local.config.profiles[i].base,
+    };
+    let current_layers = match hook_local.active_profile {
+        ActiveProfile::Default => &hook_local.config.default.layers,
+        ActiveProfile::Other(i) => &hook_local.config.profiles[i].layers,
+    };
+
     // TODO
     // Change this such that you don't need to check it on every single key press.
     // Too much computation.
     let foreground = get_foreground_window();
-    hook_local.settings.active_profile = None;
-    for (i, profile_condition) in hook_local.settings.profile_conditions.iter().enumerate() {
+    hook_local.active_profile = ActiveProfile::Default;
+    for (i, profile_condition) in hook_local
+        .config
+        .profiles
+        .iter()
+        .map(|profile| &profile.condition)
+        .enumerate()
+    {
         match profile_condition {
             ProfileCondition::OriBF => {
                 if foreground == "Ori And The Blind Forest: Definitive Edition" {
-                    hook_local.settings.active_profile = Some(i);
+                    hook_local.active_profile = ActiveProfile::Other(i);
                 }
             }
             ProfileCondition::OriWotW => {
                 if foreground == "OriAndTheWilloftheWisps" {
-                    hook_local.settings.active_profile = Some(i);
+                    hook_local.active_profile = ActiveProfile::Other(i);
                 }
             }
             ProfileCondition::Other(title) => {
                 if foreground == *title {
-                    hook_local.settings.active_profile = Some(i);
+                    hook_local.active_profile = ActiveProfile::Other(i);
                 }
             }
         }
@@ -409,7 +425,7 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
 
     // Step 2
     // Update layers
-    for layer in hook_local.settings.get_active_layers_mut().iter_mut() {
+    for (i, layer) in current_layers.iter().enumerate() {
         // Only update layers for which this button is a condition.
         if layer.condition.contains(&hold_button) {
             // All conditions met?
@@ -421,8 +437,8 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
             {
                 // All conditions met. Let's enable/toggle this layer.
                 match &layer.layer_type {
-                    LayerType::Modifier => layer.active = true,
-                    LayerType::Toggle => layer.active = !layer.active,
+                    LayerType::Modifier => hook_local.active_layers[i] = true,
+                    LayerType::Toggle => hook_local.active_layers[i] = !hook_local.active_layers[i],
                 }
             }
         }
@@ -430,11 +446,10 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
 
     // Step 3
     // Identify the appropriate remap and apply it. At the same time, set button_state.
-    for layer in hook_local
-        .settings
-        .get_active_layers()
+    for (_, layer) in current_layers
         .iter()
-        .filter(|layer| layer.active)
+        .enumerate()
+        .filter(|(i, _)| hook_local.active_layers[*i])
         .rev()
     {
         match &layer.policy[Button::from(hold_button)] {
@@ -459,7 +474,7 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
             }
         }
     }
-    match &hook_local.settings.get_active_base_layer().policy[Button::from(hold_button)] {
+    match &current_base.policy[Button::from(hold_button)] {
         BaseRemapPolicy::Remap(output) => {
             let target_buttons: Vec<KeyboardAndMouse::INPUT> = output
                 .iter()
@@ -494,26 +509,37 @@ fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
         .as_mut()
         .expect("local data should have been initialized");
 
+    let current_layers = match hook_local.active_profile {
+        ActiveProfile::Default => &hook_local.config.default.layers,
+        ActiveProfile::Other(i) => &hook_local.config.profiles[i].layers,
+    };
+
     // TODO
     // Change this such that you don't need to check it on every single key press.
     // Too much computation.
     let foreground = get_foreground_window();
-    hook_local.settings.active_profile = None;
-    for (i, profile_condition) in hook_local.settings.profile_conditions.iter().enumerate() {
+    hook_local.active_profile = ActiveProfile::Default;
+    for (i, profile_condition) in hook_local
+        .config
+        .profiles
+        .iter()
+        .map(|profile| &profile.condition)
+        .enumerate()
+    {
         match profile_condition {
             ProfileCondition::OriBF => {
                 if foreground == "Ori And The Blind Forest: Definitive Edition" {
-                    hook_local.settings.active_profile = Some(i);
+                    hook_local.active_profile = ActiveProfile::Other(i);
                 }
             }
             ProfileCondition::OriWotW => {
                 if foreground == "OriAndTheWilloftheWisps" {
-                    hook_local.settings.active_profile = Some(i);
+                    hook_local.active_profile = ActiveProfile::Other(i);
                 }
             }
             ProfileCondition::Other(title) => {
                 if foreground == *title {
-                    hook_local.settings.active_profile = Some(i);
+                    hook_local.active_profile = ActiveProfile::Other(i);
                 }
             }
         }
@@ -522,12 +548,12 @@ fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
 
     // Step 1
     // Update layers
-    for layer in hook_local.settings.get_active_layers_mut().iter_mut() {
+    for (i, layer) in current_layers.iter().enumerate() {
         // Only update layers for which this button is a condition.
         // These layers are no longer active.
         if layer.condition.contains(&hold_button) {
             match &layer.layer_type {
-                LayerType::Modifier => layer.active = false,
+                LayerType::Modifier => hook_local.active_layers[i] = false,
                 LayerType::Toggle => (), // Toggle buttons not affected by keyup
             }
         }
@@ -581,37 +607,51 @@ fn intercept_tap_input(tap_button: TapButton) -> bool {
         .as_mut()
         .expect("local data should have been initialized");
 
+    let current_base = match hook_local.active_profile {
+        ActiveProfile::Default => &hook_local.config.default.base,
+        ActiveProfile::Other(i) => &hook_local.config.profiles[i].base,
+    };
+    let current_layers = match hook_local.active_profile {
+        ActiveProfile::Default => &hook_local.config.default.layers,
+        ActiveProfile::Other(i) => &hook_local.config.profiles[i].layers,
+    };
+
     // TODO
     // Change this such that you don't need to check it on every single key press.
     // Too much computation.
     let foreground = get_foreground_window();
-    hook_local.settings.active_profile = None;
-    for (i, profile_condition) in hook_local.settings.profile_conditions.iter().enumerate() {
+    hook_local.active_profile = ActiveProfile::Default;
+    for (i, profile_condition) in hook_local
+        .config
+        .profiles
+        .iter()
+        .map(|profile| &profile.condition)
+        .enumerate()
+    {
         match profile_condition {
             ProfileCondition::OriBF => {
                 if foreground == "Ori And The Blind Forest: Definitive Edition" {
-                    hook_local.settings.active_profile = Some(i);
+                    hook_local.active_profile = ActiveProfile::Other(i);
                 }
             }
             ProfileCondition::OriWotW => {
                 if foreground == "OriAndTheWilloftheWisps" {
-                    hook_local.settings.active_profile = Some(i);
+                    hook_local.active_profile = ActiveProfile::Other(i);
                 }
             }
             ProfileCondition::Other(title) => {
                 if foreground == *title {
-                    hook_local.settings.active_profile = Some(i);
+                    hook_local.active_profile = ActiveProfile::Other(i);
                 }
             }
         }
     }
     // END TODO
 
-    for layer in hook_local
-        .settings
-        .get_active_layers()
+    for (_, layer) in current_layers
         .iter()
-        .filter(|layer| layer.active)
+        .enumerate()
+        .filter(|(i, _)| hook_local.active_layers[*i])
         .rev()
     {
         match &layer.policy[Button::from(tap_button)] {
@@ -637,7 +677,7 @@ fn intercept_tap_input(tap_button: TapButton) -> bool {
             }
         }
     }
-    match &hook_local.settings.get_active_base_layer().policy[Button::from(tap_button)] {
+    match &current_base.policy[Button::from(tap_button)] {
         BaseRemapPolicy::Remap(output) => {
             let target_buttons: Vec<KeyboardAndMouse::INPUT> = output
                 .iter()
@@ -657,13 +697,6 @@ fn intercept_tap_input(tap_button: TapButton) -> bool {
         BaseRemapPolicy::NoRemap => false,
     }
 }
-
-// fn send_input(input: &KeyboardAndMouse::INPUT) {
-//     let cbsize = std::mem::size_of::<KeyboardAndMouse::INPUT>() as i32;
-//     unsafe {
-//         KeyboardAndMouse::SendInput(&[*input], cbsize);
-//     }
-// }
 
 fn send_input_batch(input: &[KeyboardAndMouse::INPUT]) {
     let cbsize = std::mem::size_of::<KeyboardAndMouse::INPUT>() as i32;

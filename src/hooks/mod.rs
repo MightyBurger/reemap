@@ -1,9 +1,9 @@
 pub mod hooklocal;
 pub mod input;
 
+use crate::config;
+use crate::hooks::hooklocal::ActiveProfile;
 use hooklocal::HOOKLOCAL;
-
-use crate::settings::Settings;
 
 use std::sync::Mutex;
 
@@ -16,18 +16,18 @@ use windows::Win32::UI::WindowsAndMessaging;
 // thread.
 pub fn spawn_scoped<'scope, 'env>(
     s: &'scope std::thread::Scope<'scope, 'env>,
-    settings: Settings,
+    config: config::Config,
 ) -> HookthreadProxy {
     let (oneshot_sender, oneshot_receiver) = oneshot::channel();
     s.spawn(|| {
-        run(oneshot_sender, settings);
+        run(oneshot_sender, config);
     });
     oneshot_receiver.recv().unwrap()
 }
 
 // Run the hook thread and return a proxy through the oneshot.
 // Panics if the hook thread is already running.
-pub fn run(sender: oneshot::Sender<HookthreadProxy>, settings: Settings) {
+pub fn run(sender: oneshot::Sender<HookthreadProxy>, config: config::Config) {
     use WindowsAndMessaging as WM;
     use num_traits::FromPrimitive;
 
@@ -43,7 +43,7 @@ pub fn run(sender: oneshot::Sender<HookthreadProxy>, settings: Settings) {
 
     // Initialize the persistent thread data.
     let mut hooklocal = HOOKLOCAL.lock().unwrap();
-    *hooklocal = Some(hooklocal::HookLocalData::init_settings(settings));
+    *hooklocal = Some(hooklocal::HookLocalData::init_settings(config));
     std::mem::drop(hooklocal);
 
     // Force Windows to create a message queue for this thread. We want to have one before we
@@ -78,17 +78,18 @@ pub fn run(sender: oneshot::Sender<HookthreadProxy>, settings: Settings) {
                     WM::PostQuitMessage(0);
                 }
                 Some(HookMessage::Update) => {
-                    println!("Updating configuration!");
                     let Foundation::WPARAM(raw_usize) = lpmsg.wParam;
-                    let raw = raw_usize as *mut Settings;
-                    let settings_boxed = Box::from_raw(raw);
-                    let settings = *settings_boxed;
+                    let raw = raw_usize as *mut config::Config;
+                    let config_boxed = Box::from_raw(raw);
+                    let config = *config_boxed;
+                    println!("Updating configuration! {:#?}", &config);
 
                     let mut hook_local = HOOKLOCAL.lock().expect("mutex poisoned");
                     let hook_local = hook_local
                         .as_mut()
                         .expect("local data should have been initialized");
-                    hook_local.settings = settings;
+                    hook_local.config = config;
+                    hook_local.active_profile = ActiveProfile::default(); // TODO: fix this!!
                 }
                 None => {
                     let _ = WM::TranslateMessage(&lpmsg);
@@ -140,11 +141,11 @@ impl HookthreadProxy {
             .expect("could not send to hookthread");
         }
     }
-    pub fn update(&self, settings: Settings) {
+    pub fn update(&self, config: config::Config) {
         use num_traits::ToPrimitive;
 
-        let settings_boxed = Box::new(settings);
-        let raw = Box::into_raw(settings_boxed);
+        let config_boxed = Box::new(config);
+        let raw = Box::into_raw(config_boxed);
         let raw_usize = raw as usize;
 
         unsafe {
