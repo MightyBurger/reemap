@@ -87,6 +87,7 @@ pub struct GuiLocal {
     new_default_layer: settings::DefaultProfile,
     new_remap_modal: NewRemapModalOpts,
     new_base_remap_modal: NewBaseRemapModalOpts,
+    layer_condition_modal: LayerConditionModalOpts,
 }
 
 impl Default for GuiLocal {
@@ -101,6 +102,7 @@ impl Default for GuiLocal {
             new_default_layer: settings::DefaultProfile::default(),
             new_remap_modal: NewRemapModalOpts::default(),
             new_base_remap_modal: NewBaseRemapModalOpts::default(),
+            layer_condition_modal: LayerConditionModalOpts::default(),
         }
     }
 }
@@ -118,6 +120,21 @@ impl Default for NewRemapModalOpts {
             modal_open: None,
             policy: RemapPolicyUI::default(),
             outputs: Vec::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct LayerConditionModalOpts {
+    modal_open: bool,
+    condition: Vec<buttons::HoldButton>,
+}
+
+impl Default for LayerConditionModalOpts {
+    fn default() -> Self {
+        Self {
+            modal_open: false,
+            condition: Vec::new(),
         }
     }
 }
@@ -274,7 +291,13 @@ impl crate::gui::TrayApp for ReemApp {
                     }
                     GuiMenu::DefaultProfileLayerMenu { layer_idx } => {
                         let layer = &mut self.config.default.layers[layer_idx];
-                        ui_layer(ctx, ui, layer, &mut self.gui_local.new_remap_modal);
+                        ui_layer(
+                            ctx,
+                            ui,
+                            layer,
+                            &mut self.gui_local.new_remap_modal,
+                            &mut self.gui_local.layer_condition_modal,
+                        );
                     }
                     GuiMenu::ProfileMenu { profile_idx } => ui_profile(ctx, ui, self, profile_idx),
                     GuiMenu::ProfileBaseLayerMenu { profile_idx } => {
@@ -286,7 +309,13 @@ impl crate::gui::TrayApp for ReemApp {
                         layer_idx,
                     } => {
                         let layer = &mut self.config.profiles[profile_idx].layers[layer_idx];
-                        ui_layer(ctx, ui, layer, &mut self.gui_local.new_remap_modal);
+                        ui_layer(
+                            ctx,
+                            ui,
+                            layer,
+                            &mut self.gui_local.new_remap_modal,
+                            &mut self.gui_local.layer_condition_modal,
+                        );
                     }
                 }
             });

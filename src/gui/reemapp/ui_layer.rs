@@ -1,7 +1,9 @@
 use crate::buttons;
 use crate::config::LayerUI;
-use crate::gui::reemapp::ui_remap_tables::{ui_available_remaps_table, ui_single_remap_table};
-use crate::gui::reemapp::{NewRemapModalOpts, RemapPolicyUI};
+use crate::gui::reemapp::ui_remap_tables::{
+    ui_available_remaps_table, ui_available_remaps_table_hold_only, ui_single_remap_table,
+};
+use crate::gui::reemapp::{LayerConditionModalOpts, NewRemapModalOpts, RemapPolicyUI};
 use crate::settings;
 use strum::IntoEnumIterator;
 
@@ -10,6 +12,7 @@ pub fn ui_layer(
     ui: &mut egui::Ui,
     layer: &mut LayerUI,
     new_remap_modal: &mut NewRemapModalOpts,
+    layer_condition_modal: &mut LayerConditionModalOpts,
 ) {
     ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
         ui.horizontal(|ui| {
@@ -30,6 +33,29 @@ pub fn ui_layer(
             });
         ui.add_space(super::SPACING);
 
+        let condition_buttons_str: String = if layer.condition.is_empty() {
+            String::from("(no buttons set)")
+        } else {
+            itertools::Itertools::intersperse(
+                layer.condition.iter().map(|btn| format!("{btn}")),
+                String::from(", "),
+            )
+            .collect()
+        };
+        match layer.layer_type {
+            settings::LayerType::Modifier => ui.label(format!(
+                "Active when these buttons are held: {condition_buttons_str}"
+            )),
+            settings::LayerType::Toggle => ui.label(format!(
+                "Toggled when these buttons are pressed: {condition_buttons_str}"
+            )),
+        };
+        let edit_response = ui.button("Edit Condition");
+        if edit_response.clicked() {
+            layer_condition_modal.modal_open = true;
+        }
+        ui.add_space(super::SPACING);
+
         egui::Frame::new()
             .stroke(egui::Stroke {
                 width: 1.0,
@@ -44,6 +70,11 @@ pub fn ui_layer(
     if let Some(button) = new_remap_modal.modal_open {
         let policy = &mut layer.policy[button];
         ui_new_remap_modal(ctx, ui, new_remap_modal, button, policy);
+    }
+    if layer_condition_modal.modal_open {
+        let layer_name = &layer.name;
+        let condition = &mut layer.condition;
+        ui_layer_condition_modal(ctx, ui, layer_condition_modal, layer_name, condition);
     }
 }
 
@@ -151,7 +182,6 @@ fn ui_new_remap_modal(
                         ok = true;
                     }
                 });
-                ui.add_space(super::SPACING);
                 ui.separator();
                 ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
                     let enable_tables = match modal_opts.policy {
@@ -201,5 +231,69 @@ fn ui_new_remap_modal(
         modal_opts.modal_open = None;
     } else if cancel {
         modal_opts.modal_open = None;
+    }
+}
+
+fn ui_layer_condition_modal(
+    ctx: &egui::Context,
+    _ui: &mut egui::Ui,
+    modal_opts: &mut LayerConditionModalOpts,
+    layer_name: &str,
+    condition: &mut Vec<buttons::HoldButton>,
+) {
+    let mut ok = false;
+    let mut cancel = false;
+    let modal = egui::Modal::new(egui::Id::new("New Remap Modal")).show(ctx, |ui| {
+        ui.heading(format!("Condition for {layer_name}"));
+        ui.separator();
+        ui.add_space(super::SPACING);
+
+        ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::BOTTOM), |ui| {
+                if ui.button("Cancel").clicked() {
+                    cancel = true;
+                }
+                if ui.button("OK").clicked() {
+                    ok = true;
+                }
+            });
+            ui.separator();
+            ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
+                ui.columns_const(|[col_1, col_2]| {
+                    egui::Frame::new()
+                        .stroke(egui::Stroke {
+                            width: 1.0,
+                            color: egui::Color32::DARK_GRAY,
+                        })
+                        .inner_margin(4.0)
+                        .corner_radius(4.0)
+                        .show(col_1, |ui| {
+                            ui_single_remap_table(ui, &mut modal_opts.condition);
+                        });
+                    egui::Frame::new()
+                        .stroke(egui::Stroke {
+                            width: 1.0,
+                            color: egui::Color32::DARK_GRAY,
+                        })
+                        .inner_margin(4.0)
+                        .corner_radius(4.0)
+                        .show(col_2, |ui| {
+                            ui_available_remaps_table_hold_only(ui, &mut modal_opts.condition);
+                        });
+                });
+            });
+        });
+    });
+    if ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
+        ok = true;
+    }
+    if modal.should_close() {
+        cancel = true;
+    }
+    if ok {
+        *condition = modal_opts.condition.clone();
+        modal_opts.modal_open = false;
+    } else if cancel {
+        modal_opts.modal_open = false;
     }
 }
