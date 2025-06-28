@@ -3,7 +3,7 @@ use enum_map::EnumMap;
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 
-pub type Output = SmallVec<[Button; 4]>;
+pub type Output = SmallVec<[Button; 8]>;
 
 /*
     Settings represent the run-time application state.
