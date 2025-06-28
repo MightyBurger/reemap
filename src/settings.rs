@@ -107,6 +107,12 @@ impl std::fmt::Display for LayerType {
     }
 }
 
+impl Default for LayerType {
+    fn default() -> Self {
+        Self::Modifier
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct Layer {
     pub active: bool,

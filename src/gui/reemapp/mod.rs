@@ -127,6 +127,7 @@ impl Default for NewRemapModalOpts {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct LayerConditionModalOpts {
     modal_open: bool,
+    layer_type: settings::LayerType,
     condition: Vec<buttons::HoldButton>,
 }
 
@@ -134,6 +135,7 @@ impl Default for LayerConditionModalOpts {
     fn default() -> Self {
         Self {
             modal_open: false,
+            layer_type: settings::LayerType::default(),
             condition: Vec::new(),
         }
     }

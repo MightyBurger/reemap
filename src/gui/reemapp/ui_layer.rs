@@ -21,18 +21,6 @@ pub fn ui_layer(
         });
         ui.add_space(super::SPACING);
 
-        egui::ComboBox::from_label("Layer Type")
-            .selected_text(format!("{}", &layer.layer_type))
-            .show_ui(ui, |ui| {
-                ui.selectable_value(
-                    &mut layer.layer_type,
-                    settings::LayerType::Modifier,
-                    "Modifier",
-                );
-                ui.selectable_value(&mut layer.layer_type, settings::LayerType::Toggle, "Toggle");
-            });
-        ui.add_space(super::SPACING);
-
         let condition_buttons_str: String = if layer.condition.is_empty() {
             String::from("(no buttons set)")
         } else {
@@ -50,9 +38,13 @@ pub fn ui_layer(
                 "Toggled when these buttons are pressed: {condition_buttons_str}"
             )),
         };
-        let edit_response = ui.button("Edit Condition");
+        let edit_response = ui.button("Edit condition");
         if edit_response.clicked() {
-            layer_condition_modal.modal_open = true;
+            *layer_condition_modal = LayerConditionModalOpts {
+                modal_open: true,
+                layer_type: layer.layer_type.clone(),
+                condition: layer.condition.clone(),
+            };
         }
         ui.add_space(super::SPACING);
 
@@ -73,8 +65,16 @@ pub fn ui_layer(
     }
     if layer_condition_modal.modal_open {
         let layer_name = &layer.name;
+        let layer_type = &mut layer.layer_type;
         let condition = &mut layer.condition;
-        ui_layer_condition_modal(ctx, ui, layer_condition_modal, layer_name, condition);
+        ui_layer_condition_modal(
+            ctx,
+            ui,
+            layer_condition_modal,
+            layer_name,
+            layer_type,
+            condition,
+        );
     }
 }
 
@@ -239,6 +239,7 @@ fn ui_layer_condition_modal(
     _ui: &mut egui::Ui,
     modal_opts: &mut LayerConditionModalOpts,
     layer_name: &str,
+    layer_type: &mut settings::LayerType,
     condition: &mut Vec<buttons::HoldButton>,
 ) {
     let mut ok = false;
@@ -248,38 +249,56 @@ fn ui_layer_condition_modal(
         ui.separator();
         ui.add_space(super::SPACING);
 
-        ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::BOTTOM), |ui| {
-                if ui.button("Cancel").clicked() {
-                    cancel = true;
-                }
-                if ui.button("OK").clicked() {
-                    ok = true;
-                }
-            });
-            ui.separator();
-            ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-                ui.columns_const(|[col_1, col_2]| {
-                    egui::Frame::new()
-                        .stroke(egui::Stroke {
-                            width: 1.0,
-                            color: egui::Color32::DARK_GRAY,
-                        })
-                        .inner_margin(4.0)
-                        .corner_radius(4.0)
-                        .show(col_1, |ui| {
-                            ui_single_remap_table(ui, &mut modal_opts.condition);
-                        });
-                    egui::Frame::new()
-                        .stroke(egui::Stroke {
-                            width: 1.0,
-                            color: egui::Color32::DARK_GRAY,
-                        })
-                        .inner_margin(4.0)
-                        .corner_radius(4.0)
-                        .show(col_2, |ui| {
-                            ui_available_remaps_table_hold_only(ui, &mut modal_opts.condition);
-                        });
+        ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
+            egui::ComboBox::from_label("Layer Type")
+                .selected_text(format!("{}", &modal_opts.layer_type))
+                .show_ui(ui, |ui| {
+                    ui.selectable_value(
+                        &mut modal_opts.layer_type,
+                        settings::LayerType::Modifier,
+                        "Modifier",
+                    );
+                    ui.selectable_value(
+                        &mut modal_opts.layer_type,
+                        settings::LayerType::Toggle,
+                        "Toggle",
+                    );
+                });
+            ui.add_space(super::SPACING);
+
+            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::BOTTOM), |ui| {
+                    if ui.button("Cancel").clicked() {
+                        cancel = true;
+                    }
+                    if ui.button("OK").clicked() {
+                        ok = true;
+                    }
+                });
+                ui.separator();
+                ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
+                    ui.columns_const(|[col_1, col_2]| {
+                        egui::Frame::new()
+                            .stroke(egui::Stroke {
+                                width: 1.0,
+                                color: egui::Color32::DARK_GRAY,
+                            })
+                            .inner_margin(4.0)
+                            .corner_radius(4.0)
+                            .show(col_1, |ui| {
+                                ui_single_remap_table(ui, &mut modal_opts.condition);
+                            });
+                        egui::Frame::new()
+                            .stroke(egui::Stroke {
+                                width: 1.0,
+                                color: egui::Color32::DARK_GRAY,
+                            })
+                            .inner_margin(4.0)
+                            .corner_radius(4.0)
+                            .show(col_2, |ui| {
+                                ui_available_remaps_table_hold_only(ui, &mut modal_opts.condition);
+                            });
+                    });
                 });
             });
         });
@@ -291,6 +310,7 @@ fn ui_layer_condition_modal(
         cancel = true;
     }
     if ok {
+        *layer_type = modal_opts.layer_type.clone();
         *condition = modal_opts.condition.clone();
         modal_opts.modal_open = false;
     } else if cancel {
