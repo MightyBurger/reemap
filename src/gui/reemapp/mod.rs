@@ -3,7 +3,6 @@ mod ui_base_layer;
 mod ui_default_profile;
 mod ui_layer;
 mod ui_main;
-mod ui_new_remap_modal;
 mod ui_profile;
 mod ui_remap_tables;
 

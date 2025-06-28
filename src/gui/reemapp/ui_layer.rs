@@ -11,24 +11,35 @@ pub fn ui_layer(
     layer: &mut LayerUI,
     new_remap_modal: &mut NewRemapModalOpts,
 ) {
-    ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-        // TODO: if nothing needs to be at the bottom, remove the bottom_up layout.
-        ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-            ui.label("Layer Name");
+    ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
+        ui.horizontal(|ui| {
             ui.text_edit_singleline(&mut layer.name);
-            ui.add_space(super::SPACING);
-
-            egui::Frame::new()
-                .stroke(egui::Stroke {
-                    width: 1.0,
-                    color: egui::Color32::DARK_GRAY,
-                })
-                .inner_margin(4.0)
-                .corner_radius(4.0)
-                .show(ui, |ui| {
-                    ui_remaps_table(ui, layer, new_remap_modal);
-                });
+            ui.label("Layer Name");
         });
+        ui.add_space(super::SPACING);
+
+        egui::ComboBox::from_label("Layer Type")
+            .selected_text(format!("{}", &layer.layer_type))
+            .show_ui(ui, |ui| {
+                ui.selectable_value(
+                    &mut layer.layer_type,
+                    settings::LayerType::Modifier,
+                    "Modifier",
+                );
+                ui.selectable_value(&mut layer.layer_type, settings::LayerType::Toggle, "Toggle");
+            });
+        ui.add_space(super::SPACING);
+
+        egui::Frame::new()
+            .stroke(egui::Stroke {
+                width: 1.0,
+                color: egui::Color32::DARK_GRAY,
+            })
+            .inner_margin(4.0)
+            .corner_radius(4.0)
+            .show(ui, |ui| {
+                ui_remaps_table(ui, layer, new_remap_modal);
+            });
     });
     if let Some(button) = new_remap_modal.modal_open {
         let policy = &mut layer.policy[button];
