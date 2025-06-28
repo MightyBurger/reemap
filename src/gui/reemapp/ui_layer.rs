@@ -21,23 +21,10 @@ pub fn ui_layer(
         });
         ui.add_space(super::SPACING);
 
-        let condition_buttons_str: String = if layer.condition.is_empty() {
-            String::from("(no buttons set)")
-        } else {
-            itertools::Itertools::intersperse(
-                layer.condition.iter().map(|btn| format!("{btn}")),
-                String::from(", "),
-            )
-            .collect()
-        };
-        match layer.layer_type {
-            settings::LayerType::Modifier => ui.label(format!(
-                "Active when these buttons are held: {condition_buttons_str}"
-            )),
-            settings::LayerType::Toggle => ui.label(format!(
-                "Toggled when these buttons are pressed: {condition_buttons_str}"
-            )),
-        };
+        ui.label(get_layer_condition_text(
+            &layer.condition,
+            &layer.layer_type,
+        ));
         let edit_response = ui.button("Edit condition");
         if edit_response.clicked() {
             *layer_condition_modal = LayerConditionModalOpts {
@@ -276,6 +263,10 @@ fn ui_layer_condition_modal(
                     }
                 });
                 ui.separator();
+                ui.label(get_layer_condition_text(
+                    &modal_opts.condition,
+                    &modal_opts.layer_type,
+                ));
                 ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
                     ui.columns_const(|[col_1, col_2]| {
                         egui::Frame::new()
@@ -315,5 +306,28 @@ fn ui_layer_condition_modal(
         modal_opts.modal_open = false;
     } else if cancel {
         modal_opts.modal_open = false;
+    }
+}
+
+fn get_layer_condition_text(
+    condition: &[buttons::HoldButton],
+    layer_type: &settings::LayerType,
+) -> String {
+    let condition_buttons_str: String = if condition.is_empty() {
+        String::from("(no buttons set)")
+    } else {
+        itertools::Itertools::intersperse(
+            condition.iter().map(|btn| format!("{btn}")),
+            String::from(", "),
+        )
+        .collect()
+    };
+    match layer_type {
+        settings::LayerType::Modifier => {
+            format!("Active when these buttons are held: {condition_buttons_str}")
+        }
+        settings::LayerType::Toggle => {
+            format!("Toggled when these buttons are pressed: {condition_buttons_str}")
+        }
     }
 }
