@@ -144,7 +144,7 @@ impl std::fmt::Display for BaseRemapPolicy {
                     return write!(f, "(block input)");
                 }
                 let outstr: String = itertools::Itertools::intersperse(
-                    maps.iter().map(|btn| format!("{btn}")),
+                    maps.iter().map(|btn| btn.to_string()),
                     String::from(", "),
                 )
                 .collect();
@@ -171,7 +171,7 @@ impl std::fmt::Display for RemapPolicy {
                     return write!(f, "(block input)");
                 }
                 let outstr: String = itertools::Itertools::intersperse(
-                    maps.iter().map(|btn| format!("{btn}")),
+                    maps.iter().map(|btn| btn.to_string()),
                     String::from(", "),
                 )
                 .collect();

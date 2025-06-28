@@ -315,7 +315,7 @@ fn get_layer_condition_text(
         String::from("(no buttons set)")
     } else {
         itertools::Itertools::intersperse(
-            condition.iter().map(|btn| format!("{btn}")),
+            condition.iter().map(|btn| btn.to_string()),
             String::from(", "),
         )
         .collect()
