@@ -135,8 +135,12 @@ fn ui_new_base_remap_modal(
                         ok = true;
                     }
                 });
-                ui.add_space(super::SPACING);
                 ui.separator();
+                ui.label(get_new_remap_helper_text_base(
+                    &button,
+                    &modal_opts.outputs,
+                    &modal_opts.policy,
+                ));
                 ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
                     let enable_tables = match modal_opts.policy {
                         BaseRemapPolicyUI::NoRemap => false,
@@ -186,5 +190,29 @@ fn ui_new_base_remap_modal(
         modal_opts.modal_open = None;
     } else if cancel {
         modal_opts.modal_open = None;
+    }
+}
+
+fn get_new_remap_helper_text_base(
+    button: &buttons::Button,
+    outputs: &[buttons::Button],
+    policy: &BaseRemapPolicyUI,
+) -> String {
+    match policy {
+        BaseRemapPolicyUI::NoRemap => {
+            format!("{button} will not be remapped.")
+        }
+        BaseRemapPolicyUI::Remap => {
+            let buttons_str: String = if outputs.is_empty() {
+                String::from("(no inputs)")
+            } else {
+                itertools::Itertools::intersperse(
+                    outputs.iter().map(|btn| btn.to_string()),
+                    String::from(", "),
+                )
+                .collect()
+            };
+            format!("{button} will be remapped to the following: {buttons_str}.")
+        }
     }
 }

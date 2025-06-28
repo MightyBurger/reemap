@@ -168,6 +168,11 @@ fn ui_new_remap_modal(
                     }
                 });
                 ui.separator();
+                ui.label(get_new_remap_helper_text(
+                    &button,
+                    &modal_opts.outputs,
+                    &modal_opts.policy,
+                ));
                 ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
                     let enable_tables = match modal_opts.policy {
                         RemapPolicyUI::Defer | RemapPolicyUI::NoRemap => false,
@@ -326,6 +331,31 @@ fn get_layer_condition_text(
         }
         settings::LayerType::Toggle => {
             format!("Toggled when these buttons are pressed: {condition_buttons_str}")
+        }
+    }
+}
+
+fn get_new_remap_helper_text(
+    button: &buttons::Button,
+    outputs: &[buttons::Button],
+    policy: &RemapPolicyUI,
+) -> String {
+    match policy {
+        RemapPolicyUI::Defer => format!("This layer will not affect {button} inputs."),
+        RemapPolicyUI::NoRemap => {
+            format!("When active, this layer will prevent {button} from being remapped.")
+        }
+        RemapPolicyUI::Remap => {
+            let buttons_str: String = if outputs.is_empty() {
+                String::from("(no inputs)")
+            } else {
+                itertools::Itertools::intersperse(
+                    outputs.iter().map(|btn| btn.to_string()),
+                    String::from(", "),
+                )
+                .collect()
+            };
+            format!("When active, this layer will remap {button} to the following: {buttons_str}.")
         }
     }
 }
