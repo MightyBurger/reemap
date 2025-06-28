@@ -152,10 +152,10 @@ fn default_layers_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
     match layer_select {
         LayerSelect::None => (),
         LayerSelect::Base => {
-            args.gui_local.menu = GuiMenu::DefaultProfileBaseLayerMenu;
+            args.gui_local.menu = GuiMenu::DefaultProfileBaseLayer;
         }
         LayerSelect::Other(i) => {
-            args.gui_local.menu = GuiMenu::DefaultProfileLayerMenu { layer_idx: i };
+            args.gui_local.menu = GuiMenu::DefaultProfileLayer { layer_idx: i };
         }
     }
     if pointing_hand {

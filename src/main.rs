@@ -161,7 +161,7 @@ fn main() {
             hookthread_proxy,
             config,
             gui_local: gui::reemapp::GuiLocal::default(),
-            config_path: config_path,
+            config_path,
         };
         gui::run(app);
 

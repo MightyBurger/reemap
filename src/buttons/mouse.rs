@@ -24,7 +24,7 @@ pub enum MouseButton {
 }
 
 impl MouseButton {
-    pub fn to_mousedown_input(&self) -> KeyboardAndMouse::INPUT {
+    pub fn to_mousedown_input(self) -> KeyboardAndMouse::INPUT {
         use KeyboardAndMouse as KBM;
         use windows::Win32::UI::WindowsAndMessaging as WM;
 
@@ -50,7 +50,7 @@ impl MouseButton {
             },
         }
     }
-    pub fn to_mouseup_input(&self) -> KeyboardAndMouse::INPUT {
+    pub fn to_mouseup_input(self) -> KeyboardAndMouse::INPUT {
         use KeyboardAndMouse as KBM;
         use windows::Win32::UI::WindowsAndMessaging as WM;
 

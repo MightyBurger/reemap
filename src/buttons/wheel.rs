@@ -16,15 +16,15 @@ use windows::Win32::UI::Input::KeyboardAndMouse;
     Deserialize,
 )]
 pub enum MouseWheelButton {
-    ScrollUp,
-    ScrollDown,
-    ScrollHorzRight,
-    ScrollHorzLeft,
+    Up,
+    Down,
+    HorzRight,
+    HorzLeft,
 }
 
 impl MouseWheelButton {
     // note: not an impl From<> to be consistent with the other button types
-    pub fn to_input(&self) -> KeyboardAndMouse::INPUT {
+    pub fn to_input(self) -> KeyboardAndMouse::INPUT {
         use KeyboardAndMouse as KBM;
         use windows::Win32::UI::WindowsAndMessaging as WM;
 
@@ -34,10 +34,10 @@ impl MouseWheelButton {
         let minus_click: u32 = -(WM::WHEEL_DELTA as i32) as u32;
 
         let (dw_flags, mouse_data): (KBM::MOUSE_EVENT_FLAGS, u32) = match self {
-            Self::ScrollUp => (KBM::MOUSEEVENTF_WHEEL, plus_click),
-            Self::ScrollDown => (KBM::MOUSEEVENTF_WHEEL, minus_click),
-            Self::ScrollHorzRight => (KBM::MOUSEEVENTF_HWHEEL, plus_click),
-            Self::ScrollHorzLeft => (KBM::MOUSEEVENTF_HWHEEL, minus_click),
+            Self::Up => (KBM::MOUSEEVENTF_WHEEL, plus_click),
+            Self::Down => (KBM::MOUSEEVENTF_WHEEL, minus_click),
+            Self::HorzRight => (KBM::MOUSEEVENTF_HWHEEL, plus_click),
+            Self::HorzLeft => (KBM::MOUSEEVENTF_HWHEEL, minus_click),
         };
 
         KBM::INPUT {
@@ -59,10 +59,10 @@ impl MouseWheelButton {
 impl std::fmt::Display for MouseWheelButton {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::ScrollUp => write!(f, "Scroll Up"),
-            Self::ScrollDown => write!(f, "Scroll Down"),
-            Self::ScrollHorzRight => write!(f, "Scroll Right"),
-            Self::ScrollHorzLeft => write!(f, "Scroll Left"),
+            Self::Up => write!(f, "Scroll Up"),
+            Self::Down => write!(f, "Scroll Down"),
+            Self::HorzRight => write!(f, "Scroll Right"),
+            Self::HorzLeft => write!(f, "Scroll Left"),
         }
     }
 }

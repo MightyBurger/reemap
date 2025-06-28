@@ -100,19 +100,10 @@ impl From<ConfigUI> for settings::Settings {
 
 // -------------------- Profiles (UI) --------------------
 // Like config::Profile, but  uses Vec<LayerUI> instead of Vec<config::Layer>
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct DefaultProfileUI {
     pub base: settings::BaseLayer,
     pub layers: Vec<LayerUI>,
-}
-
-impl Default for DefaultProfileUI {
-    fn default() -> Self {
-        Self {
-            base: settings::BaseLayer::default(),
-            layers: Vec::new(),
-        }
-    }
 }
 
 impl From<DefaultProfileUI> for settings::DefaultProfile {

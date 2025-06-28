@@ -85,10 +85,8 @@ unsafe extern "system" fn keybd_hook(
         if intercept_hold_up_input(HoldButton::from(key)) {
             return Foundation::LRESULT(1);
         }
-    } else {
-        if intercept_hold_down_input(HoldButton::from(key)) {
-            return Foundation::LRESULT(1);
-        }
+    } else if intercept_hold_down_input(HoldButton::from(key)) {
+        return Foundation::LRESULT(1);
     }
     unsafe { WM::CallNextHookEx(None, nCode, wParam, lParam) }
 }
@@ -207,9 +205,9 @@ unsafe extern "system" fn mouse_hook(
             let higher_word: u16 = ((hookstruct.mouseData & 0xFF00) >> 16) as u16;
             let higher_word_signed: i16 = higher_word as i16;
             if higher_word_signed > 0 {
-                Wheel(MouseWheelButton::ScrollUp)
+                Wheel(MouseWheelButton::Up)
             } else if higher_word_signed < 0 {
-                Wheel(MouseWheelButton::ScrollDown)
+                Wheel(MouseWheelButton::Down)
             } else {
                 // Malformed input; ignore it.
                 unsafe {
@@ -221,9 +219,9 @@ unsafe extern "system" fn mouse_hook(
             let higher_word: u16 = ((hookstruct.mouseData & 0xFF00) >> 16) as u16;
             let higher_word_signed: i16 = higher_word as i16;
             if higher_word_signed > 0 {
-                Wheel(MouseWheelButton::ScrollHorzRight)
+                Wheel(MouseWheelButton::HorzRight)
             } else if higher_word_signed < 0 {
-                Wheel(MouseWheelButton::ScrollHorzLeft)
+                Wheel(MouseWheelButton::HorzLeft)
             } else {
                 // Malformed input; ignore it.
                 unsafe {
@@ -252,9 +250,7 @@ unsafe extern "system" fn mouse_hook(
     if intercepted {
         return Foundation::LRESULT(1);
     }
-    unsafe {
-        return WM::CallNextHookEx(None, nCode, wParam, lParam);
-    }
+    unsafe { WM::CallNextHookEx(None, nCode, wParam, lParam) }
 }
 
 /*
@@ -420,7 +416,7 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
             if layer
                 .condition
                 .iter()
-                .filter(|&condition| *condition != HoldButton::from(hold_button))
+                .filter(|&condition| *condition != hold_button)
                 .all(|condition| hook_local.button_state[*condition] != HoldButtonState::NotHeld)
             {
                 // All conditions met. Let's enable/toggle this layer.
@@ -475,11 +471,11 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
                 .collect();
             send_input_batch(&target_buttons);
             hook_local.button_state[hold_button] = HoldButtonState::HeldWithRemap(output.clone());
-            return true;
+            true
         }
         BaseRemapPolicy::NoRemap => {
             hook_local.button_state[hold_button] = HoldButtonState::HeldNoRemap;
-            return false;
+            false
         }
     }
 }
@@ -656,11 +652,9 @@ fn intercept_tap_input(tap_button: TapButton) -> bool {
                 })
                 .collect();
             send_input_batch(&target_buttons);
-            return true;
+            true
         }
-        BaseRemapPolicy::NoRemap => {
-            return false;
-        }
+        BaseRemapPolicy::NoRemap => false,
     }
 }
 
@@ -685,6 +679,5 @@ fn get_foreground_window() -> String {
     let mut title_u16 = [0u16; CAP];
     let len = unsafe { WM::GetWindowTextW(hwnd, &mut title_u16) };
     let len = std::cmp::max(len as usize, CAP - 1);
-    let title = String::from_utf16_lossy(&title_u16[0..len]);
-    title
+    String::from_utf16_lossy(&title_u16[0..len])
 }

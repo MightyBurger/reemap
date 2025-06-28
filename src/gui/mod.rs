@@ -6,7 +6,7 @@ pub mod reemapp;
 
 use glutin_ctx::GlutinWindowContext;
 
-const TITLE: &'static str = "Reemap";
+const TITLE: &str = "Reemap";
 const SIZE: winit::dpi::LogicalSize<f64> = winit::dpi::LogicalSize {
     width: 800.0,
     height: 600.0,

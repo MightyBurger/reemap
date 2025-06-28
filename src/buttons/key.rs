@@ -57,12 +57,12 @@ impl KeyButton {
         use num_traits::FromPrimitive;
         Self::from_u8(vk)
     }
-    pub fn to_vk(&self) -> u8 {
+    pub fn to_vk(self) -> u8 {
         use num_traits::ToPrimitive;
         self.to_u8()
             .expect("button should always be convertable to virtual key code")
     }
-    pub fn to_keydown_input(&self) -> KeyboardAndMouse::INPUT {
+    pub fn to_keydown_input(self) -> KeyboardAndMouse::INPUT {
         use KeyboardAndMouse as KBM;
         let vk = self.to_vk();
         KBM::INPUT {
@@ -78,7 +78,7 @@ impl KeyButton {
             },
         }
     }
-    pub fn to_keyup_input(&self) -> KeyboardAndMouse::INPUT {
+    pub fn to_keyup_input(self) -> KeyboardAndMouse::INPUT {
         use KeyboardAndMouse as KBM;
         let vk = self.to_vk();
         KBM::INPUT {

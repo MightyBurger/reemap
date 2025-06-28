@@ -92,11 +92,9 @@ pub fn ui_remaps_table(
             });
         })
         .body(|mut body| {
-            let key_iter = buttons::key::KeyButton::iter().map(|key| buttons::Button::from(key));
-            let mouse_iter =
-                buttons::mouse::MouseButton::iter().map(|mouse| buttons::Button::from(mouse));
-            let wheel_iter =
-                buttons::wheel::MouseWheelButton::iter().map(|wheel| buttons::Button::from(wheel));
+            let key_iter = buttons::key::KeyButton::iter().map(buttons::Button::from);
+            let mouse_iter = buttons::mouse::MouseButton::iter().map(buttons::Button::from);
+            let wheel_iter = buttons::wheel::MouseWheelButton::iter().map(buttons::Button::from);
 
             for button in key_iter.chain(mouse_iter).chain(wheel_iter) {
                 body.row(row_height, |mut row| {

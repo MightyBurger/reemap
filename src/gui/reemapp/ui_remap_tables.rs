@@ -79,11 +79,9 @@ pub fn ui_available_remaps_table(ui: &mut egui::Ui, remaps: &mut Vec<buttons::Bu
             });
         })
         .body(|mut body| {
-            let key_iter = buttons::key::KeyButton::iter().map(|key| buttons::Button::from(key));
-            let mouse_iter =
-                buttons::mouse::MouseButton::iter().map(|mouse| buttons::Button::from(mouse));
-            let wheel_iter =
-                buttons::wheel::MouseWheelButton::iter().map(|wheel| buttons::Button::from(wheel));
+            let key_iter = buttons::key::KeyButton::iter().map(buttons::Button::from);
+            let mouse_iter = buttons::mouse::MouseButton::iter().map(buttons::Button::from);
+            let wheel_iter = buttons::wheel::MouseWheelButton::iter().map(buttons::Button::from);
 
             for button in key_iter.chain(mouse_iter).chain(wheel_iter) {
                 let enabled = !remaps.contains(&button);
@@ -134,10 +132,8 @@ pub fn ui_available_remaps_table_hold_only(
             });
         })
         .body(|mut body| {
-            let key_iter =
-                buttons::key::KeyButton::iter().map(|key| buttons::HoldButton::from(key));
-            let mouse_iter =
-                buttons::mouse::MouseButton::iter().map(|mouse| buttons::HoldButton::from(mouse));
+            let key_iter = buttons::key::KeyButton::iter().map(buttons::HoldButton::from);
+            let mouse_iter = buttons::mouse::MouseButton::iter().map(buttons::HoldButton::from);
 
             for button in key_iter.chain(mouse_iter) {
                 let enabled = !remaps.contains(&button);

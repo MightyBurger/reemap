@@ -16,7 +16,6 @@ use ui_main::ui_main;
 use ui_profile::ui_profile;
 
 use crate::config;
-use etcetera::BaseStrategy;
 
 use crate::buttons;
 use crate::hooks;
@@ -76,7 +75,7 @@ impl std::fmt::Display for RemapPolicyUI {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct GuiLocal {
     menu: GuiMenu,
     new_profile_modal_open: bool,
@@ -90,72 +89,25 @@ pub struct GuiLocal {
     layer_condition_modal: LayerConditionModalOpts,
 }
 
-impl Default for GuiLocal {
-    fn default() -> Self {
-        Self {
-            menu: GuiMenu::default(),
-            new_profile_modal_open: false,
-            new_profile: config::ProfileUI::default(),
-            new_layer_modal_open: false,
-            new_layer: config::LayerUI::default(),
-            new_default_layer_modal_open: false,
-            new_default_layer: settings::DefaultProfile::default(),
-            new_remap_modal: NewRemapModalOpts::default(),
-            new_base_remap_modal: NewBaseRemapModalOpts::default(),
-            layer_condition_modal: LayerConditionModalOpts::default(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NewRemapModalOpts {
     modal_open: Option<buttons::Button>,
     policy: RemapPolicyUI,
     outputs: Vec<buttons::Button>,
 }
 
-impl Default for NewRemapModalOpts {
-    fn default() -> Self {
-        Self {
-            modal_open: None,
-            policy: RemapPolicyUI::default(),
-            outputs: Vec::new(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct LayerConditionModalOpts {
     modal_open: bool,
     layer_type: settings::LayerType,
     condition: Vec<buttons::HoldButton>,
 }
 
-impl Default for LayerConditionModalOpts {
-    fn default() -> Self {
-        Self {
-            modal_open: false,
-            layer_type: settings::LayerType::default(),
-            condition: Vec::new(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NewBaseRemapModalOpts {
     modal_open: Option<buttons::Button>,
     policy: BaseRemapPolicyUI,
     outputs: Vec<buttons::Button>,
-}
-
-impl Default for NewBaseRemapModalOpts {
-    fn default() -> Self {
-        Self {
-            modal_open: None,
-            policy: BaseRemapPolicyUI::default(),
-            outputs: Vec::new(),
-        }
-    }
 }
 
 // All the possible menus the GUI can be in at any point in time.
@@ -163,19 +115,19 @@ impl Default for NewBaseRemapModalOpts {
 // But this app has limited scope, and sometimes just solving the problem directly is easier.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum GuiMenu {
-    MainMenu,
-    DefaultProfileMenu,
-    DefaultProfileBaseLayerMenu,
-    DefaultProfileLayerMenu {
+    Main,
+    DefaultProfile,
+    DefaultProfileBaseLayer,
+    DefaultProfileLayer {
         layer_idx: usize,
     },
-    ProfileMenu {
+    Profile {
         profile_idx: usize,
     },
-    ProfileBaseLayerMenu {
+    ProfileBaseLayer {
         profile_idx: usize,
     },
-    ProfileLayerMenu {
+    ProfileLayer {
         profile_idx: usize,
         layer_idx: usize,
     },
@@ -183,7 +135,7 @@ pub enum GuiMenu {
 
 impl Default for GuiMenu {
     fn default() -> Self {
-        Self::MainMenu
+        Self::Main
     }
 }
 
@@ -243,35 +195,6 @@ impl crate::gui::TrayApp for ReemApp {
                             self.hookthread_proxy
                                 .update(settings::Settings::from(self.config.clone()));
                         }
-                        if ui.button("Test Serde").clicked() {
-                            let teststr = ron::ser::to_string_pretty(
-                                &config::VersionedConfig::from(self.config.clone()),
-                                ron::ser::PrettyConfig::new(),
-                            );
-                            match &teststr {
-                                Ok(a) => println!("{a}"),
-                                Err(e) => println!("{e}"),
-                            }
-                            println!("----- Now trying to deserialize! -----");
-
-                            let new_config: Result<config::VersionedConfig, _> =
-                                ron::from_str(&teststr.unwrap());
-                            match &new_config {
-                                Ok(a) => println!("{a:#?}"),
-                                Err(e) => println!("{e}"),
-                            }
-                        }
-                        if ui.button("Test Path").clicked() {
-                            let strategy = etcetera::choose_base_strategy().unwrap();
-                            println!("config: {:?}", strategy.config_dir());
-                            println!("data: {:?}", strategy.data_dir());
-                            println!("cache: {:?}", strategy.cache_dir());
-                            println!("state: {:?}", strategy.state_dir());
-                            println!("runtime: {:?}", strategy.runtime_dir());
-                            let mut path = strategy.config_dir();
-                            path.push("Reemap\\config\\remaps.ron");
-                            println!("what I'm thinking: {:?}", path);
-                        }
                     });
                 });
             });
@@ -285,13 +208,13 @@ impl crate::gui::TrayApp for ReemApp {
 
                 let menu = self.gui_local.menu.clone();
                 match menu {
-                    GuiMenu::MainMenu => ui_main(ctx, ui, self),
-                    GuiMenu::DefaultProfileMenu => ui_default_profile(ctx, ui, self),
-                    GuiMenu::DefaultProfileBaseLayerMenu => {
+                    GuiMenu::Main => ui_main(ctx, ui, self),
+                    GuiMenu::DefaultProfile => ui_default_profile(ctx, ui, self),
+                    GuiMenu::DefaultProfileBaseLayer => {
                         let layer = &mut self.config.default.base;
                         ui_base_layer(ctx, ui, layer, &mut self.gui_local.new_base_remap_modal);
                     }
-                    GuiMenu::DefaultProfileLayerMenu { layer_idx } => {
+                    GuiMenu::DefaultProfileLayer { layer_idx } => {
                         let layer = &mut self.config.default.layers[layer_idx];
                         ui_layer(
                             ctx,
@@ -301,12 +224,12 @@ impl crate::gui::TrayApp for ReemApp {
                             &mut self.gui_local.layer_condition_modal,
                         );
                     }
-                    GuiMenu::ProfileMenu { profile_idx } => ui_profile(ctx, ui, self, profile_idx),
-                    GuiMenu::ProfileBaseLayerMenu { profile_idx } => {
+                    GuiMenu::Profile { profile_idx } => ui_profile(ctx, ui, self, profile_idx),
+                    GuiMenu::ProfileBaseLayer { profile_idx } => {
                         let layer = &mut self.config.profiles[profile_idx].base;
                         ui_base_layer(ctx, ui, layer, &mut self.gui_local.new_base_remap_modal);
                     }
-                    GuiMenu::ProfileLayerMenu {
+                    GuiMenu::ProfileLayer {
                         profile_idx,
                         layer_idx,
                     } => {

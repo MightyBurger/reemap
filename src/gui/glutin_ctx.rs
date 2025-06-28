@@ -59,7 +59,7 @@ impl GlutinWindowContext {
                 .expect("failed to get window handle")
                 .as_raw()
         });
-        log::debug!("raw window handle: {:?}", raw_window_handle);
+        log::debug!("raw window handle: {raw_window_handle:?}");
 
         let context_attributes =
             glutin::context::ContextAttributesBuilder::new().build(raw_window_handle);

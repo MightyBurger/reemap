@@ -151,9 +151,9 @@ fn profiles_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
     match profile_select {
         ProfileSelect::None => (),
         ProfileSelect::Default => {
-            args.gui_local.menu = GuiMenu::DefaultProfileMenu;
+            args.gui_local.menu = GuiMenu::DefaultProfile;
         }
-        ProfileSelect::Other(i) => args.gui_local.menu = GuiMenu::ProfileMenu { profile_idx: i },
+        ProfileSelect::Other(i) => args.gui_local.menu = GuiMenu::Profile { profile_idx: i },
     }
     if pointing_hand {
         ui.ctx()

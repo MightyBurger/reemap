@@ -140,7 +140,7 @@ impl std::fmt::Display for BaseRemapPolicy {
         match self {
             Self::NoRemap => write!(f, "(do not remap)"),
             Self::Remap(maps) => {
-                if maps.len() == 0 {
+                if maps.is_empty() {
                     return write!(f, "(block input)");
                 }
                 let outstr: String = itertools::Itertools::intersperse(
@@ -167,7 +167,7 @@ impl std::fmt::Display for RemapPolicy {
             Self::Defer => write!(f, "(defer to next layer)"),
             Self::NoRemap => write!(f, "(do not remap)"),
             Self::Remap(maps) => {
-                if maps.len() == 0 {
+                if maps.is_empty() {
                     return write!(f, "(block input)");
                 }
                 let outstr: String = itertools::Itertools::intersperse(
