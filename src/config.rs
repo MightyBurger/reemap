@@ -144,11 +144,11 @@ pub struct ProfileUI {
 impl Default for ProfileUI {
     fn default() -> Self {
         Self {
+            name: String::from("New Profile"),
+            enabled: true,
+            condition: settings::ProfileCondition::OriBF,
             base: settings::BaseLayer::default(),
             layers: Vec::new(),
-            condition: settings::ProfileCondition::OriBF,
-            enabled: true,
-            name: String::from("New Profile"),
         }
     }
 }
@@ -192,11 +192,11 @@ pub struct LayerUI {
 impl Default for LayerUI {
     fn default() -> Self {
         Self {
+            name: String::from("New Layer"),
             enabled: true,
             layer_type: settings::LayerType::Modifier,
             condition: Vec::new(),
             policy: EnumMap::default(),
-            name: String::from("New Layer"),
         }
     }
 }
