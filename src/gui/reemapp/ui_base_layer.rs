@@ -1,8 +1,8 @@
 use crate::buttons;
-use crate::gui::reemapp::ui_remap_tables::ui_available_remaps_table;
-use crate::gui::reemapp::ui_remap_tables::ui_single_remap_table;
+use crate::gui::reemapp::ui_remap_tables::{ui_available_remaps_table, ui_remap_outputs_table};
 use crate::gui::reemapp::{BaseRemapPolicyUI, NewBaseRemapModalOpts};
 use crate::settings;
+use smallvec::SmallVec;
 use strum::IntoEnumIterator;
 
 pub fn ui_base_layer(
@@ -89,7 +89,7 @@ pub fn ui_base_remaps_table(
             settings::BaseRemapPolicy::Remap(_) => BaseRemapPolicyUI::Remap,
         };
         new_remap_modal.outputs = match layer.policy[button] {
-            settings::BaseRemapPolicy::NoRemap => Vec::new(),
+            settings::BaseRemapPolicy::NoRemap => SmallVec::new(),
             settings::BaseRemapPolicy::Remap(ref output) => output.clone(),
         };
     }
@@ -156,7 +156,7 @@ fn ui_new_base_remap_modal(
                                 .inner_margin(4.0)
                                 .corner_radius(4.0)
                                 .show(col_1, |ui| {
-                                    ui_single_remap_table(ui, &mut modal_opts.outputs);
+                                    ui_remap_outputs_table(ui, &mut modal_opts.outputs);
                                 });
                             egui::Frame::new()
                                 .stroke(egui::Stroke {

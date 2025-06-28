@@ -1,10 +1,12 @@
 use crate::buttons;
 use crate::config::LayerUI;
 use crate::gui::reemapp::ui_remap_tables::{
-    ui_available_remaps_table, ui_available_remaps_table_hold_only, ui_single_remap_table,
+    ui_available_layer_conditions_table, ui_available_remaps_table, ui_layer_condition_table,
+    ui_remap_outputs_table,
 };
 use crate::gui::reemapp::{LayerConditionModalOpts, NewRemapModalOpts, RemapPolicyUI};
 use crate::settings;
+use smallvec::SmallVec;
 use strum::IntoEnumIterator;
 
 pub fn ui_layer(
@@ -124,7 +126,7 @@ pub fn ui_remaps_table(
             settings::RemapPolicy::Remap(_) => RemapPolicyUI::Remap,
         };
         new_remap_modal.outputs = match layer.policy[button] {
-            settings::RemapPolicy::Defer | settings::RemapPolicy::NoRemap => Vec::new(),
+            settings::RemapPolicy::Defer | settings::RemapPolicy::NoRemap => SmallVec::new(),
             settings::RemapPolicy::Remap(ref output) => output.clone(),
         };
     }
@@ -188,7 +190,7 @@ fn ui_new_remap_modal(
                                 .inner_margin(4.0)
                                 .corner_radius(4.0)
                                 .show(col_1, |ui| {
-                                    ui_single_remap_table(ui, &mut modal_opts.outputs);
+                                    ui_remap_outputs_table(ui, &mut modal_opts.outputs);
                                 });
                             egui::Frame::new()
                                 .stroke(egui::Stroke {
@@ -280,7 +282,7 @@ fn ui_layer_condition_modal(
                             .inner_margin(4.0)
                             .corner_radius(4.0)
                             .show(col_1, |ui| {
-                                ui_single_remap_table(ui, &mut modal_opts.condition);
+                                ui_layer_condition_table(ui, &mut modal_opts.condition);
                             });
                         egui::Frame::new()
                             .stroke(egui::Stroke {
@@ -290,7 +292,7 @@ fn ui_layer_condition_modal(
                             .inner_margin(4.0)
                             .corner_radius(4.0)
                             .show(col_2, |ui| {
-                                ui_available_remaps_table_hold_only(ui, &mut modal_opts.condition);
+                                ui_available_layer_conditions_table(ui, &mut modal_opts.condition);
                             });
                     });
                 });

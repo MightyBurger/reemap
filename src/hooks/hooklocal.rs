@@ -1,4 +1,5 @@
 use crate::buttons;
+use crate::settings::Output;
 use crate::settings::Settings;
 use enum_map::EnumMap;
 use std::sync::Mutex;
@@ -21,7 +22,7 @@ pub static HOOKLOCAL: Mutex<Option<HookLocalData>> = Mutex::new(None);
 pub enum HoldButtonState {
     NotHeld,
     HeldNoRemap,
-    HeldWithRemap(Vec<buttons::Button>),
+    HeldWithRemap(Output),
 }
 
 impl Default for HoldButtonState {

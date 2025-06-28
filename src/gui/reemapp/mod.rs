@@ -22,6 +22,7 @@ use crate::buttons;
 use crate::gui::reemapp::ui_status_bar::ui_status_bar;
 use crate::hooks;
 use crate::settings;
+use crate::settings::Output;
 
 const SPACING: f32 = 8.0;
 
@@ -95,7 +96,7 @@ pub struct GuiLocal {
 pub struct NewRemapModalOpts {
     modal_open: Option<buttons::Button>,
     policy: RemapPolicyUI,
-    outputs: Vec<buttons::Button>,
+    outputs: Output,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -109,7 +110,7 @@ pub struct LayerConditionModalOpts {
 pub struct NewBaseRemapModalOpts {
     modal_open: Option<buttons::Button>,
     policy: BaseRemapPolicyUI,
-    outputs: Vec<buttons::Button>,
+    outputs: Output,
 }
 
 // All the possible menus the GUI can be in at any point in time.

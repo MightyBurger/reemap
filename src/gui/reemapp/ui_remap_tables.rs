@@ -1,13 +1,7 @@
-use crate::buttons;
+use crate::{buttons, settings::Output};
 use strum::IntoEnumIterator;
 
-// This is generic, but Reemap only uses it in two cases:
-//  T is buttons::Button, or
-//  T is buttons::HoldButton
-pub fn ui_single_remap_table<T>(ui: &mut egui::Ui, remaps: &mut Vec<T>)
-where
-    T: std::fmt::Display,
-{
+pub fn ui_layer_condition_table(ui: &mut egui::Ui, remaps: &mut Vec<buttons::HoldButton>) {
     use egui_extras::{Column, TableBuilder};
     let header_height = 12.0;
     let row_height = 20.0;
@@ -60,7 +54,60 @@ where
     }
 }
 
-pub fn ui_available_remaps_table(ui: &mut egui::Ui, remaps: &mut Vec<buttons::Button>) {
+pub fn ui_remap_outputs_table(ui: &mut egui::Ui, remaps: &mut Output) {
+    use egui_extras::{Column, TableBuilder};
+    let header_height = 12.0;
+    let row_height = 20.0;
+    let btn_size = [20.0, 20.0];
+    let mut to_delete = None;
+    let mut pointing_hand = false;
+    TableBuilder::new(ui)
+        .id_salt("Single Remap Table")
+        .striped(true)
+        .auto_shrink(false)
+        .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
+        .column(Column::exact(60.0)) // Enabled
+        .column(Column::remainder()) // Profile Name
+        .header(header_height, |mut header| {
+            header.col(|ui| {
+                ui.strong("Remove");
+            });
+            header.col(|ui| {
+                ui.strong("Output");
+            });
+        })
+        .body(|mut body| {
+            for (i, button) in remaps.iter_mut().enumerate() {
+                body.row(row_height, |mut row| {
+                    row.col(|ui| {
+                        ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+                            let remove_btn_response =
+                                ui.add_sized(btn_size, egui::Button::new("✖"));
+                            if remove_btn_response.hovered() {
+                                pointing_hand = true;
+                            }
+                            if remove_btn_response.clicked() {
+                                to_delete = Some(i);
+                            };
+                        });
+                    });
+                    row.col(|ui| {
+                        ui.style_mut().interaction.selectable_labels = false;
+                        ui.label(format!("{button}"));
+                    });
+                });
+            }
+        });
+    if let Some(to_delete) = to_delete {
+        remaps.remove(to_delete);
+    }
+    if pointing_hand {
+        ui.ctx()
+            .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+    }
+}
+
+pub fn ui_available_remaps_table(ui: &mut egui::Ui, remaps: &mut Output) {
     use egui_extras::{Column, TableBuilder};
     let header_height = 12.0;
     let row_height = 20.0;
@@ -110,7 +157,7 @@ pub fn ui_available_remaps_table(ui: &mut egui::Ui, remaps: &mut Vec<buttons::Bu
     }
 }
 
-pub fn ui_available_remaps_table_hold_only(
+pub fn ui_available_layer_conditions_table(
     ui: &mut egui::Ui,
     remaps: &mut Vec<buttons::HoldButton>,
 ) {

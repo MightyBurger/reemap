@@ -1,6 +1,9 @@
 use crate::buttons::{Button, HoldButton};
 use enum_map::EnumMap;
 use serde::{Deserialize, Serialize};
+use smallvec::SmallVec;
+
+pub type Output = SmallVec<[Button; 4]>;
 
 /*
     Settings represent the run-time application state.
@@ -126,7 +129,7 @@ pub struct Layer {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum BaseRemapPolicy {
     NoRemap,
-    Remap(Vec<Button>),
+    Remap(Output),
 }
 
 impl Default for BaseRemapPolicy {
@@ -158,7 +161,7 @@ impl std::fmt::Display for BaseRemapPolicy {
 pub enum RemapPolicy {
     Defer,
     NoRemap,
-    Remap(Vec<Button>),
+    Remap(Output),
 }
 
 impl std::fmt::Display for RemapPolicy {

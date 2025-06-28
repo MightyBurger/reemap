@@ -8,7 +8,6 @@ enum-map = "2.7.3"
 num-derive = "0.4.2"
 num-traits = "0.2.19"
 strum = { version = "0.27.1", features = ["derive"] }
-arrayvec = "0.7.6"
 windows = { version = "0.61.1", features = [
     "Win32_UI_Input_KeyboardAndMouse",
     "Win32_UI_WindowsAndMessaging",
@@ -35,4 +34,8 @@ itertools = "0.14.0"
 etcetera = "0.10.0"
 serde = { version = "1.0.219", features = ["derive"] }
 ron = "0.10.1"
-native-dialog = { version = "0.9.0", features = ["windows_dpi_awareness", "windows_visual_styles"] }
+native-dialog = { version = "0.9.0", features = [
+    "windows_dpi_awareness",
+    "windows_visual_styles",
+] }
+smallvec = { version = "1.15.1", features = ["serde"] }

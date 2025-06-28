@@ -2759,7 +2759,6 @@ dependencies = [
 name = "reemap"
 version = "0.1.0"
 dependencies = [
- "arrayvec",
  "catppuccin-egui",
  "egui",
  "egui-winit",
@@ -2779,6 +2778,7 @@ dependencies = [
  "oneshot",
  "ron",
  "serde",
+ "smallvec",
  "strum",
  "thiserror 2.0.12",
  "tray-icon",
@@ -2962,9 +2962,12 @@ dependencies = [
 
 [[package]]
 name = "smallvec"
-version = "1.15.0"
+version = "1.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8917285742e9f3e1683f0a9c4e6b57960b7314d0b08d30d1ecd426713ee2eee9"
+checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "smithay-client-toolkit"
