@@ -33,75 +33,59 @@ fn main() {
 
     // Open the configuration file, or create it if it doesn't already exist.
 
+    fn display_error(text: &str, ctx: impl std::fmt::Display) {
+        let body_text = format!("{text}\n\n{ctx}");
+        native_dialog::DialogBuilder::message()
+            .set_level(native_dialog::MessageLevel::Error)
+            .set_title("Error opening Reemap")
+            .set_text(body_text)
+            .alert()
+            .show()
+            .unwrap();
+    }
+
     // Step 1
     let mut reemap_dir = etcetera::choose_base_strategy().unwrap().config_dir();
     reemap_dir.push("Reemap");
-    match reemap_dir.try_exists() {
-        Ok(true) => (),
-        Ok(false) => match std::fs::create_dir(&reemap_dir) {
+    let reemap_dir_exists = match reemap_dir.try_exists() {
+        Ok(exists) => exists,
+        Err(e) => {
+            display_error(
+                "Reemap could not check whether the configuration directory exists.",
+                e,
+            );
+            return;
+        }
+    };
+    if !reemap_dir_exists {
+        match std::fs::create_dir(&reemap_dir) {
             Ok(()) => (),
             Err(e) => {
-                native_dialog::DialogBuilder::message()
-                    .set_level(native_dialog::MessageLevel::Error)
-                    .set_title("Error creating directory")
-                    .set_text(format!(
-                        "Reemap could not create the configuration directory.\n{e}"
-                    ))
-                    .alert()
-                    .show()
-                    .unwrap();
+                display_error("Reemap could not create the configuration directory.", e);
                 return;
             }
-        },
-        Err(e) => {
-            native_dialog::DialogBuilder::message()
-                .set_level(native_dialog::MessageLevel::Error)
-                .set_title("Error opening directory")
-                .set_text(format!(
-                    "Reemap could not open the configuration directory.\n{e}"
-                ))
-                .alert()
-                .show()
-                .unwrap();
-            return;
         }
     }
 
     // Step 2
     let config_path = reemap_dir.join("remaps.ron");
-    match config_path.try_exists() {
-        Ok(true) => (),
-        Ok(false) => {
-            let default_config = config::VersionedConfig::default();
-            let default_config =
-                ron::ser::to_string_pretty(&default_config, ron::ser::PrettyConfig::new()).unwrap();
-            match std::fs::write(&config_path, default_config) {
-                Ok(()) => (),
-                Err(e) => {
-                    native_dialog::DialogBuilder::message()
-                        .set_level(native_dialog::MessageLevel::Error)
-                        .set_title("Error creating file")
-                        .set_text(format!(
-                            "Reemap could not create the configuration file.\n{e}"
-                        ))
-                        .alert()
-                        .show()
-                        .unwrap();
-                    return;
-                }
-            }
-        }
+    let config_file_exists = match config_path.try_exists() {
+        Ok(exists) => exists,
         Err(e) => {
-            native_dialog::DialogBuilder::message()
-                .set_level(native_dialog::MessageLevel::Error)
-                .set_title("Error opening config file")
-                .set_text(format!(
-                    "Reemap could not open the configuration file.\n{e}"
-                ))
-                .alert()
-                .show()
-                .unwrap();
+            display_error("Reemap could not open the configuration file.", e);
             return;
+        }
+    };
+    if !config_file_exists {
+        let default_config = config::VersionedConfig::default();
+        let default_config =
+            ron::ser::to_string_pretty(&default_config, ron::ser::PrettyConfig::new()).unwrap();
+        match std::fs::write(&config_path, default_config) {
+            Ok(()) => (),
+            Err(e) => {
+                display_error("Reemap could not create the configuration file.", e);
+                return;
+            }
         }
     }
 
@@ -109,15 +93,7 @@ fn main() {
     let config_str = match std::fs::read_to_string(&config_path) {
         Ok(s) => s,
         Err(e) => {
-            native_dialog::DialogBuilder::message()
-                .set_level(native_dialog::MessageLevel::Error)
-                .set_title("Error reading config file")
-                .set_text(format!(
-                    "Reemap could not read the configuration file.\n{e}"
-                ))
-                .alert()
-                .show()
-                .unwrap();
+            display_error("Reemap could not read the configuration file.", e);
             return;
         }
     };
