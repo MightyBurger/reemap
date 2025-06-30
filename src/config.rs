@@ -3,7 +3,8 @@ use enum_map::EnumMap;
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 
-pub type Output = SmallVec<[buttons::Button; 8]>;
+pub const REMAP_SMALLVEC_LEN: usize = 8;
+pub type Output = SmallVec<[buttons::Button; REMAP_SMALLVEC_LEN]>;
 
 // -------------------- VersionedConfig --------------------
 // Preparing for the future when the Config struct may change.

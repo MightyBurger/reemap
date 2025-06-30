@@ -28,8 +28,8 @@ pub fn spawn_scoped<'scope, 'env>(
 // Run the hook thread and return a proxy through the oneshot.
 // Panics if the hook thread is already running.
 pub fn run(sender: oneshot::Sender<HookthreadProxy>, config: config::Config) {
-    use WindowsAndMessaging as WM;
     use num_traits::FromPrimitive;
+    use WindowsAndMessaging as WM;
 
     static RUNNING: Mutex<bool> = Mutex::new(false);
 
