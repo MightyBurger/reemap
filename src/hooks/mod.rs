@@ -28,8 +28,8 @@ pub fn spawn_scoped<'scope, 'env>(
 // Run the hook thread and return a proxy through the oneshot.
 // Panics if the hook thread is already running.
 pub fn run(sender: oneshot::Sender<HookthreadProxy>, config: config::Config) {
-    use num_traits::FromPrimitive;
     use WindowsAndMessaging as WM;
+    use num_traits::FromPrimitive;
 
     static RUNNING: Mutex<bool> = Mutex::new(false);
 
@@ -82,14 +82,13 @@ pub fn run(sender: oneshot::Sender<HookthreadProxy>, config: config::Config) {
                     let raw = raw_usize as *mut config::Config;
                     let config_boxed = Box::from_raw(raw);
                     let config = *config_boxed;
-                    println!("Updating configuration! {:#?}", &config);
 
                     let mut hook_local = HOOKLOCAL.lock().expect("mutex poisoned");
                     let hook_local = hook_local
                         .as_mut()
                         .expect("local data should have been initialized");
-                    hook_local.config = config;
-                    hook_local.active_profile = ActiveProfile::default(); // TODO: fix this!!
+
+                    hook_local.update_config(config);
                 }
                 None => {
                     let _ = WM::TranslateMessage(&lpmsg);

@@ -18,7 +18,46 @@ pub fn ui_status_bar(_ctx: &egui::Context, ui: &mut egui::Ui, app: &mut super::R
         cross_justify: false,
     };
     ui.with_layout(left_to_right, |ui| {
-        ui.label("Reemap");
+        use crate::hooks::hooklocal::{ActiveProfile, HOOKLOCAL};
+        let mut hook_local = HOOKLOCAL.lock().expect("mutex poisoned");
+        let hook_local = hook_local
+            .as_mut()
+            .expect("local data should have been initialized");
+
+        let (current_layers, current_layer_actives): (&[config::Layer], &[bool]) =
+            match hook_local.active_profile {
+                ActiveProfile::Default => (
+                    &hook_local.config.default.layers,
+                    &mut hook_local.active_layers_default,
+                ),
+                ActiveProfile::Other(profile_idx) => (
+                    &hook_local.config.profiles[profile_idx].layers,
+                    &mut hook_local.active_layers_profile[profile_idx],
+                ),
+            };
+
+        let profile_str = match hook_local.active_profile {
+            ActiveProfile::Default => "Default Profile".to_string(),
+            ActiveProfile::Other(profile_idx) => {
+                hook_local.config.profiles[profile_idx].name.clone()
+            }
+        };
+
+        let active_layers_str: String = if current_layer_actives.iter().all(|active| !active) {
+            String::from("(no active layers)")
+        } else {
+            itertools::Itertools::intersperse(
+                current_layers
+                    .iter()
+                    .zip(current_layer_actives)
+                    .filter(|(_, active)| **active)
+                    .map(|(layer, _)| layer.name.clone()),
+                String::from(", "),
+            )
+            .collect()
+        };
+
+        ui.label(format!("{profile_str} | {active_layers_str}"));
     });
     ui.with_layout(right_to_left, |ui| {
         if ui.button("Apply").clicked() {

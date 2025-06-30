@@ -350,6 +350,7 @@ On tap:
 // Returns "true" if the input is intercepted.
 // Refer to the above pseudocode.
 fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
+    println!("{hold_button} down");
     let mut hook_local = HOOKLOCAL.lock().expect("mutex poisoned");
     let hook_local = hook_local
         .as_mut()
@@ -422,6 +423,14 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
             }
         }
     }
+    // TODO remove debug
+    let to_print: String = current_layers
+        .iter()
+        .zip(current_layer_actives.iter())
+        .filter(|(_, active)| **active)
+        .map(|(layer, _)| layer.name.clone())
+        .collect();
+    println!("active: {to_print}");
 
     // Step 3
     // Identify the appropriate remap and apply it. At the same time, set button_state.
@@ -483,6 +492,7 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
 // Returns "true" if the input is intercepted.
 // Refer to the above pseudocode.
 fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
+    println!("{hold_button} up");
     let mut hook_local = HOOKLOCAL.lock().expect("mutex poisoned");
     let hook_local = hook_local
         .as_mut()
@@ -518,6 +528,14 @@ fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
             }
         }
     }
+    // TODO remove debug
+    let to_print: String = current_layers
+        .iter()
+        .zip(current_layer_actives.iter())
+        .filter(|(_, active)| **active)
+        .map(|(layer, _)| layer.name.clone())
+        .collect();
+    println!("active: {to_print}");
 
     // Step 2
     // See what this button was mapped to.
@@ -542,7 +560,6 @@ fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
             true
         }
     };
-
     // Step 3
     hook_local.button_state[hold_button] = HoldButtonState::NotHeld;
     remapped
@@ -557,6 +574,8 @@ fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
 // Returns "true" if the input is intercepted.
 // Refer to the above pseudocode.
 fn intercept_tap_input(tap_button: TapButton) -> bool {
+    println!("{tap_button} tap");
+    println!("tap");
     // Layers are not allowed to depend on tap inputs.
     // Additionally, we do not try to remember which tap inputs are "held", because it is
     // meaningless to "hold" a scroll wheel button.
