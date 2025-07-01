@@ -172,7 +172,7 @@ unsafe extern "system" fn mouse_hook(
             action: Up,
         },
         WM::WM_XBUTTONDOWN => {
-            let higher_word: u16 = ((hookstruct.mouseData & 0xFF00) >> 16) as u16;
+            let higher_word: u16 = ((hookstruct.mouseData & 0xFFFF0000) >> 16) as u16;
             match higher_word {
                 WM::XBUTTON1 => Mouse {
                     button: MouseButton::X1,
@@ -195,7 +195,7 @@ unsafe extern "system" fn mouse_hook(
             }
         }
         WM::WM_XBUTTONUP => {
-            let higher_word: u16 = ((hookstruct.mouseData & 0xFF00) >> 16) as u16;
+            let higher_word: u16 = ((hookstruct.mouseData & 0xFFFF0000) >> 16) as u16;
             match higher_word {
                 WM::XBUTTON1 => Mouse {
                     button: MouseButton::X1,
@@ -218,7 +218,7 @@ unsafe extern "system" fn mouse_hook(
             }
         }
         WM::WM_MOUSEWHEEL => {
-            let higher_word: u16 = ((hookstruct.mouseData & 0xFF00) >> 16) as u16;
+            let higher_word: u16 = ((hookstruct.mouseData & 0xFFFF0000) >> 16) as u16;
             let higher_word_signed: i16 = higher_word as i16;
             if higher_word_signed > 0 {
                 Wheel(MouseWheelButton::Up)
@@ -236,7 +236,7 @@ unsafe extern "system" fn mouse_hook(
             }
         }
         WM::WM_MOUSEHWHEEL => {
-            let higher_word: u16 = ((hookstruct.mouseData & 0xFF00) >> 16) as u16;
+            let higher_word: u16 = ((hookstruct.mouseData & 0xFFFF0000) >> 16) as u16;
             let higher_word_signed: i16 = higher_word as i16;
             if higher_word_signed > 0 {
                 Wheel(MouseWheelButton::HorzRight)
