@@ -10,6 +10,7 @@ mod ui_status_bar;
 use std::path::PathBuf;
 
 use breadcrumb::breadcrumb;
+use tracing::instrument;
 use ui_base_layer::ui_base_layer;
 use ui_default_profile::ui_default_profile;
 use ui_layer::ui_layer;
@@ -26,6 +27,7 @@ use crate::hooks;
 const SPACING: f32 = 8.0;
 
 // Thought the name was clever. Don't get too mad, please.
+#[derive(Debug)]
 pub struct ReemApp {
     pub hookthread_proxy: hooks::HookthreadProxy,
     pub config: config::Config,
@@ -142,6 +144,7 @@ impl Default for GuiMenu {
 }
 
 impl crate::gui::TrayApp for ReemApp {
+    #[instrument(skip_all, name = "ui")]
     fn update(&mut self, ctx: &egui::Context) {
         // catppuccin_egui::set_theme(ctx, catppuccin_egui::MACCHIATO);
         egui::TopBottomPanel::bottom("Bottom Panel").show(ctx, |ui| {

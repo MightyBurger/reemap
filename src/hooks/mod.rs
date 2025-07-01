@@ -4,6 +4,7 @@ pub mod input;
 use crate::config;
 use crate::hooks::hooklocal::ActiveProfile;
 use hooklocal::HOOKLOCAL;
+use tracing::{debug, error, info, instrument, warn};
 
 use std::sync::Mutex;
 
@@ -27,7 +28,9 @@ pub fn spawn_scoped<'scope, 'env>(
 
 // Run the hook thread and return a proxy through the oneshot.
 // Panics if the hook thread is already running.
+#[instrument(skip_all, name = "hooks")]
 pub fn run(sender: oneshot::Sender<HookthreadProxy>, config: config::Config) {
+    debug!("entering hook thread");
     use WindowsAndMessaging as WM;
     use num_traits::FromPrimitive;
 
@@ -78,6 +81,7 @@ pub fn run(sender: oneshot::Sender<HookthreadProxy>, config: config::Config) {
                     WM::PostQuitMessage(0);
                 }
                 Some(HookMessage::Update) => {
+                    debug!("updating config");
                     let Foundation::WPARAM(raw_usize) = lpmsg.wParam;
                     let raw = raw_usize as *mut config::Config;
                     let config_boxed = Box::from_raw(raw);
@@ -100,6 +104,7 @@ pub fn run(sender: oneshot::Sender<HookthreadProxy>, config: config::Config) {
 
     let mut running = RUNNING.lock().unwrap();
     *running = false;
+    debug!("exiting hook thread");
 }
 
 #[derive(

@@ -90,7 +90,7 @@ fn get_foreground_window() -> String {
     let hwnd = unsafe { WM::GetForegroundWindow() };
     let mut title_u16 = [0u16; CAP];
     let len = unsafe { WM::GetWindowTextW(hwnd, &mut title_u16) };
-    let len = std::cmp::max(len as usize, CAP - 1);
+    let len = std::cmp::min(len as usize, CAP - 1);
     String::from_utf16_lossy(&title_u16[0..len])
 }
 

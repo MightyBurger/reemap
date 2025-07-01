@@ -6,8 +6,11 @@ mod gui;
 mod hooks;
 
 use etcetera::BaseStrategy;
+use tracing::{error, info, instrument, warn};
 
+#[instrument]
 fn main() {
+    tracing_subscriber::fmt::init();
     /*
         Initialization sequence:
 
@@ -35,10 +38,11 @@ fn main() {
         native_dialog::DialogBuilder::message()
             .set_level(native_dialog::MessageLevel::Error)
             .set_title("Error opening Reemap")
-            .set_text(body_text)
+            .set_text(&body_text)
             .alert()
             .show()
             .unwrap();
+        error!("error opening Reemap: {}", &body_text);
     }
 
     // Step 1
@@ -97,7 +101,8 @@ fn main() {
 
     let versioned_config: config::VersionedConfig = match ron::from_str(&config_str) {
         Ok(c) => c,
-        Err(_) => {
+        Err(e) => {
+            warn!("failed to parse config file: {e}");
             let regenerate = native_dialog::DialogBuilder::message()
                 .set_level(native_dialog::MessageLevel::Warning)
                 .set_title("Corrupted configuration file")
@@ -112,8 +117,10 @@ fn main() {
                 .show()
                 .unwrap();
             if regenerate {
+                info!("going forward with the default configuration");
                 config::VersionedConfig::default()
             } else {
+                info!("exiting now");
                 return;
             }
         }

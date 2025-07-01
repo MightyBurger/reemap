@@ -8,6 +8,7 @@ use crate::buttons::{Button, HoldButton, TapButton};
 
 use crate::hooks::hooklocal::{ActiveProfile, HOOKLOCAL, HoldButtonState};
 
+use tracing::{debug, instrument, warn};
 use windows::Win32::Foundation;
 use windows::Win32::UI::Input::KeyboardAndMouse;
 use windows::Win32::UI::WindowsAndMessaging;
@@ -39,6 +40,7 @@ pub unsafe fn remove_hook(hhk: WindowsAndMessaging::HHOOK) -> Result<(), windows
 // This is a LowLevelKeyboardProc.
 // https://learn.microsoft.com/en-us/windows/win32/winmsg/lowlevelkeyboardproc
 #[allow(non_snake_case)]
+#[instrument(skip_all, name = "keybd")]
 unsafe extern "system" fn keybd_hook(
     nCode: i32,
     wParam: Foundation::WPARAM,
@@ -74,6 +76,7 @@ unsafe extern "system" fn keybd_hook(
 
     // If we don't know about this button, let's just forward it along uninterrupted.
     let Some(key) = KeyButton::from_vk(hookstruct.vkCode as u8) else {
+        warn!(hookstruct.vkCode, "unknown VK 0x{:02x}", hookstruct.vkCode);
         unsafe {
             return WM::CallNextHookEx(None, nCode, wParam, lParam);
         }
@@ -95,6 +98,7 @@ unsafe extern "system" fn keybd_hook(
 // This is a LowLevelMouseProc.
 // https://learn.microsoft.com/en-us/windows/win32/winmsg/lowlevelmouseproc
 #[allow(non_snake_case)]
+#[instrument(skip_all, name = "mouse")]
 unsafe extern "system" fn mouse_hook(
     nCode: i32,
     wParam: Foundation::WPARAM,
@@ -128,10 +132,12 @@ unsafe extern "system" fn mouse_hook(
         }
     }
 
+    #[derive(Debug)]
     enum Action {
         Down,
         Up,
     }
+    #[derive(Debug)]
     enum MouseOrWheel {
         Mouse { button: MouseButton, action: Action },
         Wheel(MouseWheelButton),
@@ -139,6 +145,7 @@ unsafe extern "system" fn mouse_hook(
     use Action::{Down, Up};
     use MouseOrWheel::{Mouse, Wheel};
 
+    debug!("param0: {}", wParam.0);
     let button: MouseOrWheel = match wParam.0 as u32 {
         WM::WM_LBUTTONDOWN => Mouse {
             button: MouseButton::Left,
@@ -177,6 +184,10 @@ unsafe extern "system" fn mouse_hook(
                 },
                 _ => {
                     // Malformed input; ignore it.
+                    warn!(
+                        hookstruct.mouseData,
+                        "ignoring malformed XBUTTONUP data 0x{:08x}", hookstruct.mouseData
+                    );
                     unsafe {
                         return WM::CallNextHookEx(None, nCode, wParam, lParam);
                     }
@@ -196,6 +207,10 @@ unsafe extern "system" fn mouse_hook(
                 },
                 _ => {
                     // Malformed input; ignore it.
+                    warn!(
+                        hookstruct.mouseData,
+                        "ignoring malformed XBUTTONUP data 0x{:08x}", hookstruct.mouseData
+                    );
                     unsafe {
                         return WM::CallNextHookEx(None, nCode, wParam, lParam);
                     }
@@ -211,6 +226,10 @@ unsafe extern "system" fn mouse_hook(
                 Wheel(MouseWheelButton::Down)
             } else {
                 // Malformed input; ignore it.
+                warn!(
+                    hookstruct.mouseData,
+                    "ignoring malformed WM_MOUSEWHEEL data 0x{:08x}", hookstruct.mouseData
+                );
                 unsafe {
                     return WM::CallNextHookEx(None, nCode, wParam, lParam);
                 }
@@ -225,6 +244,10 @@ unsafe extern "system" fn mouse_hook(
                 Wheel(MouseWheelButton::HorzLeft)
             } else {
                 // Malformed input; ignore it.
+                warn!(
+                    hookstruct.mouseData,
+                    "ignoring malformed WM_MOUSEWHEEL data 0x{:08x}", hookstruct.mouseData
+                );
                 unsafe {
                     return WM::CallNextHookEx(None, nCode, wParam, lParam);
                 }
@@ -239,6 +262,7 @@ unsafe extern "system" fn mouse_hook(
         }
     };
 
+    debug!("button {:?}", &button);
     let intercepted = match button {
         Mouse {
             button,
@@ -349,8 +373,9 @@ On tap:
 
 // Returns "true" if the input is intercepted.
 // Refer to the above pseudocode.
+#[instrument(name = "btn_down")]
 fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
-    println!("{hold_button} down");
+    debug!("got button down");
     let mut hook_local = HOOKLOCAL.lock().expect("mutex poisoned");
     let hook_local = hook_local
         .as_mut()
@@ -423,14 +448,6 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
             }
         }
     }
-    // TODO remove debug
-    let to_print: String = current_layers
-        .iter()
-        .zip(current_layer_actives.iter())
-        .filter(|(_, active)| **active)
-        .map(|(layer, _)| layer.name.clone())
-        .collect();
-    println!("active: {to_print}");
 
     // Step 3
     // Identify the appropriate remap and apply it. At the same time, set button_state.
@@ -491,8 +508,9 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
 
 // Returns "true" if the input is intercepted.
 // Refer to the above pseudocode.
+#[instrument(name = "btn_up")]
 fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
-    println!("{hold_button} up");
+    debug!("got button up");
     let mut hook_local = HOOKLOCAL.lock().expect("mutex poisoned");
     let hook_local = hook_local
         .as_mut()
@@ -528,14 +546,6 @@ fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
             }
         }
     }
-    // TODO remove debug
-    let to_print: String = current_layers
-        .iter()
-        .zip(current_layer_actives.iter())
-        .filter(|(_, active)| **active)
-        .map(|(layer, _)| layer.name.clone())
-        .collect();
-    println!("active: {to_print}");
 
     // Step 2
     // See what this button was mapped to.
@@ -573,9 +583,9 @@ fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
 
 // Returns "true" if the input is intercepted.
 // Refer to the above pseudocode.
+#[instrument(name = "tap")]
 fn intercept_tap_input(tap_button: TapButton) -> bool {
-    println!("{tap_button} tap");
-    println!("tap");
+    debug!("got tap input");
     // Layers are not allowed to depend on tap inputs.
     // Additionally, we do not try to remember which tap inputs are "held", because it is
     // meaningless to "hold" a scroll wheel button.
