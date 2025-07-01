@@ -2,9 +2,8 @@ pub mod hooklocal;
 pub mod input;
 
 use crate::config;
-use crate::hooks::hooklocal::ActiveProfile;
 use hooklocal::HOOKLOCAL;
-use tracing::{debug, error, info, instrument, warn};
+use tracing::{debug, info, instrument, warn};
 
 use std::sync::Mutex;
 
@@ -81,7 +80,7 @@ pub fn run(sender: oneshot::Sender<HookthreadProxy>, config: config::Config) {
                     WM::PostQuitMessage(0);
                 }
                 Some(HookMessage::Update) => {
-                    debug!("updating config");
+                    info!("updating config");
                     let Foundation::WPARAM(raw_usize) = lpmsg.wParam;
                     let raw = raw_usize as *mut config::Config;
                     let config_boxed = Box::from_raw(raw);

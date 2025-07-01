@@ -4,6 +4,7 @@ use crate::config::REMAP_SMALLVEC_LEN;
 use enum_map::EnumMap;
 use smallvec::SmallVec;
 use std::sync::Mutex;
+use tracing::info;
 
 /*
     This is the runtime storage for the Hook thread.
@@ -54,7 +55,7 @@ impl HookLocalData {
     /// Check which window is in the foreground and update the active profile accordingly.
     pub fn update_active_profile(&mut self) {
         let foreground = get_foreground_window();
-        self.active_profile = ActiveProfile::Default;
+        let mut new_profile = ActiveProfile::Default;
         for (i, profile_condition) in self
             .config
             .profiles
@@ -66,21 +67,31 @@ impl HookLocalData {
             match profile_condition {
                 config::ProfileCondition::OriBF => {
                     if foreground == "Ori And The Blind Forest: Definitive Edition" {
-                        self.active_profile = ActiveProfile::Other(i);
+                        new_profile = ActiveProfile::Other(i);
                     }
                 }
                 config::ProfileCondition::OriWotW => {
                     if foreground == "OriAndTheWilloftheWisps" {
-                        self.active_profile = ActiveProfile::Other(i);
+                        new_profile = ActiveProfile::Other(i);
                     }
                 }
                 config::ProfileCondition::Other(title) => {
                     if foreground == *title {
-                        self.active_profile = ActiveProfile::Other(i);
+                        new_profile = ActiveProfile::Other(i);
                     }
                 }
             }
         }
+        if self.active_profile != new_profile {
+            match new_profile {
+                ActiveProfile::Default => info!(?new_profile, "switching to default profile"),
+                ActiveProfile::Other(profile_idx) => info!(
+                    ?new_profile,
+                    "switching to profile {}", &self.config.profiles[profile_idx].name
+                ),
+            }
+        }
+        self.active_profile = new_profile;
     }
 }
 
