@@ -8,7 +8,7 @@ use crate::buttons::{Button, HoldButton, TapButton};
 
 use crate::hooks::hooklocal::{ActiveProfile, HOOKLOCAL, HoldButtonState};
 
-use tracing::{debug, instrument, warn};
+use tracing::{instrument, trace, warn};
 use windows::Win32::Foundation;
 use windows::Win32::UI::Input::KeyboardAndMouse;
 use windows::Win32::UI::WindowsAndMessaging;
@@ -145,7 +145,6 @@ unsafe extern "system" fn mouse_hook(
     use Action::{Down, Up};
     use MouseOrWheel::{Mouse, Wheel};
 
-    debug!("param0: {}", wParam.0);
     let button: MouseOrWheel = match wParam.0 as u32 {
         WM::WM_LBUTTONDOWN => Mouse {
             button: MouseButton::Left,
@@ -262,7 +261,6 @@ unsafe extern "system" fn mouse_hook(
         }
     };
 
-    debug!("button {:?}", &button);
     let intercepted = match button {
         Mouse {
             button,
@@ -375,7 +373,7 @@ On tap:
 // Refer to the above pseudocode.
 #[instrument(name = "btn_down")]
 fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
-    debug!("got button down");
+    trace!("got button down");
     let mut hook_local = HOOKLOCAL.lock().expect("mutex poisoned");
     let hook_local = hook_local
         .as_mut()
@@ -510,7 +508,7 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
 // Refer to the above pseudocode.
 #[instrument(name = "btn_up")]
 fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
-    debug!("got button up");
+    trace!("got button up");
     let mut hook_local = HOOKLOCAL.lock().expect("mutex poisoned");
     let hook_local = hook_local
         .as_mut()
@@ -585,7 +583,7 @@ fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
 // Refer to the above pseudocode.
 #[instrument(name = "tap")]
 fn intercept_tap_input(tap_button: TapButton) -> bool {
-    debug!("got tap input");
+    trace!("got tap input");
     // Layers are not allowed to depend on tap inputs.
     // Additionally, we do not try to remember which tap inputs are "held", because it is
     // meaningless to "hold" a scroll wheel button.
