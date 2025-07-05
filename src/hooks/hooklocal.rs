@@ -1,23 +1,26 @@
 use crate::buttons;
 use crate::config;
 use crate::config::REMAP_SMALLVEC_LEN;
+use crate::hooks::query_foreground::ForegroundWindowInfo;
+use crate::hooks::query_foreground::get_foreground_window;
 use enum_map::EnumMap;
 use smallvec::SmallVec;
-use std::path::PathBuf;
 use std::sync::Mutex;
-use tracing::{debug, info, instrument, warn};
+use tracing::{info, warn};
 
 /*
     This is the runtime storage for the Hook thread.
     I also dislike global variables. Unfortunately, the nature of Windows hook callbacks make it
     necessary.
 
-    Everything that touches this is in the hooks module:
-        hooks/mod.rs:   initializes HOOKLOCAL on startup,
-                        updates HOOKLOCAL.settings on receipt of an Update message
-        hooks/input.rs: reads and updates HOOKLOCAL on every button press and release
-
-    TODO: see about swapping the Mutex with something else
+    Everything that touches this variable is in the hooks module:
+        hooks/input.rs (the main user of this data):
+            -   acquires the mutex and changes HOOKLOCAL on every button press and release
+        hooks/mod.rs:
+            -   initializes HOOKLOCAL on startup
+            -   acquires the mutex and calls .update_config() on recepit of an Update message
+            -   acquires the mutex and calls .update_new_foreground() on receipt of a Check
+                Foreground Window message
 */
 pub static HOOKLOCAL: Mutex<Option<HookLocalData>> = Mutex::new(None);
 
@@ -39,8 +42,12 @@ impl HookLocalData {
         result
     }
 
+    /// Change the remaps to the provided configuration
     pub fn update_config(&mut self, config: config::Config) {
         use smallvec::smallvec;
+
+        // Set self.config, .active_profile, .active_layers_default, and .active_layers_profile.
+        // Note: it is not necessary to set button_state.
 
         self.config = config;
         self.active_layers_default = smallvec![false; self.config.default.layers.len()];
@@ -50,15 +57,24 @@ impl HookLocalData {
             .iter()
             .map(|profile| smallvec![false; profile.layers.len()])
             .collect();
-        self.update_active_profile();
+
+        match get_foreground_window() {
+            Ok(info) => {
+                self.update_from_foreground(info);
+            }
+            Err(e) => {
+                warn!(
+                    ?e,
+                    "failed to get foreground window; assuming default profile"
+                );
+                self.active_profile = ActiveProfile::Default;
+            }
+        }
     }
 
-    /// Check which window is in the foreground and update the active profile accordingly.
-    pub fn update_active_profile(&mut self) {
-        let Some(ForegroundWindowInfo { title, process }) = get_foreground_window() else {
-            warn!("failed to get foreground window; not updating the active profile");
-            return;
-        };
+    /// Update the active profile using information about the current foreground window.
+    pub fn update_from_foreground(&mut self, info: ForegroundWindowInfo) {
+        let ForegroundWindowInfo { title, process } = info;
         let mut new_profile = ActiveProfile::Default;
         for (i, profile_condition) in self
             .config
@@ -106,101 +122,6 @@ impl HookLocalData {
         }
         self.active_profile = new_profile;
     }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-struct ForegroundWindowInfo {
-    title: String,
-    process: String,
-}
-
-#[instrument]
-fn get_foreground_window() -> Option<ForegroundWindowInfo> {
-    use windows::Win32::UI::WindowsAndMessaging as WM;
-    debug!("getting foreground window");
-
-    let hwnd = unsafe { WM::GetForegroundWindow() };
-    if hwnd.is_invalid() {
-        warn!("foreground window handle is invalid");
-        return None;
-    }
-
-    let title = unsafe { get_window_title(hwnd) }?;
-    debug!(?title, "got foreground title");
-    let process = unsafe { get_process_name(hwnd) }?;
-    debug!(?process, "got foreground process");
-
-    Some(ForegroundWindowInfo { title, process })
-}
-
-// SAFETY: hwnd must be valid
-#[instrument]
-unsafe fn get_window_title(hwnd: windows::Win32::Foundation::HWND) -> Option<String> {
-    use windows::Win32::UI::WindowsAndMessaging as WM;
-
-    const CAP: usize = 512;
-
-    let mut title = [0u16; CAP];
-    let len = unsafe { WM::GetWindowTextW(hwnd, &mut title) };
-    if len == 0 {
-        warn!("window text is empty");
-        return None;
-    }
-    let len = std::cmp::min(len as usize, CAP - 1);
-    Some(String::from_utf16_lossy(&title[0..len]))
-}
-
-// SAFETY: hwnd must be valid
-#[instrument]
-unsafe fn get_process_name(hwnd: windows::Win32::Foundation::HWND) -> Option<String> {
-    use windows::Win32::System::Threading as TH;
-    use windows::Win32::UI::WindowsAndMessaging as WM;
-    use windows::core::PWSTR;
-
-    const CAP: usize = 512;
-
-    let mut lpdwprocessid = 0u32;
-    let lpdwprocessid_ptr: *mut u32 = &mut lpdwprocessid;
-    let dwprocessid = unsafe { WM::GetWindowThreadProcessId(hwnd, Some(lpdwprocessid_ptr)) };
-    if dwprocessid == 0 {
-        warn!("thread id is invalid");
-        return None;
-    }
-
-    let hprocess = unsafe {
-        match TH::OpenProcess(TH::PROCESS_QUERY_LIMITED_INFORMATION, false, lpdwprocessid) {
-            Ok(hprocess) => hprocess,
-            Err(e) => {
-                warn!("failed to open process: {}", e);
-                return None;
-            }
-        }
-    };
-
-    let mut title = [0u16; CAP];
-    let mut len = (CAP - 1) as u32;
-    match unsafe {
-        TH::QueryFullProcessImageNameW(
-            hprocess,
-            TH::PROCESS_NAME_WIN32,
-            PWSTR(&mut title as *mut u16),
-            &mut len,
-        )
-    } {
-        Ok(()) => (),
-        Err(e) => {
-            warn!("error querying process image name: {e}");
-            return None;
-        }
-    };
-    let len = std::cmp::min(len as usize, CAP - 1);
-    let title = String::from_utf16_lossy(&title[0..len]);
-    let title = PathBuf::from(title);
-    let Some(title) = title.file_name() else {
-        warn!("could not get as filename");
-        return None;
-    };
-    Some(String::from(title.to_string_lossy()))
 }
 
 // -------------------- ActiveProfile --------------------

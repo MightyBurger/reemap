@@ -374,12 +374,12 @@ On tap:
 #[instrument(name = "btn_down")]
 fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
     trace!("got button down");
-    let mut hook_local = HOOKLOCAL.lock().expect("mutex poisoned");
-    let hook_local = hook_local
+
+    trace!("locking HOOKLOCAL");
+    let mut hook_local_guard = HOOKLOCAL.lock().expect("mutex poisoned");
+    let hook_local = hook_local_guard
         .as_mut()
         .expect("local data should have been initialized");
-
-    hook_local.update_active_profile();
 
     let (current_base, current_layers, current_layer_actives): (&BaseLayer, &[Layer], &mut [bool]) =
         match hook_local.active_profile {
@@ -477,7 +477,7 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
             }
         }
     }
-    match &current_base.policy[Button::from(hold_button)] {
+    let intercepted = match &current_base.policy[Button::from(hold_button)] {
         BaseRemapPolicy::Remap(output) => {
             let target_buttons: Vec<KeyboardAndMouse::INPUT> = output
                 .iter()
@@ -495,7 +495,12 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
             hook_local.button_state[hold_button] = HoldButtonState::HeldNoRemap;
             false
         }
-    }
+    };
+
+    trace!("unlocking HOOKLOCAL");
+    drop(hook_local_guard);
+
+    intercepted
 }
 
 /*
@@ -509,12 +514,12 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
 #[instrument(name = "btn_up")]
 fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
     trace!("got button up");
-    let mut hook_local = HOOKLOCAL.lock().expect("mutex poisoned");
-    let hook_local = hook_local
+
+    trace!("locking HOOKLOCAL");
+    let mut hook_local_guard = HOOKLOCAL.lock().expect("mutex poisoned");
+    let hook_local = hook_local_guard
         .as_mut()
         .expect("local data should have been initialized");
-
-    hook_local.update_active_profile();
 
     let (current_layers, current_layer_actives): (&[Layer], &mut [bool]) =
         match hook_local.active_profile {
@@ -549,7 +554,7 @@ fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
     // See what this button was mapped to.
     // Note we never consult the profile. The original decision of what a button maps to is only
     // made when the button is first pressed.
-    let remapped = match &hook_local.button_state[hold_button] {
+    let intercepted = match &hook_local.button_state[hold_button] {
         // This button down was not intercepted, so let's not intercept the button up.
         HoldButtonState::HeldNoRemap | HoldButtonState::NotHeld => false,
 
@@ -570,7 +575,11 @@ fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
     };
     // Step 3
     hook_local.button_state[hold_button] = HoldButtonState::NotHeld;
-    remapped
+
+    trace!("unlocking HOOKLOCAL");
+    drop(hook_local_guard);
+
+    intercepted
 }
 
 /*
@@ -589,12 +598,11 @@ fn intercept_tap_input(tap_button: TapButton) -> bool {
     // meaningless to "hold" a scroll wheel button.
     // This makes the job much easier.
 
-    let mut hook_local = HOOKLOCAL.lock().expect("mutex poisoned");
-    let hook_local = hook_local
+    trace!("locking HOOKLOCAL");
+    let mut hook_local_guard = HOOKLOCAL.lock().expect("mutex poisoned");
+    let hook_local = hook_local_guard
         .as_mut()
         .expect("local data should have been initialized");
-
-    hook_local.update_active_profile();
 
     let (current_base, current_layers, current_layer_actives): (&BaseLayer, &[Layer], &mut [bool]) =
         match hook_local.active_profile {
@@ -639,7 +647,7 @@ fn intercept_tap_input(tap_button: TapButton) -> bool {
             }
         }
     }
-    match &current_base.policy[Button::from(tap_button)] {
+    let intercepted = match &current_base.policy[Button::from(tap_button)] {
         BaseRemapPolicy::Remap(output) => {
             let target_buttons: Vec<KeyboardAndMouse::INPUT> = output
                 .iter()
@@ -657,7 +665,12 @@ fn intercept_tap_input(tap_button: TapButton) -> bool {
             true
         }
         BaseRemapPolicy::NoRemap => false,
-    }
+    };
+
+    trace!("unlocking HOOKLOCAL");
+    drop(hook_local_guard);
+
+    intercepted
 }
 
 fn send_input_batch(input: &[KeyboardAndMouse::INPUT]) {

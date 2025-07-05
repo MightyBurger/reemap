@@ -1,15 +1,21 @@
-pub mod hooklocal;
-pub mod input;
+mod foreground_hook;
+mod hooklocal;
+mod input_hooks;
+mod minimize_end_hook;
+mod query_foreground;
 
 use crate::config;
+use crate::hooks::query_foreground::get_foreground_window;
 use hooklocal::HOOKLOCAL;
-use tracing::{debug, info, instrument, warn};
+use tracing::{debug, info, instrument, trace, warn};
 
 use std::sync::Mutex;
 
 use windows::Win32::Foundation;
 use windows::Win32::System::Threading;
 use windows::Win32::UI::WindowsAndMessaging;
+
+const CHECK_FOREGROUND_INTERVAL_MS: u32 = 500;
 
 // The main way to launch the hook thread. Pass in a std::thread::scope, and this function
 // will spawn the thread to handle all the hooks involved in Reemap. It will return a proxy to the
@@ -44,8 +50,10 @@ pub fn run(sender: oneshot::Sender<HookthreadProxy>, config: config::Config) {
     std::mem::drop(running);
 
     // Initialize the persistent thread data.
+    trace!("locking HOOKLOCAL");
     let mut hooklocal = HOOKLOCAL.lock().unwrap();
     *hooklocal = Some(hooklocal::HookLocalData::init_settings(config));
+    trace!("unlocking HOOKLOCAL");
     std::mem::drop(hooklocal);
 
     // Force Windows to create a message queue for this thread. We want to have one before we
@@ -58,10 +66,22 @@ pub fn run(sender: oneshot::Sender<HookthreadProxy>, config: config::Config) {
     // Create a proxy and give it back to whoever spawned us.
     let thread_id = unsafe { Threading::GetCurrentThreadId() };
     let proxy = HookthreadProxy { thread_id };
-    sender.send(proxy).unwrap();
+    sender.send(proxy.clone()).unwrap();
 
-    let mouse_hhk = input::set_mouse_hook().unwrap();
-    let keybd_hhk = input::set_keybd_hook().unwrap();
+    // Create a timer with which to check the foreground window.
+    // It is the only polling done in Reemap, and it is only done as a backup.
+    // Windows is not perfectly reliable in sending events when the foreground window changes.
+    let timer_id = unsafe { WM::SetTimer(None, 0, CHECK_FOREGROUND_INTERVAL_MS, None) };
+    if timer_id == 0 {
+        panic!("could not create timer");
+    }
+
+    // Establish all of the hooks.
+    let mouse_hhk = input_hooks::set_mouse_hook().unwrap();
+    let keybd_hhk = input_hooks::set_keybd_hook().unwrap();
+    let foreground_hhk = foreground_hook::set_hook(proxy.clone()).unwrap();
+    let minimize_end_hhk = minimize_end_hook::set_hook(proxy.clone()).unwrap();
+
     let mut lpmsg = WM::MSG::default();
     unsafe {
         loop {
@@ -70,32 +90,62 @@ pub fn run(sender: oneshot::Sender<HookthreadProxy>, config: config::Config) {
                 break;
             }
             if bret.0 == -1 {
-                // TODO handle the error instead of just quitting
+                warn!(?bret, "error from GetMessageW");
                 break;
             }
+            trace!("handling a new message");
             match HookMessage::from_u32(lpmsg.message) {
                 Some(HookMessage::Quit) => {
-                    input::remove_hook(mouse_hhk).unwrap();
-                    input::remove_hook(keybd_hhk).unwrap();
+                    trace!("handling Quit message");
+                    let _ = input_hooks::remove_hook(mouse_hhk).unwrap();
+                    let _ = input_hooks::remove_hook(keybd_hhk).unwrap();
+                    let _ = foreground_hook::remove_hook(foreground_hhk);
+                    let _ = minimize_end_hook::remove_hook(minimize_end_hhk);
                     WM::PostQuitMessage(0);
+                    trace!("done handling Quit message");
                 }
                 Some(HookMessage::Update) => {
+                    trace!("handling Update message");
                     info!("updating config");
                     let Foundation::WPARAM(raw_usize) = lpmsg.wParam;
                     let raw = raw_usize as *mut config::Config;
                     let config_boxed = Box::from_raw(raw);
                     let config = *config_boxed;
 
-                    let mut hook_local = HOOKLOCAL.lock().expect("mutex poisoned");
-                    let hook_local = hook_local
+                    trace!("locking HOOKLOCAL");
+                    let mut hook_local_guard = HOOKLOCAL.lock().expect("mutex poisoned");
+                    let hook_local = hook_local_guard
                         .as_mut()
                         .expect("local data should have been initialized");
-
                     hook_local.update_config(config);
+                    trace!("unlocking HOOKLOCAL");
+                    drop(hook_local_guard);
+                    trace!("done handling Update message");
+                }
+                Some(HookMessage::TimerExpire) | Some(HookMessage::CheckForeground) => {
+                    trace!("handling TimerExpire or CheckForeground message");
+                    match get_foreground_window() {
+                        Ok(info) => {
+                            trace!("locking HOOKLOCAL");
+                            let mut hook_local_guard = HOOKLOCAL.lock().expect("mutex poisoned");
+                            let hook_local = hook_local_guard
+                                .as_mut()
+                                .expect("local data should have been initialized");
+                            hook_local.update_from_foreground(info);
+                            trace!("unlocking HOOKLOCAL");
+                            drop(hook_local_guard);
+                        }
+                        Err(e) => {
+                            warn!(?e, "failed to get foreground window");
+                        }
+                    }
+                    trace!("done handling TimerExpire or CheckForeground message");
                 }
                 None => {
+                    trace!("got unknown message; treat as normal");
                     let _ = WM::TranslateMessage(&lpmsg);
                     let _ = WM::DispatchMessageA(&lpmsg);
+                    trace!("done treating as normal");
                 }
             }
         }
@@ -103,6 +153,9 @@ pub fn run(sender: oneshot::Sender<HookthreadProxy>, config: config::Config) {
 
     let mut running = RUNNING.lock().unwrap();
     *running = false;
+    if let Err(e) = unsafe { WM::KillTimer(None, timer_id) } {
+        warn!(?e, "error killing timer");
+    }
     debug!("exiting hook thread");
 }
 
@@ -120,11 +173,13 @@ pub fn run(sender: oneshot::Sender<HookthreadProxy>, config: config::Config) {
 )]
 #[repr(u32)]
 enum HookMessage {
+    TimerExpire = WindowsAndMessaging::WM_TIMER,
     Quit = WindowsAndMessaging::WM_APP,
     Update = WindowsAndMessaging::WM_APP + 1,
+    CheckForeground = WindowsAndMessaging::WM_APP + 2,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct HookthreadProxy {
     thread_id: u32,
 }
@@ -132,6 +187,7 @@ pub struct HookthreadProxy {
 impl HookthreadProxy {
     pub fn quit(&self) {
         use num_traits::ToPrimitive;
+        debug!("telling hookthread to quit");
         unsafe {
             WindowsAndMessaging::PostThreadMessageW(
                 self.thread_id,
@@ -158,6 +214,20 @@ impl HookthreadProxy {
                     .to_u32()
                     .expect("msg should always be representable as u32"),
                 Foundation::WPARAM(raw_usize),
+                Foundation::LPARAM(0),
+            )
+            .expect("could not send to hookthread");
+        }
+    }
+    pub fn check_foreground(&self) {
+        use num_traits::ToPrimitive;
+        unsafe {
+            WindowsAndMessaging::PostThreadMessageW(
+                self.thread_id,
+                HookMessage::CheckForeground
+                    .to_u32()
+                    .expect("msg should always be representable as u32"),
+                Foundation::WPARAM(0),
                 Foundation::LPARAM(0),
             )
             .expect("could not send to hookthread");
