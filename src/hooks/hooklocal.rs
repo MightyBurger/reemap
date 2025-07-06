@@ -85,27 +85,47 @@ impl HookLocalData {
             .map(|(i, profile)| (i, &profile.condition))
         {
             match profile_condition {
-                // Non-DE
-                // Title: "Ori And The Blind Forest"
-                // Process: "ori.exe"
-
-                // Definitive Edition
-                // Title: "Ori And The Blind Forest: Definitive Edition"
-                // Process: "oriDE.exe"
                 config::ProfileCondition::OriBF => {
-                    if title == "Ori And The Blind Forest: Definitive Edition" {
+                    if title == "Ori And The Blind Forest" && process == "ori.exe" {
                         new_profile = ActiveProfile::Other(i);
                     }
                 }
-                // Title: "OriAndTheWilloftheWisps"
-                // Process: "oriwotw.exe"
+
+                config::ProfileCondition::OriBFDE => {
+                    if title == "Ori And The Blind Forest: Definitive Edition"
+                        && process == "oriDE.exe"
+                    {
+                        new_profile = ActiveProfile::Other(i);
+                    }
+                }
+
                 config::ProfileCondition::OriWotW => {
-                    if title == "OriAndTheWilloftheWisps" {
+                    if title == "OriAndTheWilloftheWisps" && process == "oriwotw.exe" {
                         new_profile = ActiveProfile::Other(i);
                     }
                 }
-                config::ProfileCondition::Other(condition_title) => {
+
+                config::ProfileCondition::TitleAndProcess {
+                    title: condition_title,
+                    process: condition_process,
+                } => {
+                    if title == *condition_title && process == *condition_process {
+                        new_profile = ActiveProfile::Other(i);
+                    }
+                }
+
+                config::ProfileCondition::Title {
+                    title: condition_title,
+                } => {
                     if title == *condition_title {
+                        new_profile = ActiveProfile::Other(i);
+                    }
+                }
+
+                config::ProfileCondition::Process {
+                    process: condition_process,
+                } => {
+                    if process == *condition_process {
                         new_profile = ActiveProfile::Other(i);
                     }
                 }

@@ -76,9 +76,14 @@ impl Default for Profile {
 // -------------------- ProfileCondition --------------------
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum ProfileCondition {
+    // presets
     OriBF,
+    OriBFDE,
     OriWotW,
-    Other(String),
+    // custom
+    TitleAndProcess { title: String, process: String },
+    Title { title: String },
+    Process { process: String },
 }
 
 // -------------------- BaseLayer --------------------
