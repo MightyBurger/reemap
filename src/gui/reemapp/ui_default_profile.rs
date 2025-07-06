@@ -7,7 +7,7 @@ pub fn ui_default_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut Ree
             args.gui_local.new_default_layer_modal_open = true;
         }
         ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-            ui.label("The default profile is active when no other profile is active.");
+            ui.label("Active when no other profile is active");
             ui.add_space(super::SPACING);
 
             egui::Frame::new()
