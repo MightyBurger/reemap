@@ -2,8 +2,6 @@ use std::path::PathBuf;
 use thiserror::Error;
 use tracing::{instrument, trace};
 
-const CAP: usize = 512;
-
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ForegroundWindowInfo {
     pub title: String,
@@ -16,8 +14,6 @@ pub enum ForegroundWindowError {
     InvalidHWND,
     #[error("window text is of negative length: {0}")]
     NegativeTextLen(i32),
-    #[error("thread ID is invalid")]
-    InvalidThreadID,
     #[error("failed to open process")]
     OpenProcessError,
     #[error("failed to query process name")]
@@ -30,7 +26,11 @@ pub type ForegroundWindowResult<T> = Result<T, ForegroundWindowError>;
 
 #[instrument]
 pub fn get_foreground_window() -> ForegroundWindowResult<ForegroundWindowInfo> {
+    use windows::Win32::System::Threading as TH;
     use windows::Win32::UI::WindowsAndMessaging as WM;
+    use windows::core::PWSTR;
+    const CAP: usize = 512;
+
     trace!("getting foreground window");
 
     let hwnd = unsafe { WM::GetForegroundWindow() };
@@ -38,86 +38,94 @@ pub fn get_foreground_window() -> ForegroundWindowResult<ForegroundWindowInfo> {
         return Err(ForegroundWindowError::InvalidHWND);
     }
 
-    trace!("got foreground HWND");
+    let process_id = {
+        let mut process_id = 0u32;
+        let process_id_ptr: *mut u32 = &mut process_id;
+        let thread_id = unsafe { WM::GetWindowThreadProcessId(hwnd, Some(process_id_ptr)) };
+        if thread_id == 0 {
+            return Err(ForegroundWindowError::InvalidHWND);
+        }
+        process_id
+    };
 
-    let title = unsafe { get_window_title(hwnd) }?;
-    trace!(?title, "got foreground title");
-    let process = unsafe { get_process_name(hwnd) }?;
-    trace!(?process, "got foreground process");
+    /*
+        A special case - the focused window is Reemap.
+        It is important we do not attempt to grab the window text of Reemap. Why? Because otherwise,
+        Reemap may hang when closing.
+
+        See this blog:
+        https://devblogs.microsoft.com/oldnewthing/20030821-00/?p=42833
+        "The Secret Life of GetWindowText", Raymond Chen, Microsoft Dev Blogs, 21 Aug 2003
+
+        As described there, GetWindowText behaves differently when the window belongs to the same
+        process that called the function. Specifically, it sends a WM_GETTEXT message, and the
+        event loop is responsible for responding.
+
+        The problem happens when Reemap exits. In Reemap, the UI stops first, then the hook thread.
+        So, for a brief period of time, the UI thread is not actively running a Windows event loop
+        while the hook thread is still active.
+
+        If, during this brief period, GetWindowText gets called and Reemap is the foreground window,
+        GetWindowText hangs indefinitely, because it's waiting for the message loop to handle its
+        WM_GETTEXT message but it never does.
+    */
+
+    // TODO rather than having hard-coded values, just have a special case for this.
+    // Remaps should probably behave differently when Reemap is the focused window, anyways.
+    let reemap_process_id = unsafe { TH::GetCurrentProcessId() };
+    if process_id == reemap_process_id {
+        return Ok(ForegroundWindowInfo {
+            title: String::from("Reemap"),
+            process: String::from("reemap.exe"),
+        });
+    }
+
+    let title = {
+        trace!("getting window title");
+
+        let mut title = [0u16; CAP];
+        let len = unsafe { WM::GetWindowTextW(hwnd, &mut title) };
+        trace!("getwindowtext done");
+        if len < 0 {
+            return Err(ForegroundWindowError::NegativeTextLen(len));
+        }
+        let len = std::cmp::min(len as usize, CAP - 1);
+        String::from_utf16_lossy(&title[0..len])
+    };
+
+    let process = {
+        let hprocess = unsafe {
+            match TH::OpenProcess(TH::PROCESS_QUERY_LIMITED_INFORMATION, false, process_id) {
+                Ok(hprocess) => hprocess,
+                Err(_) => {
+                    return Err(ForegroundWindowError::OpenProcessError);
+                }
+            }
+        };
+
+        let mut title = [0u16; CAP];
+        let mut len = (CAP - 1) as u32;
+        match unsafe {
+            TH::QueryFullProcessImageNameW(
+                hprocess,
+                TH::PROCESS_NAME_WIN32,
+                PWSTR(&mut title as *mut u16),
+                &mut len,
+            )
+        } {
+            Ok(()) => (),
+            Err(_) => {
+                return Err(ForegroundWindowError::QueryProcessError);
+            }
+        };
+        let len = std::cmp::min(len as usize, CAP - 1);
+        let title = String::from_utf16_lossy(&title[0..len]);
+        let title = PathBuf::from(title);
+        let Some(title) = title.file_name() else {
+            return Err(ForegroundWindowError::ExtractFilenameError);
+        };
+        String::from(title.to_string_lossy())
+    };
 
     Ok(ForegroundWindowInfo { title, process })
-}
-
-// SAFETY: hwnd must be valid
-#[instrument]
-unsafe fn get_window_title(
-    hwnd: windows::Win32::Foundation::HWND,
-) -> ForegroundWindowResult<String> {
-    use windows::Win32::UI::WindowsAndMessaging as WM;
-
-    trace!("getting window title");
-
-    let mut title = [0u16; CAP];
-    // TODO
-    // This hangs on program exit!!
-    // This is why: https://devblogs.microsoft.com/oldnewthing/20030821-00/?p=42833
-    // "The Secret Life of GetWindowText", Raymond Chen, Microsoft Dev Blogs, 21 Aug 2003
-    let len = unsafe { WM::GetWindowTextW(hwnd, &mut title) };
-    trace!("getwindowtext done");
-    if len < 0 {
-        return Err(ForegroundWindowError::NegativeTextLen(len));
-    }
-    let len = std::cmp::min(len as usize, CAP - 1);
-    Ok(String::from_utf16_lossy(&title[0..len]))
-}
-
-// SAFETY: hwnd must be valid
-#[instrument]
-unsafe fn get_process_name(
-    hwnd: windows::Win32::Foundation::HWND,
-) -> ForegroundWindowResult<String> {
-    use windows::Win32::System::Threading as TH;
-    use windows::Win32::UI::WindowsAndMessaging as WM;
-    use windows::core::PWSTR;
-
-    trace!("getting process name");
-
-    let mut lpdwprocessid = 0u32;
-    let lpdwprocessid_ptr: *mut u32 = &mut lpdwprocessid;
-    let dwprocessid = unsafe { WM::GetWindowThreadProcessId(hwnd, Some(lpdwprocessid_ptr)) };
-    if dwprocessid == 0 {
-        return Err(ForegroundWindowError::InvalidThreadID);
-    }
-
-    let hprocess = unsafe {
-        match TH::OpenProcess(TH::PROCESS_QUERY_LIMITED_INFORMATION, false, lpdwprocessid) {
-            Ok(hprocess) => hprocess,
-            Err(_) => {
-                return Err(ForegroundWindowError::OpenProcessError);
-            }
-        }
-    };
-
-    let mut title = [0u16; CAP];
-    let mut len = (CAP - 1) as u32;
-    match unsafe {
-        TH::QueryFullProcessImageNameW(
-            hprocess,
-            TH::PROCESS_NAME_WIN32,
-            PWSTR(&mut title as *mut u16),
-            &mut len,
-        )
-    } {
-        Ok(()) => (),
-        Err(_) => {
-            return Err(ForegroundWindowError::QueryProcessError);
-        }
-    };
-    let len = std::cmp::min(len as usize, CAP - 1);
-    let title = String::from_utf16_lossy(&title[0..len]);
-    let title = PathBuf::from(title);
-    let Some(title) = title.file_name() else {
-        return Err(ForegroundWindowError::ExtractFilenameError);
-    };
-    Ok(String::from(title.to_string_lossy()))
 }
