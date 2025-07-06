@@ -1,8 +1,8 @@
 use crate::buttons;
 use crate::config;
 use crate::config::REMAP_SMALLVEC_LEN;
-use crate::hooks::query_foreground::ForegroundWindowInfo;
-use crate::hooks::query_foreground::get_foreground_window;
+use crate::query_windows::WindowInfo;
+use crate::query_windows::get_foreground_window;
 use enum_map::EnumMap;
 use smallvec::SmallVec;
 use std::sync::Mutex;
@@ -73,8 +73,8 @@ impl HookLocalData {
     }
 
     /// Update the active profile using information about the current foreground window.
-    pub fn update_from_foreground(&mut self, info: ForegroundWindowInfo) {
-        let ForegroundWindowInfo { title, process } = info;
+    pub fn update_from_foreground(&mut self, info: WindowInfo) {
+        let WindowInfo { title, process } = info;
         let mut new_profile = ActiveProfile::Default;
         for (i, profile_condition) in self
             .config

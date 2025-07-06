@@ -7,9 +7,8 @@ mod ui_profile;
 mod ui_remap_tables;
 mod ui_status_bar;
 
-use std::path::PathBuf;
-
 use breadcrumb::breadcrumb;
+use std::path::PathBuf;
 use tracing::instrument;
 use ui_base_layer::ui_base_layer;
 use ui_default_profile::ui_default_profile;
@@ -17,12 +16,12 @@ use ui_layer::ui_layer;
 use ui_main::ui_main;
 use ui_profile::ui_profile;
 
-use crate::config;
-
 use crate::buttons;
+use crate::config;
 use crate::config::Output;
 use crate::gui::reemapp::ui_status_bar::ui_status_bar;
 use crate::hooks;
+use crate::query_windows;
 
 const SPACING: f32 = 8.0;
 
@@ -133,6 +132,7 @@ pub struct ProfileConditionModalOpts {
     condition: ProfileConditionUI,
     title: String,
     process: String,
+    open_windows: Vec<query_windows::WindowInfo>,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]

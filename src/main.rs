@@ -4,6 +4,7 @@ mod buttons;
 mod config;
 mod gui;
 mod hooks;
+mod query_windows;
 
 use etcetera::BaseStrategy;
 use tracing::{error, info, instrument, warn};

@@ -2,10 +2,9 @@ mod foreground_hook;
 mod hooklocal;
 mod input_hooks;
 mod minimize_end_hook;
-mod query_foreground;
 
 use crate::config;
-use crate::hooks::query_foreground::get_foreground_window;
+use crate::query_windows::get_foreground_window;
 use hooklocal::HOOKLOCAL;
 use tracing::{debug, info, instrument, trace, warn};
 

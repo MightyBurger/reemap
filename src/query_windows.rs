@@ -1,15 +1,22 @@
+//! Utility functions for Windows
+
 use std::path::PathBuf;
 use thiserror::Error;
-use tracing::{instrument, trace};
+use windows::Win32::Foundation as FN;
+use windows::Win32::System::Threading as TH;
+use windows::Win32::UI::WindowsAndMessaging as WM;
+use windows::core::PWSTR;
+
+const CAP: usize = 512;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ForegroundWindowInfo {
+pub struct WindowInfo {
     pub title: String,
     pub process: String,
 }
 
 #[derive(Debug, Error, Clone)]
-pub enum ForegroundWindowError {
+pub enum WindowError {
     #[error("foreground window handle is invalid")]
     InvalidHWND,
     #[error("window text is of negative length: {0}")]
@@ -22,28 +29,28 @@ pub enum ForegroundWindowError {
     ExtractFilenameError,
 }
 
-pub type ForegroundWindowResult<T> = Result<T, ForegroundWindowError>;
+pub type WindowResult<T> = Result<T, WindowError>;
 
-#[instrument]
-pub fn get_foreground_window() -> ForegroundWindowResult<ForegroundWindowInfo> {
-    use windows::Win32::System::Threading as TH;
-    use windows::Win32::UI::WindowsAndMessaging as WM;
-    use windows::core::PWSTR;
-    const CAP: usize = 512;
-
-    trace!("getting foreground window");
-
+pub fn get_foreground_window() -> WindowResult<WindowInfo> {
     let hwnd = unsafe { WM::GetForegroundWindow() };
-    if hwnd.is_invalid() {
-        return Err(ForegroundWindowError::InvalidHWND);
-    }
+    get_window_info(hwnd)
+}
 
+pub fn get_window_info(hwnd: FN::HWND) -> WindowResult<WindowInfo> {
+    if hwnd.is_invalid() {
+        return Err(WindowError::InvalidHWND);
+    }
+    unsafe { get_window_info_unchecked(hwnd) }
+}
+
+// SAFETY: hwnd must be valid
+pub unsafe fn get_window_info_unchecked(hwnd: FN::HWND) -> WindowResult<WindowInfo> {
     let process_id = {
         let mut process_id = 0u32;
         let process_id_ptr: *mut u32 = &mut process_id;
         let thread_id = unsafe { WM::GetWindowThreadProcessId(hwnd, Some(process_id_ptr)) };
         if thread_id == 0 {
-            return Err(ForegroundWindowError::InvalidHWND);
+            return Err(WindowError::InvalidHWND);
         }
         process_id
     };
@@ -74,20 +81,17 @@ pub fn get_foreground_window() -> ForegroundWindowResult<ForegroundWindowInfo> {
     // Remaps should probably behave differently when Reemap is the focused window, anyways.
     let reemap_process_id = unsafe { TH::GetCurrentProcessId() };
     if process_id == reemap_process_id {
-        return Ok(ForegroundWindowInfo {
+        return Ok(WindowInfo {
             title: String::from("Reemap"),
             process: String::from("reemap.exe"),
         });
     }
 
     let title = {
-        trace!("getting window title");
-
         let mut title = [0u16; CAP];
         let len = unsafe { WM::GetWindowTextW(hwnd, &mut title) };
-        trace!("getwindowtext done");
         if len < 0 {
-            return Err(ForegroundWindowError::NegativeTextLen(len));
+            return Err(WindowError::NegativeTextLen(len));
         }
         let len = std::cmp::min(len as usize, CAP - 1);
         String::from_utf16_lossy(&title[0..len])
@@ -98,7 +102,7 @@ pub fn get_foreground_window() -> ForegroundWindowResult<ForegroundWindowInfo> {
             match TH::OpenProcess(TH::PROCESS_QUERY_LIMITED_INFORMATION, false, process_id) {
                 Ok(hprocess) => hprocess,
                 Err(_) => {
-                    return Err(ForegroundWindowError::OpenProcessError);
+                    return Err(WindowError::OpenProcessError);
                 }
             }
         };
@@ -115,17 +119,46 @@ pub fn get_foreground_window() -> ForegroundWindowResult<ForegroundWindowInfo> {
         } {
             Ok(()) => (),
             Err(_) => {
-                return Err(ForegroundWindowError::QueryProcessError);
+                return Err(WindowError::QueryProcessError);
             }
         };
         let len = std::cmp::min(len as usize, CAP - 1);
         let title = String::from_utf16_lossy(&title[0..len]);
         let title = PathBuf::from(title);
         let Some(title) = title.file_name() else {
-            return Err(ForegroundWindowError::ExtractFilenameError);
+            return Err(WindowError::ExtractFilenameError);
         };
         String::from(title.to_string_lossy())
     };
 
-    Ok(ForegroundWindowInfo { title, process })
+    Ok(WindowInfo { title, process })
+}
+
+/// Get every visible window.
+pub fn enumerate_open_windows() -> Vec<WindowInfo> {
+    let mut windows = Vec::new();
+    let windows_ptr = &mut windows as *mut Vec<_>;
+    let windows_ptr_isize = windows_ptr as isize;
+    unsafe { WM::EnumWindows(Some(enum_windows_proc), FN::LPARAM(windows_ptr_isize)) }.unwrap();
+    windows
+}
+
+// This is an EnumWindowsProc.
+// https://learn.microsoft.com/en-us/previous-versions/windows/desktop/legacy/ms633498(v=vs.85)
+unsafe extern "system" fn enum_windows_proc(
+    hwnd: FN::HWND,
+    lparam: FN::LPARAM,
+) -> windows::core::BOOL {
+    let FN::LPARAM(windows_ptr_isize) = lparam;
+    let windows_ptr = windows_ptr_isize as *mut Vec<WindowInfo>;
+    let windows = unsafe { &mut *windows_ptr };
+
+    if let Ok(info) = unsafe { get_window_info_unchecked(hwnd) }
+        && !info.title.is_empty()
+        && unsafe { WM::IsWindowVisible(hwnd) }.as_bool()
+    {
+        windows.push(info);
+    }
+
+    true.into()
 }

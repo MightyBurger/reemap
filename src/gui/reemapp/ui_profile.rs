@@ -3,6 +3,7 @@ use super::ReemApp;
 use crate::config;
 use crate::gui::reemapp::ProfileConditionModalOpts;
 use crate::gui::reemapp::ProfileConditionUI;
+use crate::query_windows;
 
 pub fn ui_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize) {
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
@@ -47,6 +48,7 @@ pub fn ui_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp, pr
                         config::ProfileCondition::Process { process } => process.clone(),
                         _ => String::new(),
                     },
+                    open_windows: query_windows::enumerate_open_windows(),
                 };
             }
             ui.add_space(super::SPACING);
@@ -76,6 +78,7 @@ pub fn ui_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp, pr
         new_layer_modal(ctx, ui, args, profile_idx);
     }
 }
+
 fn layers_table_ui(ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize) {
     enum LayerSelect {
         None,
@@ -328,6 +331,7 @@ fn ui_profile_condition_modal(
                         "Ori and the Will of the Wisps",
                     );
                 });
+
             ui.add_space(super::SPACING);
 
             ui.columns_const(|[col_1, col_2]| {
@@ -350,14 +354,51 @@ fn ui_profile_condition_modal(
                 });
             });
 
-            ui.separator();
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::BOTTOM), |ui| {
-                if ui.button("Cancel").clicked() {
-                    cancel = true;
+            ui.add_space(super::SPACING);
+
+            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::BOTTOM), |ui| {
+                    if ui.button("Cancel").clicked() {
+                        cancel = true;
+                    }
+                    if ui.button("OK").clicked() {
+                        ok = true;
+                    }
+                });
+                ui.separator();
+
+                if ui.button("Refresh").clicked() {
+                    modal_opts.open_windows = query_windows::enumerate_open_windows();
                 }
-                if ui.button("OK").clicked() {
-                    ok = true;
-                }
+                ui.add_space(super::SPACING);
+
+                ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
+                    let enable_table = match modal_opts.condition {
+                        ProfileConditionUI::TitleAndProcess
+                        | ProfileConditionUI::Title
+                        | ProfileConditionUI::Process => true,
+                        ProfileConditionUI::OriBF
+                        | ProfileConditionUI::OriBFDE
+                        | ProfileConditionUI::OriWotW => false,
+                    };
+                    ui.add_enabled_ui(enable_table, |ui| {
+                        egui::Frame::new()
+                            .stroke(egui::Stroke {
+                                width: 1.0,
+                                color: egui::Color32::DARK_GRAY,
+                            })
+                            .inner_margin(4.0)
+                            .corner_radius(4.0)
+                            .show(ui, |ui| {
+                                if let Some(query_windows::WindowInfo { title, process }) =
+                                    ui_open_windows_table(ui, &modal_opts.open_windows)
+                                {
+                                    modal_opts.title = title;
+                                    modal_opts.process = process;
+                                }
+                            });
+                    });
+                });
             });
         });
     });
@@ -387,4 +428,56 @@ fn ui_profile_condition_modal(
     } else if cancel {
         modal_opts.modal_open = false;
     }
+}
+
+fn ui_open_windows_table(
+    ui: &mut egui::Ui,
+    windows: &[query_windows::WindowInfo],
+) -> Option<query_windows::WindowInfo> {
+    use egui_extras::{Column, TableBuilder};
+    let header_height = 12.0;
+    let row_height = 20.0;
+    let mut pointing_hand = false;
+    let mut window_select = None;
+    TableBuilder::new(ui)
+        .id_salt("Open Windows Table")
+        .striped(true)
+        .auto_shrink(false)
+        .sense(egui::Sense::click_and_drag())
+        .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
+        .column(Column::exact(200.0)) // Process
+        .column(Column::remainder()) // Window Title
+        .header(header_height, |mut header| {
+            header.col(|ui| {
+                ui.strong("Process");
+            });
+            header.col(|ui| {
+                ui.strong("Window Title");
+            });
+        })
+        .body(|mut body| {
+            for window in windows {
+                body.row(row_height, |mut row| {
+                    row.col(|ui| {
+                        ui.style_mut().interaction.selectable_labels = false;
+                        ui.label(&window.process);
+                    });
+                    row.col(|ui| {
+                        ui.style_mut().interaction.selectable_labels = false;
+                        ui.label(&window.title);
+                    });
+                    if row.response().hovered() {
+                        pointing_hand = true;
+                    }
+                    if row.response().clicked() {
+                        window_select = Some(window.clone());
+                    }
+                });
+            }
+        });
+    if pointing_hand {
+        ui.ctx()
+            .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+    }
+    window_select
 }
