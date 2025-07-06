@@ -235,7 +235,7 @@ fn ui_layer_condition_modal(
 ) {
     let mut ok = false;
     let mut cancel = false;
-    let modal = egui::Modal::new(egui::Id::new("New Remap Modal")).show(ctx, |ui| {
+    let modal = egui::Modal::new(egui::Id::new("Layer Condition Modal")).show(ctx, |ui| {
         ui.heading(format!("Condition for {layer_name}"));
         ui.separator();
         ui.add_space(super::SPACING);

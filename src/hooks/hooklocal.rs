@@ -85,26 +85,6 @@ impl HookLocalData {
             .map(|(i, profile)| (i, &profile.condition))
         {
             match profile_condition {
-                config::ProfileCondition::OriBF => {
-                    if title == "Ori And The Blind Forest" && process == "ori.exe" {
-                        new_profile = ActiveProfile::Other(i);
-                    }
-                }
-
-                config::ProfileCondition::OriBFDE => {
-                    if title == "Ori And The Blind Forest: Definitive Edition"
-                        && process == "oriDE.exe"
-                    {
-                        new_profile = ActiveProfile::Other(i);
-                    }
-                }
-
-                config::ProfileCondition::OriWotW => {
-                    if title == "OriAndTheWilloftheWisps" && process == "oriwotw.exe" {
-                        new_profile = ActiveProfile::Other(i);
-                    }
-                }
-
                 config::ProfileCondition::TitleAndProcess {
                     title: condition_title,
                     process: condition_process,
@@ -126,6 +106,26 @@ impl HookLocalData {
                     process: condition_process,
                 } => {
                     if process == *condition_process {
+                        new_profile = ActiveProfile::Other(i);
+                    }
+                }
+
+                config::ProfileCondition::OriBF => {
+                    if title == "Ori And The Blind Forest" && process == "ori.exe" {
+                        new_profile = ActiveProfile::Other(i);
+                    }
+                }
+
+                config::ProfileCondition::OriBFDE => {
+                    if title == "Ori And The Blind Forest: Definitive Edition"
+                        && process == "oriDE.exe"
+                    {
+                        new_profile = ActiveProfile::Other(i);
+                    }
+                }
+
+                config::ProfileCondition::OriWotW => {
+                    if title == "OriAndTheWilloftheWisps" && process == "oriwotw.exe" {
                         new_profile = ActiveProfile::Other(i);
                     }
                 }

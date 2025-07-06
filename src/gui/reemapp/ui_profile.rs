@@ -1,6 +1,8 @@
 use super::GuiMenu;
 use super::ReemApp;
 use crate::config;
+use crate::gui::reemapp::ProfileConditionModalOpts;
+use crate::gui::reemapp::ProfileConditionUI;
 
 pub fn ui_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize) {
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
@@ -17,11 +19,35 @@ pub fn ui_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp, pr
             ));
             let edit_response = ui.button("Edit condition");
             if edit_response.clicked() {
-                // *layer_condition_modal = LayerConditionModalOpts {
-                //     modal_open: true,
-                //     layer_type: layer.layer_type.clone(),
-                //     condition: layer.condition.clone(),
-                // };
+                args.gui_local.profile_condition_modal = ProfileConditionModalOpts {
+                    modal_open: true,
+                    condition: match &args.config.profiles[profile_idx].condition {
+                        // custom
+                        config::ProfileCondition::TitleAndProcess { .. } => {
+                            ProfileConditionUI::TitleAndProcess
+                        }
+                        config::ProfileCondition::Title { .. } => ProfileConditionUI::Title,
+                        config::ProfileCondition::Process { .. } => ProfileConditionUI::Process,
+                        // presets
+                        config::ProfileCondition::OriBF => ProfileConditionUI::OriBF,
+                        config::ProfileCondition::OriBFDE => ProfileConditionUI::OriBFDE,
+                        config::ProfileCondition::OriWotW => ProfileConditionUI::OriWotW,
+                    },
+                    title: match &args.config.profiles[profile_idx].condition {
+                        config::ProfileCondition::TitleAndProcess { title, process: _ } => {
+                            title.clone()
+                        }
+                        config::ProfileCondition::Title { title } => title.clone(),
+                        _ => String::new(),
+                    },
+                    process: match &args.config.profiles[profile_idx].condition {
+                        config::ProfileCondition::TitleAndProcess { title: _, process } => {
+                            process.clone()
+                        }
+                        config::ProfileCondition::Process { process } => process.clone(),
+                        _ => String::new(),
+                    },
+                };
             }
             ui.add_space(super::SPACING);
 
@@ -37,6 +63,15 @@ pub fn ui_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp, pr
                 });
         });
     });
+    if args.gui_local.profile_condition_modal.modal_open {
+        ui_profile_condition_modal(
+            ctx,
+            ui,
+            &mut args.gui_local.profile_condition_modal,
+            &args.config.profiles[profile_idx].name.clone(),
+            &mut args.config.profiles[profile_idx].condition,
+        );
+    }
     if args.gui_local.new_layer_modal_open {
         new_layer_modal(ctx, ui, args, profile_idx);
     }
@@ -189,11 +224,6 @@ fn layers_table_ui(ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize) {
 fn get_profile_condition_text(condition: &config::ProfileCondition) -> String {
     use config::ProfileCondition as PC;
     match condition {
-        PC::OriBF => "Active when Ori and the Blind Forest is in focus".to_string(),
-        PC::OriBFDE => {
-            "Active when Ori and the Blind Forest: Definitive Edition is in focus".to_string()
-        }
-        PC::OriWotW => "Active when Ori and the Will of the Wisps is in focus".to_string(),
         PC::TitleAndProcess { title, process } => {
             format!("Active when {title} ({process}) is in focus")
         }
@@ -203,6 +233,11 @@ fn get_profile_condition_text(condition: &config::ProfileCondition) -> String {
         PC::Process { process } => {
             format!("Active when the process {process} is in focus")
         }
+        PC::OriBF => "Active when Ori and the Blind Forest is in focus".to_string(),
+        PC::OriBFDE => {
+            "Active when Ori and the Blind Forest: Definitive Edition is in focus".to_string()
+        }
+        PC::OriWotW => "Active when Ori and the Will of the Wisps is in focus".to_string(),
     }
 }
 
@@ -240,5 +275,102 @@ fn new_layer_modal(
         args.gui_local.new_layer_modal_open = false;
     } else if cancel {
         args.gui_local.new_layer_modal_open = false;
+    }
+}
+
+fn ui_profile_condition_modal(
+    ctx: &egui::Context,
+    _ui: &mut egui::Ui,
+    modal_opts: &mut ProfileConditionModalOpts,
+    profile_name: &str,
+    condition: &mut config::ProfileCondition,
+) {
+    let mut ok = false;
+    let mut cancel = false;
+    let modal = egui::Modal::new(egui::Id::new("Profile Condition Modal")).show(ctx, |ui| {
+        ui.heading(format!("Condition for {profile_name}"));
+        ui.separator();
+        ui.add_space(super::SPACING);
+
+        ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
+            egui::ComboBox::from_label("Condition")
+                .selected_text(&modal_opts.condition.to_string())
+                .show_ui(ui, |ui| {
+                    ui.selectable_value(
+                        &mut modal_opts.condition,
+                        ProfileConditionUI::TitleAndProcess,
+                        "Window Title and Process",
+                    );
+                    ui.selectable_value(
+                        &mut modal_opts.condition,
+                        ProfileConditionUI::Title,
+                        "Window Title",
+                    );
+                    ui.selectable_value(
+                        &mut modal_opts.condition,
+                        ProfileConditionUI::Process,
+                        "Process",
+                    );
+                    ui.selectable_value(
+                        &mut modal_opts.condition,
+                        ProfileConditionUI::OriBF,
+                        "Ori and the Blind Forest",
+                    );
+                    ui.selectable_value(
+                        &mut modal_opts.condition,
+                        ProfileConditionUI::OriBFDE,
+                        "Ori and the Blind Forest: Definitive Edition",
+                    );
+                    ui.selectable_value(
+                        &mut modal_opts.condition,
+                        ProfileConditionUI::OriWotW,
+                        "Ori and the Will of the Wisps",
+                    );
+                });
+            ui.add_space(super::SPACING);
+
+            ui.label("Window Title");
+            ui.text_edit_singleline(&mut modal_opts.title);
+            ui.add_space(super::SPACING);
+
+            ui.label("Process");
+            ui.text_edit_singleline(&mut modal_opts.process);
+
+            ui.separator();
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::BOTTOM), |ui| {
+                if ui.button("Cancel").clicked() {
+                    cancel = true;
+                }
+                if ui.button("OK").clicked() {
+                    ok = true;
+                }
+            });
+        });
+    });
+    if ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
+        ok = true;
+    }
+    if modal.should_close() {
+        cancel = true;
+    }
+    if ok {
+        *condition = match modal_opts.condition {
+            ProfileConditionUI::TitleAndProcess => config::ProfileCondition::TitleAndProcess {
+                title: modal_opts.title.clone(),
+                process: modal_opts.process.clone(),
+            },
+            ProfileConditionUI::Title => config::ProfileCondition::Title {
+                title: modal_opts.title.clone(),
+            },
+            ProfileConditionUI::Process => config::ProfileCondition::Process {
+                process: modal_opts.process.clone(),
+            },
+            ProfileConditionUI::OriBF => config::ProfileCondition::OriBF,
+            ProfileConditionUI::OriBFDE => config::ProfileCondition::OriBFDE,
+            ProfileConditionUI::OriWotW => config::ProfileCondition::OriWotW,
+        };
+        modal_opts.modal_open = false;
+    } else if cancel {
+        modal_opts.modal_open = false;
     }
 }

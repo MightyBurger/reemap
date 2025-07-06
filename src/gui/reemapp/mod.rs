@@ -36,6 +36,39 @@ pub struct ReemApp {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+enum ProfileConditionUI {
+    // custom
+    TitleAndProcess,
+    Title,
+    Process,
+    // presets
+    OriBF,
+    OriBFDE,
+    OriWotW,
+}
+
+impl Default for ProfileConditionUI {
+    fn default() -> Self {
+        Self::OriBFDE
+    }
+}
+
+impl std::fmt::Display for ProfileConditionUI {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            // custom
+            Self::TitleAndProcess => write!(f, "Window title and process"),
+            Self::Title => write!(f, "Window title"),
+            Self::Process => write!(f, "Process"),
+            // presets
+            Self::OriBF => write!(f, "Ori and the Blind Forest"),
+            Self::OriBFDE => write!(f, "Ori and the Blind Forest: Definitive Edition"),
+            Self::OriWotW => write!(f, "Ori and the Will of the Wisps"),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 enum BaseRemapPolicyUI {
     NoRemap,
     Remap,
@@ -88,17 +121,19 @@ pub struct GuiLocal {
     new_layer: config::Layer,
     new_default_layer_modal_open: bool,
     new_default_layer: config::DefaultProfile,
+    profile_condition_modal: ProfileConditionModalOpts,
     new_remap_modal: NewRemapModalOpts,
     new_base_remap_modal: NewBaseRemapModalOpts,
     layer_condition_modal: LayerConditionModalOpts,
 }
 
-// #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-// pub struct ProfileConditionModalOpts {
-//     modal_open: bool,
-//     policy: RemapPolicyUI,
-//     outputs: Output,
-// }
+#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ProfileConditionModalOpts {
+    modal_open: bool,
+    condition: ProfileConditionUI,
+    title: String,
+    process: String,
+}
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NewRemapModalOpts {
