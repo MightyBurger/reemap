@@ -5,6 +5,8 @@ use crate::gui::reemapp::ProfileConditionModalOpts;
 use crate::gui::reemapp::ProfileConditionUI;
 use crate::query_windows;
 
+use egui_extras::{Size, StripBuilder};
+
 pub fn ui_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize) {
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
         if ui.button("Add Layer").clicked() {
@@ -290,6 +292,22 @@ fn ui_profile_condition_modal(
 ) {
     let mut ok = false;
     let mut cancel = false;
+    let enable_title = match modal_opts.condition {
+        ProfileConditionUI::TitleAndProcess | ProfileConditionUI::Title => true,
+        _ => false,
+    };
+    let enable_process = match modal_opts.condition {
+        ProfileConditionUI::TitleAndProcess | ProfileConditionUI::Process => true,
+        _ => false,
+    };
+    let enable_table = match modal_opts.condition {
+        ProfileConditionUI::TitleAndProcess
+        | ProfileConditionUI::Title
+        | ProfileConditionUI::Process => true,
+        ProfileConditionUI::OriBF | ProfileConditionUI::OriBFDE | ProfileConditionUI::OriWotW => {
+            false
+        }
+    };
     let modal = egui::Modal::new(egui::Id::new("Profile Condition Modal")).show(ctx, |ui| {
         ui.heading(format!("Condition for {profile_name}"));
         ui.separator();
@@ -334,72 +352,66 @@ fn ui_profile_condition_modal(
 
             ui.add_space(super::SPACING);
 
-            ui.columns_const(|[col_1, col_2]| {
-                let enable_title = match modal_opts.condition {
-                    ProfileConditionUI::TitleAndProcess | ProfileConditionUI::Title => true,
-                    _ => false,
-                };
-                col_1.add_enabled_ui(enable_title, |ui| {
-                    ui.label("Window Title");
-                    ui.text_edit_singleline(&mut modal_opts.title);
-                });
+            StripBuilder::new(ui)
+                .size(Size::exact(300.0))
+                .size(Size::exact(20.0))
+                .size(Size::exact(27.0)) // OK, Cancel
+                .vertical(|mut strip| {
+                    strip.cell(|ui| {
+                        ui.columns_const(|[col_1, col_2]| {
+                            col_1.add_enabled_ui(enable_title, |ui| {
+                                ui.label("Window Title");
+                                ui.text_edit_singleline(&mut modal_opts.title);
+                            });
 
-                let enable_process = match modal_opts.condition {
-                    ProfileConditionUI::TitleAndProcess | ProfileConditionUI::Process => true,
-                    _ => false,
-                };
-                col_2.add_enabled_ui(enable_process, |ui| {
-                    ui.label("Process");
-                    ui.text_edit_singleline(&mut modal_opts.process);
-                });
-            });
+                            col_2.add_enabled_ui(enable_process, |ui| {
+                                ui.label("Process");
+                                ui.text_edit_singleline(&mut modal_opts.process);
+                            });
+                        });
 
-            ui.add_space(super::SPACING);
+                        ui.add_space(super::SPACING);
 
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::BOTTOM), |ui| {
-                    if ui.button("Cancel").clicked() {
-                        cancel = true;
-                    }
-                    if ui.button("OK").clicked() {
-                        ok = true;
-                    }
-                });
-                ui.separator();
-
-                if ui.button("Refresh").clicked() {
-                    modal_opts.open_windows = query_windows::enumerate_open_windows();
-                }
-                ui.add_space(super::SPACING);
-
-                ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-                    let enable_table = match modal_opts.condition {
-                        ProfileConditionUI::TitleAndProcess
-                        | ProfileConditionUI::Title
-                        | ProfileConditionUI::Process => true,
-                        ProfileConditionUI::OriBF
-                        | ProfileConditionUI::OriBFDE
-                        | ProfileConditionUI::OriWotW => false,
-                    };
-                    ui.add_enabled_ui(enable_table, |ui| {
-                        egui::Frame::new()
-                            .stroke(egui::Stroke {
-                                width: 1.0,
-                                color: egui::Color32::DARK_GRAY,
-                            })
-                            .inner_margin(4.0)
-                            .corner_radius(4.0)
-                            .show(ui, |ui| {
-                                if let Some(query_windows::WindowInfo { title, process }) =
-                                    ui_open_windows_table(ui, &modal_opts.open_windows)
-                                {
-                                    modal_opts.title = title;
-                                    modal_opts.process = process;
+                        ui.add_enabled_ui(enable_table, |ui| {
+                            egui::Frame::new()
+                                .stroke(egui::Stroke {
+                                    width: 1.0,
+                                    color: egui::Color32::DARK_GRAY,
+                                })
+                                .inner_margin(4.0)
+                                .corner_radius(4.0)
+                                .show(ui, |ui| {
+                                    if let Some(query_windows::WindowInfo { title, process }) =
+                                        ui_open_windows_table(ui, &modal_opts.open_windows)
+                                    {
+                                        modal_opts.title = title;
+                                        modal_opts.process = process;
+                                    }
+                                });
+                        });
+                    });
+                    strip.cell(|ui| {
+                        ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                            ui.add_enabled_ui(enable_table, |ui| {
+                                if ui.button("Refresh").clicked() {
+                                    modal_opts.open_windows =
+                                        query_windows::enumerate_open_windows();
                                 }
                             });
+                        });
+                    });
+                    strip.cell(|ui| {
+                        ui.separator();
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            if ui.button("Cancel").clicked() {
+                                cancel = true;
+                            }
+                            if ui.button("OK").clicked() {
+                                ok = true;
+                            }
+                        });
                     });
                 });
-            });
         });
     });
     if ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
