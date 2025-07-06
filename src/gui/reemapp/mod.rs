@@ -93,6 +93,13 @@ pub struct GuiLocal {
     layer_condition_modal: LayerConditionModalOpts,
 }
 
+// #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+// pub struct ProfileConditionModalOpts {
+//     modal_open: bool,
+//     policy: RemapPolicyUI,
+//     outputs: Output,
+// }
+
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NewRemapModalOpts {
     modal_open: Option<buttons::Button>,

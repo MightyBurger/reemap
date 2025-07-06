@@ -1,5 +1,6 @@
 use super::GuiMenu;
 use super::ReemApp;
+use crate::config;
 
 pub fn ui_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize) {
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
@@ -9,6 +10,19 @@ pub fn ui_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp, pr
         ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
             ui.label("Profile Name");
             ui.text_edit_singleline(&mut args.config.profiles[profile_idx].name);
+            ui.add_space(super::SPACING);
+
+            ui.label(get_profile_condition_text(
+                &args.config.profiles[profile_idx].condition,
+            ));
+            let edit_response = ui.button("Edit condition");
+            if edit_response.clicked() {
+                // *layer_condition_modal = LayerConditionModalOpts {
+                //     modal_open: true,
+                //     layer_type: layer.layer_type.clone(),
+                //     condition: layer.condition.clone(),
+                // };
+            }
             ui.add_space(super::SPACING);
 
             egui::Frame::new()
@@ -169,6 +183,26 @@ fn layers_table_ui(ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize) {
     if pointing_hand {
         ui.ctx()
             .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+    }
+}
+
+fn get_profile_condition_text(condition: &config::ProfileCondition) -> String {
+    use config::ProfileCondition as PC;
+    match condition {
+        PC::OriBF => "Active when Ori and the Blind Forest is in focus".to_string(),
+        PC::OriBFDE => {
+            "Active when Ori and the Blind Forest: Definitive Edition is in focus".to_string()
+        }
+        PC::OriWotW => "Active when Ori and the Will of the Wisps is in focus".to_string(),
+        PC::TitleAndProcess { title, process } => {
+            format!("Active when {title} ({process}) is in focus")
+        }
+        PC::Title { title } => {
+            format!("Active when {title} is in focus")
+        }
+        PC::Process { process } => {
+            format!("Active when the process {process} is in focus")
+        }
     }
 }
 

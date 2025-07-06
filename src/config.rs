@@ -66,7 +66,7 @@ impl Default for Profile {
         Self {
             name: String::from("New Profile"),
             enabled: true,
-            condition: ProfileCondition::OriBF,
+            condition: ProfileCondition::OriBFDE,
             base: BaseLayer::default(),
             layers: Vec::new(),
         }
