@@ -311,6 +311,7 @@ fn ui_profile_condition_modal(
                         ProfileConditionUI::Process,
                         "Process",
                     );
+                    ui.separator();
                     ui.selectable_value(
                         &mut modal_opts.condition,
                         ProfileConditionUI::OriBF,
@@ -329,12 +330,25 @@ fn ui_profile_condition_modal(
                 });
             ui.add_space(super::SPACING);
 
-            ui.label("Window Title");
-            ui.text_edit_singleline(&mut modal_opts.title);
-            ui.add_space(super::SPACING);
+            ui.columns_const(|[col_1, col_2]| {
+                let enable_title = match modal_opts.condition {
+                    ProfileConditionUI::TitleAndProcess | ProfileConditionUI::Title => true,
+                    _ => false,
+                };
+                col_1.add_enabled_ui(enable_title, |ui| {
+                    ui.label("Window Title");
+                    ui.text_edit_singleline(&mut modal_opts.title);
+                });
 
-            ui.label("Process");
-            ui.text_edit_singleline(&mut modal_opts.process);
+                let enable_process = match modal_opts.condition {
+                    ProfileConditionUI::TitleAndProcess | ProfileConditionUI::Process => true,
+                    _ => false,
+                };
+                col_2.add_enabled_ui(enable_process, |ui| {
+                    ui.label("Process");
+                    ui.text_edit_singleline(&mut modal_opts.process);
+                });
+            });
 
             ui.separator();
             ui.with_layout(egui::Layout::right_to_left(egui::Align::BOTTOM), |ui| {
