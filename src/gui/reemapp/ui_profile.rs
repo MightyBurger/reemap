@@ -308,6 +308,16 @@ fn ui_profile_condition_modal(
             false
         }
     };
+    let valid = |modal_opts: &mut ProfileConditionModalOpts| match modal_opts.condition {
+        ProfileConditionUI::TitleAndProcess => {
+            !modal_opts.title.is_empty() && !modal_opts.process.is_empty()
+        }
+        ProfileConditionUI::Title => !modal_opts.title.is_empty(),
+        ProfileConditionUI::Process => !modal_opts.process.is_empty(),
+        ProfileConditionUI::OriBF | ProfileConditionUI::OriBFDE | ProfileConditionUI::OriWotW => {
+            true
+        }
+    };
     let modal = egui::Modal::new(egui::Id::new("Profile Condition Modal")).show(ctx, |ui| {
         ui.heading(format!("Condition for {profile_name}"));
         ui.separator();
@@ -406,9 +416,11 @@ fn ui_profile_condition_modal(
                             if ui.button("Cancel").clicked() {
                                 cancel = true;
                             }
-                            if ui.button("OK").clicked() {
-                                ok = true;
-                            }
+                            ui.add_enabled_ui(valid(modal_opts), |ui| {
+                                if ui.button("OK").clicked() {
+                                    ok = true;
+                                }
+                            });
                         });
                     });
                 });
@@ -420,7 +432,7 @@ fn ui_profile_condition_modal(
     if modal.should_close() {
         cancel = true;
     }
-    if ok {
+    if ok && valid(modal_opts) {
         *condition = match modal_opts.condition {
             ProfileConditionUI::TitleAndProcess => config::ProfileCondition::TitleAndProcess {
                 title: modal_opts.title.clone(),
