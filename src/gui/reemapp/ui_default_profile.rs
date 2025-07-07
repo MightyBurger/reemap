@@ -52,33 +52,32 @@ fn default_layers_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
     let mut pointing_hand = false;
     let mut to_delete = None;
     let mut layer_select = None;
+    let layers_len = args.config.default.layers.len();
+    let mut to_swap: Option<(usize, usize)> = None;
     TableBuilder::new(ui)
         .id_salt("Default Layers Table")
         .striped(true)
         .auto_shrink(false)
         .sense(egui::Sense::click_and_drag())
         .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
-        .column(Column::exact(60.0)) // Enabled
-        .column(Column::exact(60.0)) // Delete
+        .column(Column::exact(30.0)) // Enabled
         .column(Column::remainder()) // Profile Name
-        // .column(Column::exact(60.0))
+        .column(Column::exact(70.0))
         .header(header_height, |mut header| {
-            header.col(|ui| {
-                ui.strong("Enabled");
+            header.col(|_ui| {
+                // ui.strong("Enabled");
             });
             header.col(|ui| {
-                ui.strong("Remove");
+                ui.strong("Layer");
             });
             header.col(|ui| {
-                ui.strong("Name");
+                ui.strong("Move");
             });
         })
         .body(|mut body| {
-            // let profiles_len = args.config.profiles.len();
-            // let mut to_swap: Option<(usize, usize)> = None;
             for (i, layer) in args.config.default.layers.iter_mut().enumerate() {
-                // let first = i == 0;
-                // let last = i == profiles_len - 1;
+                let first = i == 0;
+                let last = i == layers_len - 1;
                 body.row(row_height, |mut row| {
                     row.col(|ui| {
                         ui.with_layout(
@@ -89,28 +88,25 @@ fn default_layers_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
                         );
                     });
                     row.col(|ui| {
-                        ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-                            if ui.add_sized(btn_size, egui::Button::new("✖")).clicked() {
-                                to_delete = Some(i);
-                            };
-                        });
-                    });
-                    row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
                         ui.label(&layer.name);
                     });
-                    // row.col(|ui| {
-                    //     ui.add_enabled_ui(!first, |ui| {
-                    //         if ui.add_sized(btn_size, egui::Button::new("⬆")).clicked() {
-                    //             to_swap = Some((i - 1, i));
-                    //         }
-                    //     });
-                    //     ui.add_enabled_ui(!last, |ui| {
-                    //         if ui.add_sized(btn_size, egui::Button::new("⬇")).clicked() {
-                    //             to_swap = Some((i + 1, i));
-                    //         }
-                    //     });
-                    // });
+                    row.col(|ui| {
+                        ui.style_mut().spacing.item_spacing = [2.0, 2.0].into();
+                        ui.add_enabled_ui(!first, |ui| {
+                            if ui.add_sized(btn_size, egui::Button::new("⬆")).clicked() {
+                                to_swap = Some((i - 1, i));
+                            }
+                        });
+                        ui.add_enabled_ui(!last, |ui| {
+                            if ui.add_sized(btn_size, egui::Button::new("⬇")).clicked() {
+                                to_swap = Some((i + 1, i));
+                            }
+                        });
+                        if ui.add_sized(btn_size, egui::Button::new("✖")).clicked() {
+                            to_delete = Some(i);
+                        };
+                    });
                     if row.response().hovered() {
                         pointing_hand = true;
                     }
@@ -119,10 +115,10 @@ fn default_layers_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
                     }
                 });
             }
-            // if let Some((a, b)) = to_swap {
-            //     args.config.profiles.swap(a, b);
-            // }
         });
+    if let Some((a, b)) = to_swap {
+        args.config.default.layers.swap(a, b);
+    }
     if let Some(to_delete) = to_delete {
         args.config.default.layers.remove(to_delete);
     }
