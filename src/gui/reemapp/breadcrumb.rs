@@ -36,11 +36,8 @@ fn breadcrumb_display(_ctx: &egui::Context, ui: &mut egui::Ui, args: &ReemApp) -
     }
     let profile_idx = match &args.gui_local.menu {
         GuiMenu::Main => unreachable!(),
-        GuiMenu::DefaultProfile
-        | GuiMenu::DefaultProfileLayer { .. }
-        | GuiMenu::DefaultProfileBaseLayer => ProfileIdx::Default,
+        GuiMenu::DefaultProfile | GuiMenu::DefaultProfileLayer { .. } => ProfileIdx::Default,
         GuiMenu::Profile { profile_idx } => ProfileIdx::Other(*profile_idx),
-        GuiMenu::ProfileBaseLayer { profile_idx } => ProfileIdx::Other(*profile_idx),
         GuiMenu::ProfileLayer {
             profile_idx,
             layer_idx: _,
@@ -78,31 +75,22 @@ fn breadcrumb_display(_ctx: &egui::Context, ui: &mut egui::Ui, args: &ReemApp) -
         return click;
     }
 
-    enum LayerIdx {
-        Base,
-        Other(usize),
-    }
     let layer_idx = match &args.gui_local.menu {
         GuiMenu::Main | GuiMenu::DefaultProfile | GuiMenu::Profile { .. } => {
             unreachable!()
         }
-        GuiMenu::DefaultProfileBaseLayer => LayerIdx::Base,
-        GuiMenu::DefaultProfileLayer { layer_idx } => LayerIdx::Other(*layer_idx),
-        GuiMenu::ProfileBaseLayer { profile_idx: _ } => LayerIdx::Base,
+        GuiMenu::DefaultProfileLayer { layer_idx } => *layer_idx,
         GuiMenu::ProfileLayer {
             profile_idx: _,
             layer_idx,
-        } => LayerIdx::Other(*layer_idx),
+        } => *layer_idx,
     };
 
-    let layer_string = match layer_idx {
-        LayerIdx::Base => String::from("Base Layer"),
-        LayerIdx::Other(layer_idx) => match profile_idx {
-            ProfileIdx::Default => args.config.default.layers[layer_idx].name.clone(),
-            ProfileIdx::Other(profile_idx) => args.config.profiles[profile_idx].layers[layer_idx]
-                .name
-                .clone(),
-        },
+    let layer_string = match profile_idx {
+        ProfileIdx::Default => args.config.default.layers[layer_idx].name.clone(),
+        ProfileIdx::Other(profile_idx) => args.config.profiles[profile_idx].layers[layer_idx]
+            .name
+            .clone(),
     };
 
     ui.heading(" > ");
@@ -115,15 +103,9 @@ fn breadcrumb_display(_ctx: &egui::Context, ui: &mut egui::Ui, args: &ReemApp) -
             .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
     }
     if layer_breadcrumb_response.clicked() {
-        click = Some(match (profile_idx, layer_idx) {
-            (ProfileIdx::Default, LayerIdx::Base) => GuiMenu::DefaultProfileBaseLayer,
-            (ProfileIdx::Other(profile_idx), LayerIdx::Base) => {
-                GuiMenu::ProfileBaseLayer { profile_idx }
-            }
-            (ProfileIdx::Default, LayerIdx::Other(layer_idx)) => {
-                GuiMenu::DefaultProfileLayer { layer_idx }
-            }
-            (ProfileIdx::Other(profile_idx), LayerIdx::Other(layer_idx)) => GuiMenu::ProfileLayer {
+        click = Some(match profile_idx {
+            ProfileIdx::Default => GuiMenu::DefaultProfileLayer { layer_idx },
+            ProfileIdx::Other(profile_idx) => GuiMenu::ProfileLayer {
                 profile_idx,
                 layer_idx,
             },

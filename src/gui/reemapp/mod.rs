@@ -163,14 +163,10 @@ pub struct NewBaseRemapModalOpts {
 pub enum GuiMenu {
     Main,
     DefaultProfile,
-    DefaultProfileBaseLayer,
     DefaultProfileLayer {
         layer_idx: usize,
     },
     Profile {
-        profile_idx: usize,
-    },
-    ProfileBaseLayer {
         profile_idx: usize,
     },
     ProfileLayer {
@@ -207,10 +203,6 @@ impl crate::gui::TrayApp for ReemApp {
                 match menu {
                     GuiMenu::Main => ui_main(ctx, ui, self),
                     GuiMenu::DefaultProfile => ui_default_profile(ctx, ui, self),
-                    GuiMenu::DefaultProfileBaseLayer => {
-                        let layer = &mut self.config.default.base;
-                        ui_base_layer(ctx, ui, layer, &mut self.gui_local.new_base_remap_modal);
-                    }
                     GuiMenu::DefaultProfileLayer { layer_idx } => {
                         let layer = &mut self.config.default.layers[layer_idx];
                         ui_layer(
@@ -222,10 +214,6 @@ impl crate::gui::TrayApp for ReemApp {
                         );
                     }
                     GuiMenu::Profile { profile_idx } => ui_profile(ctx, ui, self, profile_idx),
-                    GuiMenu::ProfileBaseLayer { profile_idx } => {
-                        let layer = &mut self.config.profiles[profile_idx].base;
-                        ui_base_layer(ctx, ui, layer, &mut self.gui_local.new_base_remap_modal);
-                    }
                     GuiMenu::ProfileLayer {
                         profile_idx,
                         layer_idx,

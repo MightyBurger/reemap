@@ -16,10 +16,8 @@ pub fn ui_layer(
     layer_condition_modal: &mut LayerConditionModalOpts,
 ) {
     ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-        ui.horizontal(|ui| {
-            ui.text_edit_singleline(&mut layer.name);
-            ui.label("Layer Name");
-        });
+        ui.label("Layer Name");
+        ui.text_edit_singleline(&mut layer.name);
         ui.add_space(super::SPACING);
 
         ui.label(get_layer_condition_text(
