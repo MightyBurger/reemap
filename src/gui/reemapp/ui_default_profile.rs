@@ -3,6 +3,7 @@ use crate::gui::reemapp::ui_base_layer::ui_base_layer;
 use super::GuiMenu;
 use super::ReemApp;
 use egui_extras::{Size, StripBuilder};
+use tracing::debug;
 
 pub fn ui_default_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp) {
     StripBuilder::new(ui)
@@ -26,7 +27,8 @@ pub fn ui_default_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut Ree
                             .inner_margin(4.0)
                             .corner_radius(4.0)
                             .show(ui, |ui| {
-                                default_layers_table_ui(ui, args);
+                                // default_layers_table_ui(ui, args);
+                                dnd_default_layers_table_ui(ui, args);
                             });
                     });
                 });
@@ -44,6 +46,81 @@ pub fn ui_default_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut Ree
         new_default_layer_modal(ctx, ui, args);
     }
 }
+
+fn dnd_default_layers_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
+    let col_drag_w = 20.0;
+    let col_check_w = 20.0;
+    // let col_del_w = 60.0;
+    let mut layer_select = None;
+    let mut pointing_hand = false;
+    StripBuilder::new(ui)
+        .size(Size::exact(12.0))
+        .size(Size::remainder())
+        .vertical(|mut strip| {
+            strip.strip(|builder| {
+                builder
+                    .size(Size::exact(col_drag_w))
+                    .size(Size::remainder())
+                    .horizontal(|mut strip| {
+                        strip.cell(|_ui| ());
+                        strip.cell(|ui| {
+                            ui.strong("Layer");
+                        });
+                    });
+            });
+            strip.cell(|ui| {
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    // ui.style_mut().spacing.item_spacing = egui::Vec2::ZERO;
+                    let dnd_response = egui_dnd::dnd(ui, "Default Layers Table").show_vec(
+                        &mut args.config.default.layers,
+                        |ui, layer, handle, state| {
+                            let i = state.index;
+                            ui.set_height(20.0);
+                            let row_response = StripBuilder::new(ui)
+                                .sense(egui::Sense::click_and_drag())
+                                .size(Size::exact(col_drag_w))
+                                .size(Size::exact(col_check_w))
+                                .size(Size::remainder())
+                                .horizontal(|mut strip| {
+                                    strip.cell(|ui| {
+                                        handle.ui(ui, |ui| {
+                                            ui.add(
+                                                egui::Image::new(egui::include_image!(
+                                                    "../../../resource/grab.png"
+                                                ))
+                                                .max_height(16.0),
+                                            );
+                                        });
+                                    });
+                                    strip.cell(|ui| {
+                                        ui.add(egui::Checkbox::without_text(&mut layer.enabled));
+                                    });
+                                    strip.cell(|ui| {
+                                        ui.label(&layer.name);
+                                    });
+                                });
+                            if row_response.clicked() {
+                                debug!("clicked row");
+                                layer_select = Some(i);
+                            }
+                            if row_response.hovered() {
+                                debug!("hovered row");
+                                pointing_hand = true;
+                            }
+                        },
+                    );
+                });
+            });
+        });
+    if let Some(i) = layer_select {
+        args.gui_local.menu = GuiMenu::DefaultProfileLayer { layer_idx: i };
+    }
+    if pointing_hand {
+        ui.ctx()
+            .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+    }
+}
+
 fn default_layers_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
     use egui_extras::{Column, TableBuilder};
     let header_height = 12.0;

@@ -184,6 +184,7 @@ impl Default for GuiMenu {
 impl crate::gui::TrayApp for ReemApp {
     #[instrument(skip_all, name = "ui")]
     fn update(&mut self, ctx: &egui::Context) {
+        egui_extras::install_image_loaders(ctx);
         // catppuccin_egui::set_theme(ctx, catppuccin_egui::MACCHIATO);
         egui::TopBottomPanel::bottom("Bottom Panel").show(ctx, |ui| {
             ui.horizontal(|ui| {
