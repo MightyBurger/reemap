@@ -6,6 +6,36 @@ use egui_extras::{Size, StripBuilder};
 use tracing::debug;
 
 pub fn ui_default_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp) {
+    // Experimentation
+    let response = ui
+        .scope_builder(egui::UiBuilder::new().sense(egui::Sense::click()), |ui| {
+            StripBuilder::new(ui)
+                // .sense(egui::Sense::click())
+                .size(Size::exact(200.0))
+                .horizontal(|mut strip| {
+                    strip.cell(|ui| {
+                        let a = ui.label("test row");
+                        if a.clicked() {
+                            dbg!("label clicked");
+                        }
+                    });
+                })
+        })
+        .response;
+    // let mut frame = egui::Frame::default().inner_margin(4.0).begin(ui);
+    // {
+    //     frame.content_ui.add(|ui: &mut egui::Ui| {
+    //     });
+    // }
+    // let response = frame.allocate_space(ui);
+    if response.clicked() {
+        println!("clicked");
+    }
+    if response.hovered() {
+        println!("hovered");
+    }
+    // frame.paint(ui);
+
     StripBuilder::new(ui)
         .size(Size::relative(0.5))
         .size(Size::remainder())
@@ -71,44 +101,98 @@ fn dnd_default_layers_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
             strip.cell(|ui| {
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     // ui.style_mut().spacing.item_spacing = egui::Vec2::ZERO;
-                    let dnd_response = egui_dnd::dnd(ui, "Default Layers Table").show_vec(
-                        &mut args.config.default.layers,
-                        |ui, layer, handle, state| {
-                            let i = state.index;
-                            ui.set_height(20.0);
-                            let row_response = StripBuilder::new(ui)
-                                .sense(egui::Sense::click_and_drag())
-                                .size(Size::exact(col_drag_w))
-                                .size(Size::exact(col_check_w))
-                                .size(Size::remainder())
-                                .horizontal(|mut strip| {
-                                    strip.cell(|ui| {
-                                        handle.ui(ui, |ui| {
-                                            ui.add(
-                                                egui::Image::new(egui::include_image!(
-                                                    "../../../resource/grab.png"
-                                                ))
-                                                .max_height(16.0),
-                                            );
-                                        });
-                                    });
-                                    strip.cell(|ui| {
-                                        ui.add(egui::Checkbox::without_text(&mut layer.enabled));
-                                    });
-                                    strip.cell(|ui| {
-                                        ui.label(&layer.name);
-                                    });
+
+                    let dnd_response =
+                        egui_dnd::dnd(ui, "Default Layers Table").show_custom(|ui, iter| {
+                            for (i, layer) in args.config.default.layers.iter_mut().enumerate() {
+                                // change "true" here to "false" and see what happens
+                                iter.next(ui, egui::Id::new(&layer), i, true, |ui, item_handle| {
+                                    item_handle.ui(ui, |ui, handle, state| {
+                                        //
+                                        //
+
+                                        let index = state.index;
+                                        ui.set_height(20.0);
+                                        let row_response = StripBuilder::new(ui)
+                                            .sense(egui::Sense::click_and_drag())
+                                            .size(Size::exact(col_drag_w))
+                                            .size(Size::exact(col_check_w))
+                                            .size(Size::remainder())
+                                            .horizontal(|mut strip| {
+                                                strip.cell(|ui| {
+                                                    handle.ui(ui, |ui| {
+                                                        ui.add(
+                                                            egui::Image::new(egui::include_image!(
+                                                                "../../../resource/grab.png"
+                                                            ))
+                                                            .max_height(16.0),
+                                                        );
+                                                    });
+                                                });
+                                                strip.cell(|ui| {
+                                                    ui.add(egui::Checkbox::without_text(
+                                                        &mut layer.enabled,
+                                                    ));
+                                                });
+                                                strip.cell(|ui| {
+                                                    ui.label(&layer.name);
+                                                });
+                                            });
+                                        if row_response.clicked() {
+                                            debug!("clicked row");
+                                            layer_select = Some(index);
+                                        }
+                                        if row_response.hovered() {
+                                            debug!("hovered row");
+                                            pointing_hand = true;
+                                        }
+
+                                        //
+                                        //
+                                    })
                                 });
-                            if row_response.clicked() {
-                                debug!("clicked row");
-                                layer_select = Some(i);
                             }
-                            if row_response.hovered() {
-                                debug!("hovered row");
-                                pointing_hand = true;
-                            }
-                        },
-                    );
+                        });
+                    dnd_response.update_vec(&mut args.config.default.layers);
+
+                    // let dnd_response = egui_dnd::dnd(ui, "Default Layers Table").show_vec(
+                    //     &mut args.config.default.layers,
+                    //     |ui, layer, handle, state| {
+                    //         let i = state.index;
+                    //         ui.set_height(20.0);
+                    //         let row_response = StripBuilder::new(ui)
+                    //             .sense(egui::Sense::click_and_drag())
+                    //             .size(Size::exact(col_drag_w))
+                    //             .size(Size::exact(col_check_w))
+                    //             .size(Size::remainder())
+                    //             .horizontal(|mut strip| {
+                    //                 strip.cell(|ui| {
+                    //                     handle.ui(ui, |ui| {
+                    //                         ui.add(
+                    //                             egui::Image::new(egui::include_image!(
+                    //                                 "../../../resource/grab.png"
+                    //                             ))
+                    //                             .max_height(16.0),
+                    //                         );
+                    //                     });
+                    //                 });
+                    //                 strip.cell(|ui| {
+                    //                     ui.add(egui::Checkbox::without_text(&mut layer.enabled));
+                    //                 });
+                    //                 strip.cell(|ui| {
+                    //                     ui.label(&layer.name);
+                    //                 });
+                    //             });
+                    //         if row_response.clicked() {
+                    //             debug!("clicked row");
+                    //             layer_select = Some(i);
+                    //         }
+                    //         if row_response.hovered() {
+                    //             debug!("hovered row");
+                    //             pointing_hand = true;
+                    //         }
+                    //     },
+                    // );
                 });
             });
         });
