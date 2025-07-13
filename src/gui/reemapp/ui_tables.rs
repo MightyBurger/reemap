@@ -1,5 +1,6 @@
+use crate::buttons;
 use crate::config;
-use crate::{buttons, config::Output};
+use smallvec::SmallVec;
 use strum::IntoEnumIterator;
 
 pub trait EnableListItem: std::fmt::Display {
@@ -85,12 +86,49 @@ where
 pub trait RearrangeableListItem: std::fmt::Display {}
 impl RearrangeableListItem for config::Profile {}
 impl RearrangeableListItem for config::Layer {}
+impl RearrangeableListItem for buttons::Button {}
+
+// So I can call ui_rearrangeable_table with either a Vec or a SmallVec.
+// TODO: Is there a more idiomatic Rust way to do this?
+pub trait RearrangeableList<T> {
+    fn as_mut_slice(&mut self) -> &mut [T];
+    fn as_slice(&self) -> &[T];
+    fn remove(&mut self, index: usize) -> T;
+}
+
+impl<T> RearrangeableList<T> for Vec<T> {
+    fn as_mut_slice(&mut self) -> &mut [T] {
+        self.as_mut_slice()
+    }
+    fn as_slice(&self) -> &[T] {
+        self.as_slice()
+    }
+    fn remove(&mut self, index: usize) -> T {
+        self.remove(index)
+    }
+}
+
+impl<A, T> RearrangeableList<T> for SmallVec<A>
+where
+    A: smallvec::Array<Item = T>,
+{
+    fn as_mut_slice(&mut self) -> &mut [T] {
+        self.as_mut_slice()
+    }
+    fn as_slice(&self) -> &[T] {
+        self.as_slice()
+    }
+    fn remove(&mut self, index: usize) -> T {
+        self.remove(index)
+    }
+}
 
 /// Display a table that allows the user to re-arrange or delete items in the list.
 /// Important: if called multiple times within the same `Ui`, each call must have a different
 /// `name`, or runtime errors will occur.
-pub fn ui_rearrange_table<T>(ui: &mut egui::Ui, list: &mut Vec<T>, name: &str)
+pub fn ui_rearrange_table<T, L>(ui: &mut egui::Ui, list: &mut L, name: &str)
 where
+    L: RearrangeableList<T>,
     T: RearrangeableListItem,
 {
     use egui_extras::{Column, TableBuilder};
@@ -98,7 +136,7 @@ where
     let row_height = 20.0;
     let btn_size = [20.0, 20.0];
     let mut to_delete = None;
-    let list_len = list.len();
+    let list_len = list.as_slice().len();
     let mut to_swap: Option<(usize, usize)> = None;
     TableBuilder::new(ui)
         .id_salt(format!("ui_rearrange table for {name}"))
@@ -116,7 +154,7 @@ where
             });
         })
         .body(|mut body| {
-            for (i, item) in list.iter_mut().enumerate() {
+            for (i, item) in list.as_mut_slice().iter_mut().enumerate() {
                 let first = i == 0;
                 let last = i == list_len - 1;
                 body.row(row_height, |mut row| {
@@ -144,7 +182,7 @@ where
             }
         });
     if let Some((a, b)) = to_swap {
-        list.swap(a, b);
+        list.as_mut_slice().swap(a, b);
     }
     if let Some(to_delete) = to_delete {
         list.remove(to_delete);
@@ -204,60 +242,7 @@ pub fn ui_layer_condition_table(ui: &mut egui::Ui, remaps: &mut Vec<buttons::Hol
     }
 }
 
-pub fn ui_remap_outputs_table(ui: &mut egui::Ui, remaps: &mut Output) {
-    use egui_extras::{Column, TableBuilder};
-    let header_height = 12.0;
-    let row_height = 20.0;
-    let btn_size = [20.0, 20.0];
-    let mut to_delete = None;
-    let mut pointing_hand = false;
-    TableBuilder::new(ui)
-        .id_salt("Single Remap Table")
-        .striped(true)
-        .auto_shrink(false)
-        .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
-        .column(Column::exact(60.0)) // Enabled
-        .column(Column::remainder()) // Profile Name
-        .header(header_height, |mut header| {
-            header.col(|ui| {
-                ui.strong("Remove");
-            });
-            header.col(|ui| {
-                ui.strong("Output");
-            });
-        })
-        .body(|mut body| {
-            for (i, button) in remaps.iter_mut().enumerate() {
-                body.row(row_height, |mut row| {
-                    row.col(|ui| {
-                        ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-                            let remove_btn_response =
-                                ui.add_sized(btn_size, egui::Button::new("✖"));
-                            if remove_btn_response.hovered() {
-                                pointing_hand = true;
-                            }
-                            if remove_btn_response.clicked() {
-                                to_delete = Some(i);
-                            };
-                        });
-                    });
-                    row.col(|ui| {
-                        ui.style_mut().interaction.selectable_labels = false;
-                        ui.label(format!("{button}"));
-                    });
-                });
-            }
-        });
-    if let Some(to_delete) = to_delete {
-        remaps.remove(to_delete);
-    }
-    if pointing_hand {
-        ui.ctx()
-            .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
-    }
-}
-
-pub fn ui_available_remaps_table(ui: &mut egui::Ui, remaps: &mut Output) {
+pub fn ui_available_remaps_table(ui: &mut egui::Ui, remaps: &mut config::Output) {
     use egui_extras::{Column, TableBuilder};
     let header_height = 12.0;
     let row_height = 20.0;

@@ -1,6 +1,7 @@
 use crate::buttons;
 use crate::config;
-use crate::gui::reemapp::ui_tables::{ui_available_remaps_table, ui_remap_outputs_table};
+use crate::gui::reemapp::ui_tables::ui_available_remaps_table;
+use crate::gui::reemapp::ui_tables::ui_rearrange_table;
 use crate::gui::reemapp::{BaseRemapPolicyUI, NewBaseRemapModalOpts};
 use smallvec::SmallVec;
 use strum::IntoEnumIterator;
@@ -156,7 +157,7 @@ fn ui_new_base_remap_modal(
                                 .inner_margin(4.0)
                                 .corner_radius(4.0)
                                 .show(col_1, |ui| {
-                                    ui_remap_outputs_table(ui, &mut modal_opts.outputs);
+                                    ui_rearrange_table(ui, &mut modal_opts.outputs, "Output");
                                 });
                             egui::Frame::new()
                                 .stroke(egui::Stroke {
