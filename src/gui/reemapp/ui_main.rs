@@ -4,7 +4,6 @@ use crate::gui::reemapp::ui_tables::ui_rearrange_table;
 
 use super::GuiMenu;
 use super::ReemApp;
-use tracing::debug;
 
 pub fn ui_main(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp) {
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
@@ -68,7 +67,7 @@ fn ui_rearrange_profiles_modal(
                         .inner_margin(4.0)
                         .corner_radius(4.0)
                         .show(ui, |ui| {
-                            ui_rearrange_table(ui, &mut modal_opts.new_order, "Profiles");
+                            ui_rearrange_table(ui, &mut modal_opts.new_order, "Profile");
                         });
                 });
                 strip.cell(|ui| {
@@ -98,7 +97,6 @@ fn ui_rearrange_profiles_modal(
     });
 
     if ui.ctx().input(|i| i.key_pressed(egui::Key::Enter)) {
-        debug!("OK pressed");
         ok = true;
     }
     if modal.should_close() {

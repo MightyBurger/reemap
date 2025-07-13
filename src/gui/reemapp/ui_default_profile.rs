@@ -1,5 +1,8 @@
+use crate::config;
+use crate::gui::reemapp::RearrangeLayersModalOpts;
 use crate::gui::reemapp::ui_base_layer::ui_base_layer;
 use crate::gui::reemapp::ui_tables::ui_enable_clickable_table;
+use crate::gui::reemapp::ui_tables::ui_rearrange_table;
 
 use super::GuiMenu;
 use super::ReemApp;
@@ -14,6 +17,11 @@ pub fn ui_default_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut Ree
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
                     if ui.button("Add Layer").clicked() {
                         args.gui_local.new_default_layer_modal_open = true;
+                    }
+                    if ui.button("Rearrange").clicked() {
+                        args.gui_local.rearrange_layers_modal.new_order =
+                            args.config.default.layers.clone();
+                        args.gui_local.rearrange_layers_modal.modal_open = true;
                     }
                     ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
                         ui.label("Active when no other profile is active");
@@ -49,8 +57,85 @@ pub fn ui_default_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut Ree
                 );
             });
         });
+    if args.gui_local.rearrange_layers_modal.modal_open {
+        ui_rearrange_default_layer_modal(
+            ui,
+            &mut args.gui_local.rearrange_layers_modal,
+            &mut args.config.default.layers,
+        );
+    }
     if args.gui_local.new_default_layer_modal_open {
         new_default_layer_modal(ctx, ui, args);
+    }
+}
+
+fn ui_rearrange_default_layer_modal(
+    ui: &mut egui::Ui,
+    modal_opts: &mut RearrangeLayersModalOpts,
+    layers: &mut Vec<config::Layer>,
+) {
+    use egui_extras::{Size, StripBuilder};
+
+    let ok_cancel_width = 60.0;
+    let mut ok = false;
+    let mut cancel = false;
+
+    let modal = egui::Modal::new(egui::Id::new("rearrange layers modal")).show(ui.ctx(), |ui| {
+        ui.set_max_width(400.0);
+        StripBuilder::new(ui)
+            .size(Size::exact(300.0))
+            .size(Size::exact(20.0))
+            .vertical(|mut strip| {
+                strip.cell(|ui| {
+                    ui.heading("Rearrange and Delete Layers");
+                    egui::Frame::new()
+                        .stroke(egui::Stroke {
+                            width: 1.0,
+                            color: egui::Color32::DARK_GRAY,
+                        })
+                        .inner_margin(4.0)
+                        .corner_radius(4.0)
+                        .show(ui, |ui| {
+                            ui_rearrange_table(ui, &mut modal_opts.new_order, "Layer");
+                        });
+                });
+                strip.cell(|ui| {
+                    ui.separator();
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui
+                            .add_sized(
+                                [ok_cancel_width, ui.available_height()],
+                                egui::Button::new("Cancel"),
+                            )
+                            .clicked()
+                        {
+                            cancel = true;
+                        }
+                        if ui
+                            .add_sized(
+                                [ok_cancel_width, ui.available_height()],
+                                egui::Button::new("OK"),
+                            )
+                            .clicked()
+                        {
+                            ok = true;
+                        }
+                    });
+                });
+            });
+    });
+
+    if ui.ctx().input(|i| i.key_pressed(egui::Key::Enter)) {
+        ok = true;
+    }
+    if modal.should_close() {
+        cancel = true;
+    }
+    if ok {
+        *layers = modal_opts.new_order.clone();
+        modal_opts.modal_open = false;
+    } else if cancel {
+        modal_opts.modal_open = false;
     }
 }
 
