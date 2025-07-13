@@ -3,6 +3,7 @@ mod ui_base_layer;
 mod ui_default_profile;
 mod ui_layer;
 mod ui_main;
+mod ui_ok_cancel_modal;
 mod ui_profile;
 mod ui_status_bar;
 mod ui_tables;
@@ -215,26 +216,24 @@ impl crate::gui::TrayApp for ReemApp {
 
                 let menu = self.gui_local.menu.clone();
                 match menu {
-                    GuiMenu::Main => ui_main(ctx, ui, self),
-                    GuiMenu::DefaultProfile => ui_default_profile(ctx, ui, self),
+                    GuiMenu::Main => ui_main(ui, self),
+                    GuiMenu::DefaultProfile => ui_default_profile(ui, self),
                     GuiMenu::DefaultProfileLayer { layer_idx } => {
                         let layer = &mut self.config.default.layers[layer_idx];
                         ui_layer(
-                            ctx,
                             ui,
                             layer,
                             &mut self.gui_local.new_remap_modal,
                             &mut self.gui_local.layer_condition_modal,
                         );
                     }
-                    GuiMenu::Profile { profile_idx } => ui_profile(ctx, ui, self, profile_idx),
+                    GuiMenu::Profile { profile_idx } => ui_profile(ui, self, profile_idx),
                     GuiMenu::ProfileLayer {
                         profile_idx,
                         layer_idx,
                     } => {
                         let layer = &mut self.config.profiles[profile_idx].layers[layer_idx];
                         ui_layer(
-                            ctx,
                             ui,
                             layer,
                             &mut self.gui_local.new_remap_modal,

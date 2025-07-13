@@ -1,5 +1,6 @@
 use crate::buttons;
 use crate::config;
+use crate::gui::reemapp::ui_ok_cancel_modal::ui_ok_cancel_modal;
 use crate::gui::reemapp::ui_tables::ui_rearrange_table;
 use crate::gui::reemapp::ui_tables::{
     ui_available_layer_conditions_table, ui_available_remaps_table, ui_layer_condition_table,
@@ -9,7 +10,6 @@ use smallvec::SmallVec;
 use strum::IntoEnumIterator;
 
 pub fn ui_layer(
-    ctx: &egui::Context,
     ui: &mut egui::Ui,
     layer: &mut config::Layer,
     new_remap_modal: &mut NewRemapModalOpts,
@@ -47,20 +47,13 @@ pub fn ui_layer(
     });
     if let Some(button) = new_remap_modal.modal_open {
         let policy = &mut layer.policy[button];
-        ui_new_remap_modal(ctx, ui, new_remap_modal, button, policy);
+        ui_new_remap_modal(ui, new_remap_modal, button, policy);
     }
     if layer_condition_modal.modal_open {
         let layer_name = &layer.name;
         let layer_type = &mut layer.layer_type;
         let condition = &mut layer.condition;
-        ui_layer_condition_modal(
-            ctx,
-            ui,
-            layer_condition_modal,
-            layer_name,
-            layer_type,
-            condition,
-        );
+        ui_layer_condition_modal(ui, layer_condition_modal, layer_name, layer_type, condition);
     }
 }
 
@@ -134,15 +127,12 @@ pub fn ui_remaps_table(
 }
 
 fn ui_new_remap_modal(
-    ctx: &egui::Context,
-    _ui: &mut egui::Ui,
+    ui: &mut egui::Ui,
     modal_opts: &mut NewRemapModalOpts,
     button: buttons::Button,
     policy: &mut config::RemapPolicy,
 ) {
-    let mut ok = false;
-    let mut cancel = false;
-    let modal = egui::Modal::new(egui::Id::new("New Remap Modal")).show(ctx, |ui| {
+    let ok_cancel = ui_ok_cancel_modal(ui, |ui| {
         ui.heading(format!("Remaps for {button}"));
         ui.separator();
         ui.add_space(super::SPACING);
@@ -158,15 +148,6 @@ fn ui_new_remap_modal(
             ui.add_space(super::SPACING);
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::BOTTOM), |ui| {
-                    if ui.button("Cancel").clicked() {
-                        cancel = true;
-                    }
-                    if ui.button("OK").clicked() {
-                        ok = true;
-                    }
-                });
-                ui.separator();
                 ui.label(get_new_remap_helper_text(
                     &button,
                     &modal_opts.outputs,
@@ -205,35 +186,30 @@ fn ui_new_remap_modal(
             });
         });
     });
-    if ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
-        ok = true;
-    }
-    if modal.should_close() {
-        cancel = true;
-    }
-    if ok {
-        *policy = match modal_opts.policy {
-            RemapPolicyUI::Defer => config::RemapPolicy::Defer,
-            RemapPolicyUI::NoRemap => config::RemapPolicy::NoRemap,
-            RemapPolicyUI::Remap => config::RemapPolicy::Remap(modal_opts.outputs.clone()),
-        };
-        modal_opts.modal_open = None;
-    } else if cancel {
-        modal_opts.modal_open = None;
+    match ok_cancel {
+        Some(true) => {
+            *policy = match modal_opts.policy {
+                RemapPolicyUI::Defer => config::RemapPolicy::Defer,
+                RemapPolicyUI::NoRemap => config::RemapPolicy::NoRemap,
+                RemapPolicyUI::Remap => config::RemapPolicy::Remap(modal_opts.outputs.clone()),
+            };
+            modal_opts.modal_open = None;
+        }
+        Some(false) => {
+            modal_opts.modal_open = None;
+        }
+        None => (),
     }
 }
 
 fn ui_layer_condition_modal(
-    ctx: &egui::Context,
-    _ui: &mut egui::Ui,
+    ui: &mut egui::Ui,
     modal_opts: &mut LayerConditionModalOpts,
     layer_name: &str,
     layer_type: &mut config::LayerType,
     condition: &mut Vec<buttons::HoldButton>,
 ) {
-    let mut ok = false;
-    let mut cancel = false;
-    let modal = egui::Modal::new(egui::Id::new("Layer Condition Modal")).show(ctx, |ui| {
+    let ok_cancel = ui_ok_cancel_modal(ui, |ui| {
         ui.heading(format!("Condition for {layer_name}"));
         ui.separator();
         ui.add_space(super::SPACING);
@@ -256,15 +232,6 @@ fn ui_layer_condition_modal(
             ui.add_space(super::SPACING);
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::BOTTOM), |ui| {
-                    if ui.button("Cancel").clicked() {
-                        cancel = true;
-                    }
-                    if ui.button("OK").clicked() {
-                        ok = true;
-                    }
-                });
-                ui.separator();
                 ui.label(get_layer_condition_text(
                     &modal_opts.condition,
                     &modal_opts.layer_type,
@@ -296,18 +263,16 @@ fn ui_layer_condition_modal(
             });
         });
     });
-    if ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
-        ok = true;
-    }
-    if modal.should_close() {
-        cancel = true;
-    }
-    if ok {
-        *layer_type = modal_opts.layer_type.clone();
-        *condition = modal_opts.condition.clone();
-        modal_opts.modal_open = false;
-    } else if cancel {
-        modal_opts.modal_open = false;
+    match ok_cancel {
+        Some(true) => {
+            *layer_type = modal_opts.layer_type.clone();
+            *condition = modal_opts.condition.clone();
+            modal_opts.modal_open = false;
+        }
+        Some(false) => {
+            modal_opts.modal_open = false;
+        }
+        None => (),
     }
 }
 
