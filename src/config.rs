@@ -73,6 +73,12 @@ impl Default for Profile {
     }
 }
 
+impl std::fmt::Display for Profile {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.name)
+    }
+}
+
 // -------------------- ProfileCondition --------------------
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum ProfileCondition {
@@ -111,6 +117,12 @@ impl Default for Layer {
             condition: Vec::new(),
             policy: EnumMap::default(),
         }
+    }
+}
+
+impl std::fmt::Display for Layer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.name)
     }
 }
 

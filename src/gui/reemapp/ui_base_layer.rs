@@ -1,6 +1,6 @@
 use crate::buttons;
 use crate::config;
-use crate::gui::reemapp::ui_remap_tables::{ui_available_remaps_table, ui_remap_outputs_table};
+use crate::gui::reemapp::ui_tables::{ui_available_remaps_table, ui_remap_outputs_table};
 use crate::gui::reemapp::{BaseRemapPolicyUI, NewBaseRemapModalOpts};
 use smallvec::SmallVec;
 use strum::IntoEnumIterator;

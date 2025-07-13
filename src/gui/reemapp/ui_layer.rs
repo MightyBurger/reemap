@@ -1,6 +1,6 @@
 use crate::buttons;
 use crate::config;
-use crate::gui::reemapp::ui_remap_tables::{
+use crate::gui::reemapp::ui_tables::{
     ui_available_layer_conditions_table, ui_available_remaps_table, ui_layer_condition_table,
     ui_remap_outputs_table,
 };

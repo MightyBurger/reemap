@@ -1,10 +1,19 @@
+use crate::config;
+use crate::gui::reemapp::RearrangeProfilesModalOpts;
+use crate::gui::reemapp::ui_tables::ui_rearrange_table;
+
 use super::GuiMenu;
 use super::ReemApp;
+use tracing::debug;
 
 pub fn ui_main(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp) {
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
         if ui.button("Add Profile").clicked() {
             args.gui_local.new_profile_modal_open = true;
+        }
+        if ui.button("Rearrange").clicked() {
+            args.gui_local.rearrange_profiles_modal.new_order = args.config.profiles.clone();
+            args.gui_local.rearrange_profiles_modal.modal_open = true;
         }
         ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
             ui.add_space(super::SPACING);
@@ -22,6 +31,84 @@ pub fn ui_main(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp) {
     });
     if args.gui_local.new_profile_modal_open {
         new_profile_modal(ctx, ui, args);
+    }
+    if args.gui_local.rearrange_profiles_modal.modal_open {
+        ui_rearrange_profiles_modal(
+            ui,
+            &mut args.gui_local.rearrange_profiles_modal,
+            &mut args.config.profiles,
+        );
+    }
+}
+
+fn ui_rearrange_profiles_modal(
+    ui: &mut egui::Ui,
+    modal_opts: &mut RearrangeProfilesModalOpts,
+    profiles: &mut Vec<config::Profile>,
+) {
+    use egui_extras::{Size, StripBuilder};
+
+    let ok_cancel_width = 60.0;
+    let mut ok = false;
+    let mut cancel = false;
+
+    let modal = egui::Modal::new(egui::Id::new("rearrange profiles modal")).show(ui.ctx(), |ui| {
+        ui.set_max_width(400.0);
+        StripBuilder::new(ui)
+            .size(Size::exact(300.0))
+            .size(Size::exact(20.0))
+            .vertical(|mut strip| {
+                strip.cell(|ui| {
+                    ui.heading("Rearrange and Delete Profiles");
+                    egui::Frame::new()
+                        .stroke(egui::Stroke {
+                            width: 1.0,
+                            color: egui::Color32::DARK_GRAY,
+                        })
+                        .inner_margin(4.0)
+                        .corner_radius(4.0)
+                        .show(ui, |ui| {
+                            ui_rearrange_table(ui, &mut modal_opts.new_order, "Profiles");
+                        });
+                });
+                strip.cell(|ui| {
+                    ui.separator();
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui
+                            .add_sized(
+                                [ok_cancel_width, ui.available_height()],
+                                egui::Button::new("Cancel"),
+                            )
+                            .clicked()
+                        {
+                            cancel = true;
+                        }
+                        if ui
+                            .add_sized(
+                                [ok_cancel_width, ui.available_height()],
+                                egui::Button::new("OK"),
+                            )
+                            .clicked()
+                        {
+                            ok = true;
+                        }
+                    });
+                });
+            });
+    });
+
+    if ui.ctx().input(|i| i.key_pressed(egui::Key::Enter)) {
+        debug!("OK pressed");
+        ok = true;
+    }
+    if modal.should_close() {
+        cancel = true;
+    }
+    if ok {
+        *profiles = modal_opts.new_order.clone();
+        modal_opts.modal_open = false;
+    } else if cancel {
+        modal_opts.modal_open = false;
     }
 }
 

@@ -4,6 +4,7 @@ use crate::config;
 use crate::gui::reemapp::ProfileConditionModalOpts;
 use crate::gui::reemapp::ProfileConditionUI;
 use crate::gui::reemapp::ui_base_layer;
+use crate::gui::reemapp::ui_tables::ui_enable_clickable_table;
 use crate::query_windows;
 use egui_extras::{Size, StripBuilder};
 
@@ -80,7 +81,17 @@ pub fn ui_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp, pr
                             .inner_margin(4.0)
                             .corner_radius(4.0)
                             .show(ui, |ui| {
-                                layers_table_ui(ui, args, profile_idx);
+                                let layer_select = ui_enable_clickable_table(
+                                    ui,
+                                    &mut args.config.profiles[profile_idx].layers,
+                                    "Layer",
+                                );
+                                if let Some(i) = layer_select {
+                                    args.gui_local.menu = GuiMenu::ProfileLayer {
+                                        profile_idx,
+                                        layer_idx: i,
+                                    }
+                                }
                             });
                     });
                 });
@@ -105,104 +116,6 @@ pub fn ui_profile(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp, pr
     }
     if args.gui_local.new_layer_modal_open {
         new_layer_modal(ctx, ui, args, profile_idx);
-    }
-}
-
-fn layers_table_ui(ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize) {
-    use egui_extras::{Column, TableBuilder};
-    let header_height = 12.0;
-    let row_height = 20.0;
-    let btn_size = [20.0, 20.0];
-    let mut pointing_hand = false;
-    let mut to_delete = None;
-    let mut layer_select = None;
-    TableBuilder::new(ui)
-        .id_salt("Layers Table")
-        .striped(true)
-        .auto_shrink(false)
-        .sense(egui::Sense::click_and_drag())
-        .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
-        .column(Column::exact(60.0)) // Enabled
-        .column(Column::exact(60.0)) // Delete
-        .column(Column::remainder()) // Profile Name
-        // .column(Column::exact(60.0))
-        .header(header_height, |mut header| {
-            header.col(|ui| {
-                ui.strong("Enabled");
-            });
-            header.col(|ui| {
-                ui.strong("Remove");
-            });
-            header.col(|ui| {
-                ui.strong("Name");
-            });
-        })
-        .body(|mut body| {
-            // let profiles_len = args.config.profiles.len();
-            // let mut to_swap: Option<(usize, usize)> = None;
-            for (i, layer) in args.config.profiles[profile_idx]
-                .layers
-                .iter_mut()
-                .enumerate()
-            {
-                // let first = i == 0;
-                // let last = i == profiles_len - 1;
-                body.row(row_height, |mut row| {
-                    row.col(|ui| {
-                        ui.with_layout(
-                            egui::Layout::centered_and_justified(egui::Direction::LeftToRight),
-                            |ui| {
-                                ui.add(egui::Checkbox::without_text(&mut layer.enabled));
-                            },
-                        );
-                    });
-                    row.col(|ui| {
-                        ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-                            if ui.add_sized(btn_size, egui::Button::new("✖")).clicked() {
-                                to_delete = Some(i);
-                            };
-                        });
-                    });
-                    row.col(|ui| {
-                        ui.style_mut().interaction.selectable_labels = false;
-                        ui.label(&layer.name);
-                    });
-                    // row.col(|ui| {
-                    //     ui.add_enabled_ui(!first, |ui| {
-                    //         if ui.add_sized(btn_size, egui::Button::new("⬆")).clicked() {
-                    //             to_swap = Some((i - 1, i));
-                    //         }
-                    //     });
-                    //     ui.add_enabled_ui(!last, |ui| {
-                    //         if ui.add_sized(btn_size, egui::Button::new("⬇")).clicked() {
-                    //             to_swap = Some((i + 1, i));
-                    //         }
-                    //     });
-                    // });
-                    if row.response().hovered() {
-                        pointing_hand = true;
-                    }
-                    if row.response().clicked() {
-                        layer_select = Some(i);
-                    }
-                });
-            }
-            // if let Some((a, b)) = to_swap {
-            //     args.config.profiles.swap(a, b);
-            // }
-        });
-    if let Some(to_delete) = to_delete {
-        args.config.profiles[profile_idx].layers.remove(to_delete);
-    }
-    if let Some(i) = layer_select {
-        args.gui_local.menu = GuiMenu::ProfileLayer {
-            profile_idx,
-            layer_idx: i,
-        }
-    }
-    if pointing_hand {
-        ui.ctx()
-            .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
     }
 }
 

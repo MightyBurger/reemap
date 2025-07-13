@@ -4,8 +4,8 @@ mod ui_default_profile;
 mod ui_layer;
 mod ui_main;
 mod ui_profile;
-mod ui_remap_tables;
 mod ui_status_bar;
+mod ui_tables;
 
 use breadcrumb::breadcrumb;
 use std::path::PathBuf;
@@ -116,14 +116,28 @@ pub struct GuiLocal {
     menu: GuiMenu,
     new_profile_modal_open: bool,
     new_profile: config::Profile,
+    rearrange_profiles_modal: RearrangeProfilesModalOpts,
     new_layer_modal_open: bool,
     new_layer: config::Layer,
+    rearrange_layers_modal: RearrangeLayersModalOpts,
     new_default_layer_modal_open: bool,
     new_default_layer: config::DefaultProfile,
     profile_condition_modal: ProfileConditionModalOpts,
     new_remap_modal: NewRemapModalOpts,
     new_base_remap_modal: NewBaseRemapModalOpts,
     layer_condition_modal: LayerConditionModalOpts,
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct RearrangeProfilesModalOpts {
+    modal_open: bool,
+    new_order: Vec<config::Profile>,
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct RearrangeLayersModalOpts {
+    modal_open: bool,
+    new_order: Vec<config::Layer>,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
