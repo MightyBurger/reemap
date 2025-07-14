@@ -1,18 +1,19 @@
 use super::GuiMenu;
 use super::ReemApp;
 use crate::config;
-use crate::gui::reemapp::ProfileConditionModalOpts;
+use crate::gui::reemapp::EditProfileModalOpts;
 use crate::gui::reemapp::ProfileConditionUI;
 use crate::gui::reemapp::RearrangeLayersModalOpts;
 use crate::gui::reemapp::SPACING;
 use crate::gui::reemapp::ui_base_layer;
+use crate::gui::reemapp::ui_edit_profile_modal::ui_edit_profile_modal;
 use crate::gui::reemapp::ui_ok_cancel_modal::ui_ok_cancel_modal;
 use crate::gui::reemapp::ui_tables::ui_enable_clickable_table;
 use crate::gui::reemapp::ui_tables::ui_rearrange_table;
 use crate::query_windows;
-use egui_extras::{Size, StripBuilder};
 
 pub fn ui_profile(ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize) {
+    use egui_extras::{Size, StripBuilder};
     StripBuilder::new(ui)
         .size(Size::relative(0.5))
         .size(Size::remainder())
@@ -28,17 +29,12 @@ pub fn ui_profile(ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize) {
                         args.gui_local.rearrange_layers_modal.modal_open = true;
                     }
                     ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-                        ui.label("Profile Name");
-                        ui.text_edit_singleline(&mut args.config.profiles[profile_idx].name);
-                        ui.add_space(super::SPACING);
-
-                        ui.label(get_profile_condition_text(
-                            &args.config.profiles[profile_idx].condition,
-                        ));
-                        let edit_response = ui.button("Edit condition");
+                        ui.label(&args.config.profiles[profile_idx].condition.helper_text());
+                        let edit_response = ui.button("Edit");
                         if edit_response.clicked() {
-                            args.gui_local.profile_condition_modal = ProfileConditionModalOpts {
+                            args.gui_local.edit_profile_modal = EditProfileModalOpts {
                                 modal_open: true,
+                                name: args.config.profiles[profile_idx].name.clone(),
                                 condition: match &args.config.profiles[profile_idx].condition {
                                     // custom
                                     config::ProfileCondition::TitleAndProcess { .. } => {
@@ -120,16 +116,35 @@ pub fn ui_profile(ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize) {
             &mut args.config.profiles[profile_idx].layers,
         );
     }
-    if args.gui_local.profile_condition_modal.modal_open {
-        ui_profile_condition_modal(
+    if args.gui_local.edit_profile_modal.modal_open {
+        edit_profile_modal(
             ui,
-            &mut args.gui_local.profile_condition_modal,
-            &args.config.profiles[profile_idx].name.clone(),
-            &mut args.config.profiles[profile_idx].condition,
+            &mut args.gui_local.edit_profile_modal,
+            &mut args.config.profiles[profile_idx],
         );
     }
     if args.gui_local.new_layer_modal_open {
         new_layer_modal(ui, args, profile_idx);
+    }
+}
+
+fn edit_profile_modal(
+    ui: &mut egui::Ui,
+    modal_opts: &mut EditProfileModalOpts,
+    profile: &mut config::Profile,
+) {
+    let ok_cancel =
+        ui_edit_profile_modal(ui, modal_opts, &format!("Editing profile {}", profile.name));
+    match ok_cancel {
+        Some(true) => {
+            profile.name = modal_opts.clone().name;
+            profile.condition = modal_opts.clone().extract_condition();
+            modal_opts.modal_open = false;
+        }
+        Some(false) => {
+            modal_opts.modal_open = false;
+        }
+        None => (),
     }
 }
 
@@ -167,26 +182,6 @@ fn ui_rearrange_layers_modal(
     }
 }
 
-fn get_profile_condition_text(condition: &config::ProfileCondition) -> String {
-    use config::ProfileCondition as PC;
-    match condition {
-        PC::TitleAndProcess { title, process } => {
-            format!("Active when {title} ({process}) is in focus")
-        }
-        PC::Title { title } => {
-            format!("Active when {title} is in focus")
-        }
-        PC::Process { process } => {
-            format!("Active when the process {process} is in focus")
-        }
-        PC::OriBF => "Active when Ori and the Blind Forest is in focus".to_string(),
-        PC::OriBFDE => {
-            "Active when Ori and the Blind Forest: Definitive Edition is in focus".to_string()
-        }
-        PC::OriWotW => "Active when Ori and the Will of the Wisps is in focus".to_string(),
-    }
-}
-
 fn new_layer_modal(ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize) {
     let ok_cancel = ui_ok_cancel_modal(ui, |ui| {
         ui.label("Layer Name");
@@ -203,209 +198,4 @@ fn new_layer_modal(ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize) {
         }
         None => (),
     }
-}
-
-fn ui_profile_condition_modal(
-    ui: &mut egui::Ui,
-    modal_opts: &mut ProfileConditionModalOpts,
-    profile_name: &str,
-    condition: &mut config::ProfileCondition,
-) {
-    let ok_cancel = ui_ok_cancel_modal(ui, |ui| {
-        let enable_title = match modal_opts.condition {
-            ProfileConditionUI::TitleAndProcess | ProfileConditionUI::Title => true,
-            _ => false,
-        };
-        let enable_process = match modal_opts.condition {
-            ProfileConditionUI::TitleAndProcess | ProfileConditionUI::Process => true,
-            _ => false,
-        };
-        let enable_table = match modal_opts.condition {
-            ProfileConditionUI::TitleAndProcess
-            | ProfileConditionUI::Title
-            | ProfileConditionUI::Process => true,
-            ProfileConditionUI::OriBF
-            | ProfileConditionUI::OriBFDE
-            | ProfileConditionUI::OriWotW => false,
-        };
-        // TODO: use again
-        let valid = |modal_opts: &mut ProfileConditionModalOpts| match modal_opts.condition {
-            ProfileConditionUI::TitleAndProcess => {
-                !modal_opts.title.is_empty() && !modal_opts.process.is_empty()
-            }
-            ProfileConditionUI::Title => !modal_opts.title.is_empty(),
-            ProfileConditionUI::Process => !modal_opts.process.is_empty(),
-            ProfileConditionUI::OriBF
-            | ProfileConditionUI::OriBFDE
-            | ProfileConditionUI::OriWotW => true,
-        };
-        ui.heading(format!("Condition for {profile_name}"));
-        ui.separator();
-        ui.add_space(super::SPACING);
-
-        ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
-            egui::ComboBox::from_label("Condition")
-                .selected_text(&modal_opts.condition.to_string())
-                .show_ui(ui, |ui| {
-                    ui.selectable_value(
-                        &mut modal_opts.condition,
-                        ProfileConditionUI::TitleAndProcess,
-                        "Window Title and Process",
-                    );
-                    ui.selectable_value(
-                        &mut modal_opts.condition,
-                        ProfileConditionUI::Title,
-                        "Window Title",
-                    );
-                    ui.selectable_value(
-                        &mut modal_opts.condition,
-                        ProfileConditionUI::Process,
-                        "Process",
-                    );
-                    ui.separator();
-                    ui.selectable_value(
-                        &mut modal_opts.condition,
-                        ProfileConditionUI::OriBF,
-                        "Ori and the Blind Forest",
-                    );
-                    ui.selectable_value(
-                        &mut modal_opts.condition,
-                        ProfileConditionUI::OriBFDE,
-                        "Ori and the Blind Forest: Definitive Edition",
-                    );
-                    ui.selectable_value(
-                        &mut modal_opts.condition,
-                        ProfileConditionUI::OriWotW,
-                        "Ori and the Will of the Wisps",
-                    );
-                });
-
-            ui.add_space(super::SPACING);
-
-            StripBuilder::new(ui)
-                .size(Size::exact(300.0))
-                .size(Size::exact(20.0))
-                .vertical(|mut strip| {
-                    strip.cell(|ui| {
-                        ui.columns_const(|[col_1, col_2]| {
-                            col_1.add_enabled_ui(enable_title, |ui| {
-                                ui.label("Window Title");
-                                ui.text_edit_singleline(&mut modal_opts.title);
-                            });
-
-                            col_2.add_enabled_ui(enable_process, |ui| {
-                                ui.label("Process");
-                                ui.text_edit_singleline(&mut modal_opts.process);
-                            });
-                        });
-
-                        ui.add_space(super::SPACING);
-
-                        ui.add_enabled_ui(enable_table, |ui| {
-                            egui::Frame::new()
-                                .stroke(egui::Stroke {
-                                    width: 1.0,
-                                    color: egui::Color32::DARK_GRAY,
-                                })
-                                .inner_margin(4.0)
-                                .corner_radius(4.0)
-                                .show(ui, |ui| {
-                                    if let Some(query_windows::WindowInfo { title, process }) =
-                                        ui_open_windows_table(ui, &modal_opts.open_windows)
-                                    {
-                                        modal_opts.title = title;
-                                        modal_opts.process = process;
-                                    }
-                                });
-                        });
-                    });
-                    strip.cell(|ui| {
-                        ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
-                            ui.add_enabled_ui(enable_table, |ui| {
-                                if ui.button("Refresh").clicked() {
-                                    modal_opts.open_windows =
-                                        query_windows::enumerate_open_windows();
-                                }
-                            });
-                        });
-                    });
-                });
-        });
-    });
-    match ok_cancel {
-        Some(true) => {
-            *condition = match modal_opts.condition {
-                ProfileConditionUI::TitleAndProcess => config::ProfileCondition::TitleAndProcess {
-                    title: modal_opts.title.clone(),
-                    process: modal_opts.process.clone(),
-                },
-                ProfileConditionUI::Title => config::ProfileCondition::Title {
-                    title: modal_opts.title.clone(),
-                },
-                ProfileConditionUI::Process => config::ProfileCondition::Process {
-                    process: modal_opts.process.clone(),
-                },
-                ProfileConditionUI::OriBF => config::ProfileCondition::OriBF,
-                ProfileConditionUI::OriBFDE => config::ProfileCondition::OriBFDE,
-                ProfileConditionUI::OriWotW => config::ProfileCondition::OriWotW,
-            };
-            modal_opts.modal_open = false;
-        }
-        Some(false) => {
-            modal_opts.modal_open = false;
-        }
-        None => (),
-    }
-}
-
-fn ui_open_windows_table(
-    ui: &mut egui::Ui,
-    windows: &[query_windows::WindowInfo],
-) -> Option<query_windows::WindowInfo> {
-    use egui_extras::{Column, TableBuilder};
-    let header_height = 12.0;
-    let row_height = 20.0;
-    let mut pointing_hand = false;
-    let mut window_select = None;
-    TableBuilder::new(ui)
-        .id_salt("Open Windows Table")
-        .striped(true)
-        .auto_shrink(false)
-        .sense(egui::Sense::click_and_drag())
-        .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
-        .column(Column::exact(200.0)) // Process
-        .column(Column::remainder()) // Window Title
-        .header(header_height, |mut header| {
-            header.col(|ui| {
-                ui.strong("Process");
-            });
-            header.col(|ui| {
-                ui.strong("Window Title");
-            });
-        })
-        .body(|mut body| {
-            for window in windows {
-                body.row(row_height, |mut row| {
-                    row.col(|ui| {
-                        ui.style_mut().interaction.selectable_labels = false;
-                        ui.label(&window.process);
-                    });
-                    row.col(|ui| {
-                        ui.style_mut().interaction.selectable_labels = false;
-                        ui.label(&window.title);
-                    });
-                    if row.response().hovered() {
-                        pointing_hand = true;
-                    }
-                    if row.response().clicked() {
-                        window_select = Some(window.clone());
-                    }
-                });
-            }
-        });
-    if pointing_hand {
-        ui.ctx()
-            .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
-    }
-    window_select
 }

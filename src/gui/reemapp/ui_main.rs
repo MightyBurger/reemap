@@ -1,6 +1,8 @@
 use crate::config;
+use crate::gui::reemapp::EditProfileModalOpts;
 use crate::gui::reemapp::RearrangeProfilesModalOpts;
 use crate::gui::reemapp::SPACING;
+use crate::gui::reemapp::ui_edit_profile_modal::ui_edit_profile_modal;
 use crate::gui::reemapp::ui_ok_cancel_modal::ui_ok_cancel_modal;
 use crate::gui::reemapp::ui_tables::ui_rearrange_table;
 
@@ -10,7 +12,11 @@ use super::ReemApp;
 pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
         if ui.button("Add Profile").clicked() {
-            args.gui_local.new_profile_modal_open = true;
+            args.gui_local.new_profile_modal = EditProfileModalOpts {
+                modal_open: true,
+                name: String::from("New Profile"),
+                ..Default::default()
+            };
         }
         if ui.button("Rearrange").clicked() {
             args.gui_local.rearrange_profiles_modal.new_order = args.config.profiles.clone();
@@ -30,7 +36,7 @@ pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
                 });
         });
     });
-    if args.gui_local.new_profile_modal_open {
+    if args.gui_local.new_profile_modal.modal_open {
         new_profile_modal(ui, args);
     }
     if args.gui_local.rearrange_profiles_modal.modal_open {
@@ -212,19 +218,20 @@ fn profiles_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
 }
 
 fn new_profile_modal(ui: &mut egui::Ui, args: &mut ReemApp) {
-    let ok_cancel = ui_ok_cancel_modal(ui, |ui| {
-        ui.label("Profile Name");
-        ui.text_edit_singleline(&mut args.gui_local.new_profile.name);
-    });
+    let ok_cancel = ui_edit_profile_modal(
+        ui,
+        &mut args.gui_local.new_profile_modal,
+        "Create new profile",
+    );
     match ok_cancel {
         Some(true) => {
             args.config
                 .profiles
-                .push(args.gui_local.new_profile.clone());
-            args.gui_local.new_profile_modal_open = false;
+                .push(args.gui_local.new_profile_modal.clone().into());
+            args.gui_local.new_profile_modal.modal_open = false;
         }
         Some(false) => {
-            args.gui_local.new_profile_modal_open = false;
+            args.gui_local.new_profile_modal.modal_open = false;
         }
         None => (),
     }

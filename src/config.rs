@@ -92,6 +92,27 @@ pub enum ProfileCondition {
     OriWotW,
 }
 
+impl ProfileCondition {
+    pub fn helper_text(&self) -> String {
+        match self {
+            Self::TitleAndProcess { title, process } => {
+                format!("Active when {title} ({process}) is in focus")
+            }
+            Self::Title { title } => {
+                format!("Active when {title} is in focus")
+            }
+            Self::Process { process } => {
+                format!("Active when the process {process} is in focus")
+            }
+            Self::OriBF => "Active when Ori and the Blind Forest is in focus".to_string(),
+            Self::OriBFDE => {
+                "Active when Ori and the Blind Forest: Definitive Edition is in focus".to_string()
+            }
+            Self::OriWotW => "Active when Ori and the Will of the Wisps is in focus".to_string(),
+        }
+    }
+}
+
 // -------------------- BaseLayer --------------------
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct BaseLayer {

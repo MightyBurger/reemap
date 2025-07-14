@@ -1,6 +1,7 @@
 mod breadcrumb;
 mod ui_base_layer;
 mod ui_default_profile;
+mod ui_edit_profile_modal;
 mod ui_layer;
 mod ui_main;
 mod ui_ok_cancel_modal;
@@ -115,15 +116,14 @@ impl std::fmt::Display for RemapPolicyUI {
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct GuiLocal {
     menu: GuiMenu,
-    new_profile_modal_open: bool,
-    new_profile: config::Profile,
+    new_profile_modal: EditProfileModalOpts,
+    edit_profile_modal: EditProfileModalOpts,
     rearrange_profiles_modal: RearrangeProfilesModalOpts,
     new_layer_modal_open: bool,
     new_layer: config::Layer,
     rearrange_layers_modal: RearrangeLayersModalOpts,
     new_default_layer_modal_open: bool,
     new_default_layer: config::DefaultProfile,
-    profile_condition_modal: ProfileConditionModalOpts,
     new_remap_modal: NewRemapModalOpts,
     new_base_remap_modal: NewBaseRemapModalOpts,
     layer_condition_modal: LayerConditionModalOpts,
@@ -142,12 +142,41 @@ pub struct RearrangeLayersModalOpts {
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ProfileConditionModalOpts {
+pub struct EditProfileModalOpts {
     modal_open: bool,
+    name: String,
     condition: ProfileConditionUI,
     title: String,
     process: String,
     open_windows: Vec<query_windows::WindowInfo>,
+}
+
+impl EditProfileModalOpts {
+    fn extract_condition(self) -> config::ProfileCondition {
+        match self.condition {
+            ProfileConditionUI::TitleAndProcess => config::ProfileCondition::TitleAndProcess {
+                title: self.title,
+                process: self.process,
+            },
+            ProfileConditionUI::Title => config::ProfileCondition::Title { title: self.title },
+            ProfileConditionUI::Process => config::ProfileCondition::Process {
+                process: self.process,
+            },
+            ProfileConditionUI::OriBF => config::ProfileCondition::OriBF,
+            ProfileConditionUI::OriBFDE => config::ProfileCondition::OriBFDE,
+            ProfileConditionUI::OriWotW => config::ProfileCondition::OriWotW,
+        }
+    }
+}
+
+impl From<EditProfileModalOpts> for config::Profile {
+    fn from(value: EditProfileModalOpts) -> Self {
+        Self {
+            name: value.name.clone(),
+            condition: value.extract_condition(),
+            ..Default::default()
+        }
+    }
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
