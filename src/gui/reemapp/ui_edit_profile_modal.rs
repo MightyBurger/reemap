@@ -21,7 +21,8 @@ pub fn ui_edit_profile_modal(
             ProfileConditionUI::TitleAndProcess
             | ProfileConditionUI::Title
             | ProfileConditionUI::Process => true,
-            ProfileConditionUI::OriBF
+            ProfileConditionUI::Always
+            | ProfileConditionUI::OriBF
             | ProfileConditionUI::OriBFDE
             | ProfileConditionUI::OriWotW => false,
         };
@@ -32,7 +33,8 @@ pub fn ui_edit_profile_modal(
             }
             ProfileConditionUI::Title => !modal_opts.title.is_empty(),
             ProfileConditionUI::Process => !modal_opts.process.is_empty(),
-            ProfileConditionUI::OriBF
+            ProfileConditionUI::Always
+            | ProfileConditionUI::OriBF
             | ProfileConditionUI::OriBFDE
             | ProfileConditionUI::OriWotW => true,
         };
@@ -51,13 +53,18 @@ pub fn ui_edit_profile_modal(
                 .show_ui(ui, |ui| {
                     ui.selectable_value(
                         &mut modal_opts.condition,
+                        ProfileConditionUI::Always,
+                        "Always active",
+                    );
+                    ui.selectable_value(
+                        &mut modal_opts.condition,
                         ProfileConditionUI::TitleAndProcess,
-                        "Window Title and Process",
+                        "Window title and process",
                     );
                     ui.selectable_value(
                         &mut modal_opts.condition,
                         ProfileConditionUI::Title,
-                        "Window Title",
+                        "Window title",
                     );
                     ui.selectable_value(
                         &mut modal_opts.condition,

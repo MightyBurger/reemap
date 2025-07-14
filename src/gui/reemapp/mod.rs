@@ -38,6 +38,7 @@ pub struct ReemApp {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 enum ProfileConditionUI {
     // custom
+    Always,
     TitleAndProcess,
     Title,
     Process,
@@ -57,6 +58,7 @@ impl std::fmt::Display for ProfileConditionUI {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             // custom
+            Self::Always => write!(f, "Always active"),
             Self::TitleAndProcess => write!(f, "Window title and process"),
             Self::Title => write!(f, "Window title"),
             Self::Process => write!(f, "Process"),
@@ -150,6 +152,7 @@ pub struct EditProfileModalOpts {
 impl EditProfileModalOpts {
     fn extract_condition(self) -> config::ProfileCondition {
         match self.condition {
+            ProfileConditionUI::Always => config::ProfileCondition::Always,
             ProfileConditionUI::TitleAndProcess => config::ProfileCondition::TitleAndProcess {
                 title: self.title,
                 process: self.process,

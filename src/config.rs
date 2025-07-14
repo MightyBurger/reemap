@@ -75,6 +75,7 @@ impl std::fmt::Display for Profile {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum ProfileCondition {
     // custom
+    Always,
     TitleAndProcess { title: String, process: String },
     Title { title: String },
     Process { process: String },
@@ -87,6 +88,7 @@ pub enum ProfileCondition {
 impl ProfileCondition {
     pub fn helper_text(&self) -> String {
         match self {
+            Self::Always => "Always active".to_string(),
             Self::TitleAndProcess { title, process } => {
                 format!("Active when {title} ({process}) is in focus")
             }

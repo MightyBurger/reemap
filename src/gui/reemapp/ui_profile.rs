@@ -51,6 +51,7 @@ pub fn ui_profile(
                                 name: profile.name.clone(),
                                 condition: match &profile.condition {
                                     // custom
+                                    config::ProfileCondition::Always => ProfileConditionUI::Always,
                                     config::ProfileCondition::TitleAndProcess { .. } => {
                                         ProfileConditionUI::TitleAndProcess
                                     }

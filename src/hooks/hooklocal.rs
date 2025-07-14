@@ -83,6 +83,9 @@ impl HookLocalData {
             .map(|(i, profile)| (i, &profile.condition))
         {
             match profile_condition {
+                config::ProfileCondition::Always => {
+                    new_profile = Some(i);
+                }
                 config::ProfileCondition::TitleAndProcess {
                     title: condition_title,
                     process: condition_process,
