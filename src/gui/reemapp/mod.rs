@@ -266,7 +266,16 @@ impl crate::gui::TrayApp for ReemApp {
                             &mut self.gui_local.edit_layer_modal,
                         );
                     }
-                    GuiMenu::Profile { profile_idx } => ui_profile(ui, self, profile_idx),
+                    GuiMenu::Profile { profile_idx } => ui_profile(
+                        ui,
+                        &mut self.config.profiles[profile_idx],
+                        &mut self.gui_local.rearrange_layers_modal,
+                        &mut self.gui_local.edit_profile_modal,
+                        &mut self.gui_local.edit_layer_modal,
+                        &mut self.gui_local.new_base_remap_modal,
+                        profile_idx,
+                        &mut self.gui_local.menu,
+                    ),
                     GuiMenu::ProfileLayer {
                         profile_idx,
                         layer_idx,

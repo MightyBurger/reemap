@@ -10,7 +10,7 @@ use strum::IntoEnumIterator;
 pub fn ui_base_layer(
     ui: &mut egui::Ui,
     layer: &mut config::BaseLayer,
-    new_remap_modal: &mut NewBaseRemapModalOpts,
+    new_base_remap_modal: &mut NewBaseRemapModalOpts,
 ) {
     ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
         egui::Frame::new()
@@ -21,19 +21,22 @@ pub fn ui_base_layer(
             .inner_margin(4.0)
             .corner_radius(4.0)
             .show(ui, |ui| {
-                ui_base_remaps_table(ui, layer, new_remap_modal);
+                ui_base_remaps_table(ui, layer, new_base_remap_modal);
             });
     });
-    if let Some(button) = new_remap_modal.modal_open {
+
+    // ----- New remap modal -----
+
+    if let Some(button) = new_base_remap_modal.modal_open {
         let policy = &mut layer.policy[button];
-        ui_new_base_remap_modal(ui, new_remap_modal, button, policy);
+        ui_new_base_remap_modal(ui, new_base_remap_modal, button, policy);
     }
 }
 
 pub fn ui_base_remaps_table(
     ui: &mut egui::Ui,
     layer: &mut config::BaseLayer,
-    new_remap_modal: &mut NewBaseRemapModalOpts,
+    new_base_remap_modal: &mut NewBaseRemapModalOpts,
 ) {
     use egui_extras::{Column, TableBuilder};
     let header_height = 12.0;
@@ -82,12 +85,12 @@ pub fn ui_base_remaps_table(
             }
         });
     if let Some(button) = button_select {
-        new_remap_modal.modal_open = Some(button);
-        new_remap_modal.policy = match layer.policy[button] {
+        new_base_remap_modal.modal_open = Some(button);
+        new_base_remap_modal.policy = match layer.policy[button] {
             config::BaseRemapPolicy::NoRemap => BaseRemapPolicyUI::NoRemap,
             config::BaseRemapPolicy::Remap(_) => BaseRemapPolicyUI::Remap,
         };
-        new_remap_modal.outputs = match layer.policy[button] {
+        new_base_remap_modal.outputs = match layer.policy[button] {
             config::BaseRemapPolicy::NoRemap => SmallVec::new(),
             config::BaseRemapPolicy::Remap(ref output) => output.clone(),
         };

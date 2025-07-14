@@ -38,10 +38,16 @@ pub fn ui_layer(
                 ui_remaps_table(ui, layer, new_remap_modal);
             });
     });
+
+    // ----- New remap modal -----
+
     if let Some(button) = new_remap_modal.modal_open {
         let policy = &mut layer.policy[button];
         ui_new_remap_modal(ui, new_remap_modal, button, policy);
     }
+
+    // ----- Edit layer modal -----
+
     if edit_layer_modal.modal_open {
         let ok_cancel = ui_edit_layer_modal(
             ui,
@@ -63,7 +69,7 @@ pub fn ui_layer(
     }
 }
 
-pub fn ui_remaps_table(
+fn ui_remaps_table(
     ui: &mut egui::Ui,
     layer: &mut config::Layer,
     new_remap_modal: &mut NewRemapModalOpts,

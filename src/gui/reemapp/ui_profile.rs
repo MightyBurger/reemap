@@ -1,8 +1,8 @@
 use super::GuiMenu;
-use super::ReemApp;
 use crate::config;
 use crate::gui::reemapp::EditLayerModalOpts;
 use crate::gui::reemapp::EditProfileModalOpts;
+use crate::gui::reemapp::NewBaseRemapModalOpts;
 use crate::gui::reemapp::ProfileConditionUI;
 use crate::gui::reemapp::RearrangeLayersModalOpts;
 use crate::gui::reemapp::SPACING;
@@ -14,7 +14,16 @@ use crate::gui::reemapp::ui_tables::ui_enable_clickable_table;
 use crate::gui::reemapp::ui_tables::ui_rearrange_table;
 use crate::query_windows;
 
-pub fn ui_profile(ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize) {
+pub fn ui_profile(
+    ui: &mut egui::Ui,
+    profile: &mut config::Profile,
+    rearrange_layers_modal: &mut RearrangeLayersModalOpts,
+    edit_profile_modal: &mut EditProfileModalOpts,
+    new_layer_modal: &mut EditLayerModalOpts,
+    new_base_remap_modal: &mut NewBaseRemapModalOpts,
+    profile_idx: usize,
+    menu: &mut GuiMenu,
+) {
     use egui_extras::{Size, StripBuilder};
     StripBuilder::new(ui)
         .size(Size::relative(0.5))
@@ -23,25 +32,24 @@ pub fn ui_profile(ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize) {
             strip.cell(|ui| {
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
                     if ui.button("Add Layer").clicked() {
-                        args.gui_local.new_layer_modal = EditLayerModalOpts {
+                        *new_layer_modal = EditLayerModalOpts {
                             modal_open: true,
                             name: String::from("New layer"),
                             ..Default::default()
                         };
                     }
                     if ui.button("Rearrange").clicked() {
-                        args.gui_local.rearrange_layers_modal.new_order =
-                            args.config.profiles[profile_idx].layers.clone();
-                        args.gui_local.rearrange_layers_modal.modal_open = true;
+                        rearrange_layers_modal.new_order = profile.layers.clone();
+                        rearrange_layers_modal.modal_open = true;
                     }
                     ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-                        ui.label(&args.config.profiles[profile_idx].condition.helper_text());
+                        ui.label(&profile.condition.helper_text());
                         let edit_response = ui.button("Edit");
                         if edit_response.clicked() {
-                            args.gui_local.edit_profile_modal = EditProfileModalOpts {
+                            *edit_profile_modal = EditProfileModalOpts {
                                 modal_open: true,
-                                name: args.config.profiles[profile_idx].name.clone(),
-                                condition: match &args.config.profiles[profile_idx].condition {
+                                name: profile.name.clone(),
+                                condition: match &profile.condition {
                                     // custom
                                     config::ProfileCondition::TitleAndProcess { .. } => {
                                         ProfileConditionUI::TitleAndProcess
@@ -61,7 +69,7 @@ pub fn ui_profile(ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize) {
                                         ProfileConditionUI::OriWotW
                                     }
                                 },
-                                title: match &args.config.profiles[profile_idx].condition {
+                                title: match &profile.condition {
                                     config::ProfileCondition::TitleAndProcess {
                                         title,
                                         process: _,
@@ -69,7 +77,7 @@ pub fn ui_profile(ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize) {
                                     config::ProfileCondition::Title { title } => title.clone(),
                                     _ => String::new(),
                                 },
-                                process: match &args.config.profiles[profile_idx].condition {
+                                process: match &profile.condition {
                                     config::ProfileCondition::TitleAndProcess {
                                         title: _,
                                         process,
@@ -92,13 +100,10 @@ pub fn ui_profile(ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize) {
                             .inner_margin(4.0)
                             .corner_radius(4.0)
                             .show(ui, |ui| {
-                                let layer_select = ui_enable_clickable_table(
-                                    ui,
-                                    &mut args.config.profiles[profile_idx].layers,
-                                    "Layer",
-                                );
+                                let layer_select =
+                                    ui_enable_clickable_table(ui, &mut profile.layers, "Layer");
                                 if let Some(i) = layer_select {
-                                    args.gui_local.menu = GuiMenu::ProfileLayer {
+                                    *menu = GuiMenu::ProfileLayer {
                                         profile_idx,
                                         layer_idx: i,
                                     }
@@ -108,48 +113,48 @@ pub fn ui_profile(ui: &mut egui::Ui, args: &mut ReemApp, profile_idx: usize) {
                 });
             });
             strip.cell(|ui| {
-                ui_base_layer(
-                    ui,
-                    &mut args.config.profiles[profile_idx].base,
-                    &mut args.gui_local.new_base_remap_modal,
-                );
+                ui_base_layer(ui, &mut profile.base, new_base_remap_modal);
             });
         });
-    if args.gui_local.rearrange_layers_modal.modal_open {
-        ui_rearrange_layers_modal(
-            ui,
-            &mut args.gui_local.rearrange_layers_modal,
-            &mut args.config.profiles[profile_idx].layers,
-        );
+
+    // ----- Rearrange layers modal -----
+
+    if rearrange_layers_modal.modal_open {
+        ui_rearrange_layers_modal(ui, rearrange_layers_modal, &mut profile.layers);
     }
-    if args.gui_local.edit_profile_modal.modal_open {
-        let modal_opts = &mut args.gui_local.edit_profile_modal;
-        let profile = &mut args.config.profiles[profile_idx];
-        let ok_cancel =
-            ui_edit_profile_modal(ui, modal_opts, &format!("Editing profile {}", profile.name));
+
+    // ----- Edit profile modal -----
+
+    if edit_profile_modal.modal_open {
+        let ok_cancel = ui_edit_profile_modal(
+            ui,
+            edit_profile_modal,
+            &format!("Editing profile {}", profile.name),
+        );
         match ok_cancel {
             Some(true) => {
-                profile.name = modal_opts.clone().name;
-                profile.condition = modal_opts.clone().extract_condition();
-                modal_opts.modal_open = false;
+                profile.name = edit_profile_modal.clone().name;
+                profile.condition = edit_profile_modal.clone().extract_condition();
+                edit_profile_modal.modal_open = false;
             }
             Some(false) => {
-                modal_opts.modal_open = false;
+                edit_profile_modal.modal_open = false;
             }
             None => (),
         }
     }
-    if args.gui_local.new_layer_modal.modal_open {
-        let ok_cancel = ui_edit_layer_modal(ui, &mut args.gui_local.new_layer_modal, "New layer");
+
+    // ----- New layer modal -----
+
+    if new_layer_modal.modal_open {
+        let ok_cancel = ui_edit_layer_modal(ui, new_layer_modal, "New layer");
         match ok_cancel {
             Some(true) => {
-                args.config.profiles[profile_idx]
-                    .layers
-                    .push(args.gui_local.new_layer_modal.clone().into());
-                args.gui_local.new_layer_modal.modal_open = false;
+                profile.layers.push(new_layer_modal.clone().into());
+                new_layer_modal.modal_open = false;
             }
             Some(false) => {
-                args.gui_local.new_layer_modal.modal_open = false;
+                new_layer_modal.modal_open = false;
             }
             None => (),
         }
