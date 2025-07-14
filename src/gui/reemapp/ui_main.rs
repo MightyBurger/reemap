@@ -41,6 +41,7 @@ pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
                         }
                     } else {
                         ui.centered_and_justified(|ui| {
+                            ui.style_mut().interaction.selectable_labels = false;
                             ui.label("Add a profile to get started.");
                         });
                     }

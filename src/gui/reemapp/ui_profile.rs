@@ -101,13 +101,20 @@ pub fn ui_profile(
                             .inner_margin(4.0)
                             .corner_radius(4.0)
                             .show(ui, |ui| {
-                                let layer_select =
-                                    ui_enable_clickable_table(ui, &mut profile.layers, "Layer");
-                                if let Some(i) = layer_select {
-                                    *menu = GuiMenu::ProfileLayer {
-                                        profile_idx,
-                                        layer_idx: i,
+                                if profile.layers.len() > 0 {
+                                    let layer_select =
+                                        ui_enable_clickable_table(ui, &mut profile.layers, "Layer");
+                                    if let Some(i) = layer_select {
+                                        *menu = GuiMenu::ProfileLayer {
+                                            profile_idx,
+                                            layer_idx: i,
+                                        }
                                     }
+                                } else {
+                                    ui.centered_and_justified(|ui| {
+                                        ui.style_mut().interaction.selectable_labels = false;
+                                        ui.label("This profile has no layers.");
+                                    });
                                 }
                             });
                     });
