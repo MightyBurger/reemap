@@ -1,11 +1,10 @@
 use crate::buttons;
 use crate::config;
+use crate::gui::reemapp::ui_edit_layer_modal::ui_edit_layer_modal;
 use crate::gui::reemapp::ui_ok_cancel_modal::ui_ok_cancel_modal;
+use crate::gui::reemapp::ui_tables::ui_available_remaps_table;
 use crate::gui::reemapp::ui_tables::ui_rearrange_table;
-use crate::gui::reemapp::ui_tables::{
-    ui_available_layer_conditions_table, ui_available_remaps_table, ui_layer_condition_table,
-};
-use crate::gui::reemapp::{LayerConditionModalOpts, NewRemapModalOpts, RemapPolicyUI};
+use crate::gui::reemapp::{EditLayerModalOpts, NewRemapModalOpts, RemapPolicyUI};
 use smallvec::SmallVec;
 use strum::IntoEnumIterator;
 
@@ -13,21 +12,15 @@ pub fn ui_layer(
     ui: &mut egui::Ui,
     layer: &mut config::Layer,
     new_remap_modal: &mut NewRemapModalOpts,
-    layer_condition_modal: &mut LayerConditionModalOpts,
+    edit_layer_modal: &mut EditLayerModalOpts,
 ) {
     ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-        ui.label("Layer Name");
-        ui.text_edit_singleline(&mut layer.name);
-        ui.add_space(super::SPACING);
-
-        ui.label(get_layer_condition_text(
-            &layer.condition,
-            &layer.layer_type,
-        ));
-        let edit_response = ui.button("Edit condition");
+        ui.label(layer.condition_helper_text());
+        let edit_response = ui.button("Edit");
         if edit_response.clicked() {
-            *layer_condition_modal = LayerConditionModalOpts {
+            *edit_layer_modal = EditLayerModalOpts {
                 modal_open: true,
+                name: layer.name.clone(),
                 layer_type: layer.layer_type.clone(),
                 condition: layer.condition.clone(),
             };
@@ -49,11 +42,24 @@ pub fn ui_layer(
         let policy = &mut layer.policy[button];
         ui_new_remap_modal(ui, new_remap_modal, button, policy);
     }
-    if layer_condition_modal.modal_open {
-        let layer_name = &layer.name;
-        let layer_type = &mut layer.layer_type;
-        let condition = &mut layer.condition;
-        ui_layer_condition_modal(ui, layer_condition_modal, layer_name, layer_type, condition);
+    if edit_layer_modal.modal_open {
+        let ok_cancel = ui_edit_layer_modal(
+            ui,
+            edit_layer_modal,
+            &format!("Editing layer {}", layer.name),
+        );
+        match ok_cancel {
+            Some(true) => {
+                layer.name = edit_layer_modal.name.clone();
+                layer.layer_type = edit_layer_modal.layer_type.clone();
+                layer.condition = edit_layer_modal.condition.clone();
+                edit_layer_modal.modal_open = false;
+            }
+            Some(false) => {
+                edit_layer_modal.modal_open = false;
+            }
+            None => (),
+        }
     }
 }
 
@@ -199,103 +205,6 @@ fn ui_new_remap_modal(
             modal_opts.modal_open = None;
         }
         None => (),
-    }
-}
-
-fn ui_layer_condition_modal(
-    ui: &mut egui::Ui,
-    modal_opts: &mut LayerConditionModalOpts,
-    layer_name: &str,
-    layer_type: &mut config::LayerType,
-    condition: &mut Vec<buttons::HoldButton>,
-) {
-    let ok_cancel = ui_ok_cancel_modal(ui, |ui| {
-        ui.heading(format!("Condition for {layer_name}"));
-        ui.separator();
-        ui.add_space(super::SPACING);
-
-        ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
-            egui::ComboBox::from_label("Layer Type")
-                .selected_text(format!("{}", &modal_opts.layer_type))
-                .show_ui(ui, |ui| {
-                    ui.selectable_value(
-                        &mut modal_opts.layer_type,
-                        config::LayerType::Modifier,
-                        "Modifier",
-                    );
-                    ui.selectable_value(
-                        &mut modal_opts.layer_type,
-                        config::LayerType::Toggle,
-                        "Toggle",
-                    );
-                });
-            ui.add_space(super::SPACING);
-
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                ui.label(get_layer_condition_text(
-                    &modal_opts.condition,
-                    &modal_opts.layer_type,
-                ));
-                ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-                    ui.columns_const(|[col_1, col_2]| {
-                        egui::Frame::new()
-                            .stroke(egui::Stroke {
-                                width: 1.0,
-                                color: egui::Color32::DARK_GRAY,
-                            })
-                            .inner_margin(4.0)
-                            .corner_radius(4.0)
-                            .show(col_1, |ui| {
-                                ui_layer_condition_table(ui, &mut modal_opts.condition);
-                            });
-                        egui::Frame::new()
-                            .stroke(egui::Stroke {
-                                width: 1.0,
-                                color: egui::Color32::DARK_GRAY,
-                            })
-                            .inner_margin(4.0)
-                            .corner_radius(4.0)
-                            .show(col_2, |ui| {
-                                ui_available_layer_conditions_table(ui, &mut modal_opts.condition);
-                            });
-                    });
-                });
-            });
-        });
-    });
-    match ok_cancel {
-        Some(true) => {
-            *layer_type = modal_opts.layer_type.clone();
-            *condition = modal_opts.condition.clone();
-            modal_opts.modal_open = false;
-        }
-        Some(false) => {
-            modal_opts.modal_open = false;
-        }
-        None => (),
-    }
-}
-
-fn get_layer_condition_text(
-    condition: &[buttons::HoldButton],
-    layer_type: &config::LayerType,
-) -> String {
-    let condition_buttons_str: String = if condition.is_empty() {
-        String::from("(no buttons set)")
-    } else {
-        itertools::Itertools::intersperse(
-            condition.iter().map(|btn| btn.to_string()),
-            String::from(", "),
-        )
-        .collect()
-    };
-    match layer_type {
-        config::LayerType::Modifier => {
-            format!("Active when these buttons are held: {condition_buttons_str}")
-        }
-        config::LayerType::Toggle => {
-            format!("Toggled when these buttons are pressed: {condition_buttons_str}")
-        }
     }
 }
 

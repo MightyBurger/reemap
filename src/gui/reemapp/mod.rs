@@ -1,6 +1,7 @@
 mod breadcrumb;
 mod ui_base_layer;
 mod ui_default_profile;
+mod ui_edit_layer_modal;
 mod ui_edit_profile_modal;
 mod ui_layer;
 mod ui_main;
@@ -119,14 +120,11 @@ pub struct GuiLocal {
     new_profile_modal: EditProfileModalOpts,
     edit_profile_modal: EditProfileModalOpts,
     rearrange_profiles_modal: RearrangeProfilesModalOpts,
-    new_layer_modal_open: bool,
-    new_layer: config::Layer,
+    new_layer_modal: EditLayerModalOpts,
+    edit_layer_modal: EditLayerModalOpts,
     rearrange_layers_modal: RearrangeLayersModalOpts,
-    new_default_layer_modal_open: bool,
-    new_default_layer: config::DefaultProfile,
     new_remap_modal: NewRemapModalOpts,
     new_base_remap_modal: NewBaseRemapModalOpts,
-    layer_condition_modal: LayerConditionModalOpts,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -187,10 +185,22 @@ pub struct NewRemapModalOpts {
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct LayerConditionModalOpts {
+pub struct EditLayerModalOpts {
     modal_open: bool,
+    name: String,
     layer_type: config::LayerType,
     condition: Vec<buttons::HoldButton>,
+}
+
+impl From<EditLayerModalOpts> for config::Layer {
+    fn from(value: EditLayerModalOpts) -> Self {
+        Self {
+            name: value.name.clone(),
+            layer_type: value.layer_type.clone(),
+            condition: value.condition.clone(),
+            ..Default::default()
+        }
+    }
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -253,7 +263,7 @@ impl crate::gui::TrayApp for ReemApp {
                             ui,
                             layer,
                             &mut self.gui_local.new_remap_modal,
-                            &mut self.gui_local.layer_condition_modal,
+                            &mut self.gui_local.edit_layer_modal,
                         );
                     }
                     GuiMenu::Profile { profile_idx } => ui_profile(ui, self, profile_idx),
@@ -266,7 +276,7 @@ impl crate::gui::TrayApp for ReemApp {
                             ui,
                             layer,
                             &mut self.gui_local.new_remap_modal,
-                            &mut self.gui_local.layer_condition_modal,
+                            &mut self.gui_local.edit_layer_modal,
                         );
                     }
                 }

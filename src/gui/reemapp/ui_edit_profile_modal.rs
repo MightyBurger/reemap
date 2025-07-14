@@ -139,30 +139,6 @@ pub fn ui_edit_profile_modal(
                 });
         });
     })
-    // match ok_cancel {
-    //     Some(true) => {
-    //         *condition = match modal_opts.condition {
-    //             ProfileConditionUI::TitleAndProcess => config::ProfileCondition::TitleAndProcess {
-    //                 title: modal_opts.title.clone(),
-    //                 process: modal_opts.process.clone(),
-    //             },
-    //             ProfileConditionUI::Title => config::ProfileCondition::Title {
-    //                 title: modal_opts.title.clone(),
-    //             },
-    //             ProfileConditionUI::Process => config::ProfileCondition::Process {
-    //                 process: modal_opts.process.clone(),
-    //             },
-    //             ProfileConditionUI::OriBF => config::ProfileCondition::OriBF,
-    //             ProfileConditionUI::OriBFDE => config::ProfileCondition::OriBFDE,
-    //             ProfileConditionUI::OriWotW => config::ProfileCondition::OriWotW,
-    //         };
-    //         modal_opts.modal_open = false;
-    //     }
-    //     Some(false) => {
-    //         modal_opts.modal_open = false;
-    //     }
-    //     None =>(),
-    // }
 }
 
 fn ui_open_windows_table(

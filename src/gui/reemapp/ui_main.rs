@@ -5,6 +5,7 @@ use crate::gui::reemapp::SPACING;
 use crate::gui::reemapp::ui_edit_profile_modal::ui_edit_profile_modal;
 use crate::gui::reemapp::ui_ok_cancel_modal::ui_ok_cancel_modal;
 use crate::gui::reemapp::ui_tables::ui_rearrange_table;
+use crate::query_windows;
 
 use super::GuiMenu;
 use super::ReemApp;
@@ -15,6 +16,7 @@ pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
             args.gui_local.new_profile_modal = EditProfileModalOpts {
                 modal_open: true,
                 name: String::from("New Profile"),
+                open_windows: query_windows::enumerate_open_windows(),
                 ..Default::default()
             };
         }

@@ -12,19 +12,17 @@ pub fn ui_base_layer(
     layer: &mut config::BaseLayer,
     new_remap_modal: &mut NewBaseRemapModalOpts,
 ) {
-    ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-        ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-            egui::Frame::new()
-                .stroke(egui::Stroke {
-                    width: 1.0,
-                    color: egui::Color32::DARK_GRAY,
-                })
-                .inner_margin(4.0)
-                .corner_radius(4.0)
-                .show(ui, |ui| {
-                    ui_base_remaps_table(ui, layer, new_remap_modal);
-                });
-        });
+    ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
+        egui::Frame::new()
+            .stroke(egui::Stroke {
+                width: 1.0,
+                color: egui::Color32::DARK_GRAY,
+            })
+            .inner_margin(4.0)
+            .corner_radius(4.0)
+            .show(ui, |ui| {
+                ui_base_remaps_table(ui, layer, new_remap_modal);
+            });
     });
     if let Some(button) = new_remap_modal.modal_open {
         let policy = &mut layer.policy[button];

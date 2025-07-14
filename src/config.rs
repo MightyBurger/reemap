@@ -147,6 +147,28 @@ impl std::fmt::Display for Layer {
     }
 }
 
+impl Layer {
+    pub fn condition_helper_text(&self) -> String {
+        let condition_buttons_str: String = if self.condition.is_empty() {
+            String::from("(no buttons set)")
+        } else {
+            itertools::Itertools::intersperse(
+                self.condition.iter().map(|btn| btn.to_string()),
+                String::from(", "),
+            )
+            .collect()
+        };
+        match self.layer_type {
+            LayerType::Modifier => {
+                format!("Active when these buttons are held: {condition_buttons_str}")
+            }
+            LayerType::Toggle => {
+                format!("Toggled when these buttons are pressed: {condition_buttons_str}")
+            }
+        }
+    }
+}
+
 // -------------------- LayerType --------------------
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum LayerType {
