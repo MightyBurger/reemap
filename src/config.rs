@@ -40,15 +40,7 @@ impl From<VersionedConfig> for Config {
 // -------------------- Config --------------------
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct Config {
-    pub default: DefaultProfile,
     pub profiles: Vec<Profile>,
-}
-
-// -------------------- DefaultProfile --------------------
-#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-pub struct DefaultProfile {
-    pub base: BaseLayer,
-    pub layers: Vec<Layer>,
 }
 
 // -------------------- Profile --------------------

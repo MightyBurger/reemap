@@ -94,18 +94,13 @@ pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
 }
 
 fn profiles_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
-    enum ProfileSelect {
-        None,
-        Default,
-        Other(usize),
-    }
     use egui_extras::{Column, TableBuilder};
     let header_height = 12.0;
     let row_height = 20.0;
     let btn_size = [20.0, 20.0];
     let mut pointing_hand = false;
     let mut to_delete = None;
-    let mut profile_select = ProfileSelect::None;
+    let mut profile_select = None;
     TableBuilder::new(ui)
         .id_salt("Profiles Table")
         .striped(true)
@@ -127,34 +122,6 @@ fn profiles_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
             });
         })
         .body(|mut body| {
-            body.row(row_height, |mut row| {
-                let mut dummy = true;
-                row.col(|ui| {
-                    ui.with_layout(
-                        egui::Layout::centered_and_justified(egui::Direction::LeftToRight),
-                        |ui| {
-                            ui.add_enabled(false, egui::Checkbox::without_text(&mut dummy));
-                        },
-                    );
-                });
-                row.col(|ui| {
-                    ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-                        ui.add_enabled_ui(false, |ui| {
-                            ui.add_sized(btn_size, egui::Button::new("✖"));
-                        });
-                    });
-                });
-                row.col(|ui| {
-                    ui.style_mut().interaction.selectable_labels = false;
-                    ui.label("Default Profile");
-                });
-                if row.response().hovered() {
-                    pointing_hand = true;
-                }
-                if row.response().clicked() {
-                    profile_select = ProfileSelect::Default;
-                }
-            });
             for (i, profile) in args.config.profiles.iter_mut().enumerate() {
                 body.row(row_height, |mut row| {
                     row.col(|ui| {
@@ -180,7 +147,7 @@ fn profiles_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
                         pointing_hand = true;
                     }
                     if row.response().clicked() {
-                        profile_select = ProfileSelect::Other(i);
+                        profile_select = Some(i);
                     }
                 });
             }
@@ -188,12 +155,8 @@ fn profiles_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
     if let Some(to_delete) = to_delete {
         args.config.profiles.remove(to_delete);
     }
-    match profile_select {
-        ProfileSelect::None => (),
-        ProfileSelect::Default => {
-            args.gui_local.menu = GuiMenu::DefaultProfile;
-        }
-        ProfileSelect::Other(i) => args.gui_local.menu = GuiMenu::Profile { profile_idx: i },
+    if let Some(profile_idx) = profile_select {
+        args.gui_local.menu = GuiMenu::Profile { profile_idx };
     }
     if pointing_hand {
         ui.ctx()

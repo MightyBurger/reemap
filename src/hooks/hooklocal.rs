@@ -29,8 +29,7 @@ pub static HOOKLOCAL: Mutex<Option<HookLocalData>> = Mutex::new(None);
 pub struct HookLocalData {
     pub config: config::Config,
     pub button_state: EnumMap<buttons::HoldButton, HoldButtonState>,
-    pub active_profile: ActiveProfile,
-    pub active_layers_default: SmallVec<[bool; REMAP_SMALLVEC_LEN]>,
+    pub active_profile: Option<usize>,
     pub active_layers_profile: Vec<SmallVec<[bool; REMAP_SMALLVEC_LEN]>>, // Outer vec: over profiles. Inner vec: over layers.
 }
 
@@ -46,11 +45,10 @@ impl HookLocalData {
     pub fn update_config(&mut self, config: config::Config) {
         use smallvec::smallvec;
 
-        // Set self.config, .active_profile, .active_layers_default, and .active_layers_profile.
+        // Set self.config, .active_profile, .active_layers
         // Note: it is not necessary to set button_state.
 
         self.config = config;
-        self.active_layers_default = smallvec![false; self.config.default.layers.len()];
         self.active_layers_profile = self
             .config
             .profiles
@@ -67,7 +65,7 @@ impl HookLocalData {
                     ?e,
                     "failed to get foreground window; assuming default profile"
                 );
-                self.active_profile = ActiveProfile::Default;
+                self.active_profile = None;
             }
         }
     }
@@ -75,7 +73,7 @@ impl HookLocalData {
     /// Update the active profile using information about the current foreground window.
     pub fn update_from_foreground(&mut self, info: WindowInfo) {
         let WindowInfo { title, process } = info;
-        let mut new_profile = ActiveProfile::Default;
+        let mut new_profile = None;
         for (i, profile_condition) in self
             .config
             .profiles
@@ -90,7 +88,7 @@ impl HookLocalData {
                     process: condition_process,
                 } => {
                     if title == *condition_title && process == *condition_process {
-                        new_profile = ActiveProfile::Other(i);
+                        new_profile = Some(i);
                     }
                 }
 
@@ -98,7 +96,7 @@ impl HookLocalData {
                     title: condition_title,
                 } => {
                     if title == *condition_title {
-                        new_profile = ActiveProfile::Other(i);
+                        new_profile = Some(i);
                     }
                 }
 
@@ -106,13 +104,13 @@ impl HookLocalData {
                     process: condition_process,
                 } => {
                     if process == *condition_process {
-                        new_profile = ActiveProfile::Other(i);
+                        new_profile = Some(i);
                     }
                 }
 
                 config::ProfileCondition::OriBF => {
                     if title == "Ori And The Blind Forest" && process == "ori.exe" {
-                        new_profile = ActiveProfile::Other(i);
+                        new_profile = Some(i);
                     }
                 }
 
@@ -120,40 +118,27 @@ impl HookLocalData {
                     if title == "Ori And The Blind Forest: Definitive Edition"
                         && process == "oriDE.exe"
                     {
-                        new_profile = ActiveProfile::Other(i);
+                        new_profile = Some(i);
                     }
                 }
 
                 config::ProfileCondition::OriWotW => {
                     if title == "OriAndTheWilloftheWisps" && process == "oriwotw.exe" {
-                        new_profile = ActiveProfile::Other(i);
+                        new_profile = Some(i);
                     }
                 }
             }
         }
         if self.active_profile != new_profile {
             match new_profile {
-                ActiveProfile::Default => info!(?new_profile, "switching to default profile"),
-                ActiveProfile::Other(profile_idx) => info!(
+                None => info!(?new_profile, "no profile enabled"),
+                Some(profile_idx) => info!(
                     ?new_profile,
                     "switching to profile {}", &self.config.profiles[profile_idx].name
                 ),
             }
         }
         self.active_profile = new_profile;
-    }
-}
-
-// -------------------- ActiveProfile --------------------
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub enum ActiveProfile {
-    Default,
-    Other(usize),
-}
-
-impl Default for ActiveProfile {
-    fn default() -> Self {
-        Self::Default
     }
 }
 

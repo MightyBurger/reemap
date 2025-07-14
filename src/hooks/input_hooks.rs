@@ -6,7 +6,7 @@ use crate::buttons::mouse::MouseButton;
 use crate::buttons::wheel::MouseWheelButton;
 use crate::buttons::{Button, HoldButton, TapButton};
 
-use crate::hooks::hooklocal::{ActiveProfile, HOOKLOCAL, HoldButtonState};
+use crate::hooks::hooklocal::{HOOKLOCAL, HoldButtonState};
 
 use tracing::{instrument, trace, warn};
 use windows::Win32::Foundation;
@@ -381,20 +381,6 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
         .as_mut()
         .expect("local data should have been initialized");
 
-    let (current_base, current_layers, current_layer_actives): (&BaseLayer, &[Layer], &mut [bool]) =
-        match hook_local.active_profile {
-            ActiveProfile::Default => (
-                &hook_local.config.default.base,
-                &hook_local.config.default.layers,
-                &mut hook_local.active_layers_default,
-            ),
-            ActiveProfile::Other(profile_idx) => (
-                &hook_local.config.profiles[profile_idx].base,
-                &hook_local.config.profiles[profile_idx].layers,
-                &mut hook_local.active_layers_profile[profile_idx],
-            ),
-        };
-
     // Step 1
     // An early return to handle key repeat - the case when you get multiple keydowns before a keyup
     match &hook_local.button_state[hold_button] {
@@ -421,6 +407,14 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
         // Not held - this is a fresh input. Let's continue processing.
         HoldButtonState::NotHeld => {}
     }
+
+    // Check that a profile is actually active. Otherwise, do not intercept.
+    let Some(profile_idx) = hook_local.active_profile else {
+        return false;
+    };
+    let current_base: &BaseLayer = &hook_local.config.profiles[profile_idx].base;
+    let current_layers: &[Layer] = &hook_local.config.profiles[profile_idx].layers;
+    let current_layer_actives: &mut [bool] = &mut hook_local.active_layers_profile[profile_idx];
 
     // Step 2
     // Update layers
@@ -521,31 +515,23 @@ fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
         .as_mut()
         .expect("local data should have been initialized");
 
-    let (current_layers, current_layer_actives): (&[Layer], &mut [bool]) =
-        match hook_local.active_profile {
-            ActiveProfile::Default => (
-                &hook_local.config.default.layers,
-                &mut hook_local.active_layers_default,
-            ),
-            ActiveProfile::Other(profile_idx) => (
-                &hook_local.config.profiles[profile_idx].layers,
-                &mut hook_local.active_layers_profile[profile_idx],
-            ),
-        };
-
     // Step 1
     // Update layers
-    for (layer, active) in current_layers
-        .iter()
-        .zip(current_layer_actives.iter_mut())
-        .filter(|(layer, _)| layer.enabled)
-    {
-        // Only update layers for which this button is a condition.
-        // These layers are no longer active.
-        if layer.condition.contains(&hold_button) {
-            match &layer.layer_type {
-                LayerType::Modifier => *active = false,
-                LayerType::Toggle => (), // Toggle buttons not affected by keyup
+    if let Some(profile_idx) = hook_local.active_profile {
+        let current_layers: &[Layer] = &hook_local.config.profiles[profile_idx].layers;
+        let current_layer_actives: &mut [bool] = &mut hook_local.active_layers_profile[profile_idx];
+        for (layer, active) in current_layers
+            .iter()
+            .zip(current_layer_actives.iter_mut())
+            .filter(|(layer, _)| layer.enabled)
+        {
+            // Only update layers for which this button is a condition.
+            // These layers are no longer active.
+            if layer.condition.contains(&hold_button) {
+                match &layer.layer_type {
+                    LayerType::Modifier => *active = false,
+                    LayerType::Toggle => (), // Toggle buttons not affected by keyup
+                }
             }
         }
     }
@@ -604,19 +590,13 @@ fn intercept_tap_input(tap_button: TapButton) -> bool {
         .as_mut()
         .expect("local data should have been initialized");
 
-    let (current_base, current_layers, current_layer_actives): (&BaseLayer, &[Layer], &mut [bool]) =
-        match hook_local.active_profile {
-            ActiveProfile::Default => (
-                &hook_local.config.default.base,
-                &hook_local.config.default.layers,
-                &mut hook_local.active_layers_default,
-            ),
-            ActiveProfile::Other(profile_idx) => (
-                &hook_local.config.profiles[profile_idx].base,
-                &hook_local.config.profiles[profile_idx].layers,
-                &mut hook_local.active_layers_profile[profile_idx],
-            ),
-        };
+    // Check that a profile is actually active. Otherwise, do not intercept.
+    let Some(profile_idx) = hook_local.active_profile else {
+        return false;
+    };
+    let current_base: &BaseLayer = &hook_local.config.profiles[profile_idx].base;
+    let current_layers: &[Layer] = &hook_local.config.profiles[profile_idx].layers;
+    let current_layer_actives: &[bool] = &hook_local.active_layers_profile[profile_idx];
 
     for (layer, _) in current_layers
         .iter()

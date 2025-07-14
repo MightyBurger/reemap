@@ -1,6 +1,5 @@
 mod breadcrumb;
 mod ui_base_layer;
-mod ui_default_profile;
 mod ui_edit_layer_modal;
 mod ui_edit_profile_modal;
 mod ui_layer;
@@ -14,7 +13,6 @@ use breadcrumb::breadcrumb;
 use std::path::PathBuf;
 use tracing::instrument;
 use ui_base_layer::ui_base_layer;
-use ui_default_profile::ui_default_profile;
 use ui_layer::ui_layer;
 use ui_main::ui_main;
 use ui_profile::ui_profile;
@@ -216,10 +214,6 @@ pub struct NewBaseRemapModalOpts {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum GuiMenu {
     Main,
-    DefaultProfile,
-    DefaultProfileLayer {
-        layer_idx: usize,
-    },
     Profile {
         profile_idx: usize,
     },
@@ -256,16 +250,6 @@ impl crate::gui::TrayApp for ReemApp {
                 let menu = self.gui_local.menu.clone();
                 match menu {
                     GuiMenu::Main => ui_main(ui, self),
-                    GuiMenu::DefaultProfile => ui_default_profile(ui, self),
-                    GuiMenu::DefaultProfileLayer { layer_idx } => {
-                        let layer = &mut self.config.default.layers[layer_idx];
-                        ui_layer(
-                            ui,
-                            layer,
-                            &mut self.gui_local.new_remap_modal,
-                            &mut self.gui_local.edit_layer_modal,
-                        );
-                    }
                     GuiMenu::Profile { profile_idx } => ui_profile(
                         ui,
                         &mut self.config.profiles[profile_idx],
