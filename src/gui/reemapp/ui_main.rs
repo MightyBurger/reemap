@@ -2,6 +2,7 @@ use crate::gui::reemapp::EditProfileModalOpts;
 use crate::gui::reemapp::SPACING;
 use crate::gui::reemapp::ui_edit_profile_modal::ui_edit_profile_modal;
 use crate::gui::reemapp::ui_ok_cancel_modal::ui_ok_cancel_modal;
+use crate::gui::reemapp::ui_tables::ui_enable_clickable_table;
 use crate::gui::reemapp::ui_tables::ui_rearrange_table;
 use crate::query_windows;
 
@@ -32,7 +33,18 @@ pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
                 .inner_margin(4.0)
                 .corner_radius(4.0)
                 .show(ui, |ui| {
-                    profiles_table_ui(ui, args);
+                    if args.config.profiles.len() > 0 {
+                        let profile_select =
+                            ui_enable_clickable_table(ui, &mut args.config.profiles, "Profiles");
+                        if let Some(profile_idx) = profile_select {
+                            args.gui_local.menu = GuiMenu::Profile { profile_idx };
+                        }
+                    } else {
+                        ui.centered_and_justified(|ui| {
+                            ui.style_mut().interaction.selectable_labels = false;
+                            ui.label("Add a profile to get started.");
+                        });
+                    }
                 });
         });
     });
@@ -90,113 +102,5 @@ pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
             }
             None => (),
         }
-    }
-}
-
-fn profiles_table_ui(ui: &mut egui::Ui, args: &mut ReemApp) {
-    enum ProfileSelect {
-        None,
-        Default,
-        Other(usize),
-    }
-    use egui_extras::{Column, TableBuilder};
-    let header_height = 12.0;
-    let row_height = 20.0;
-    let btn_size = [20.0, 20.0];
-    let mut pointing_hand = false;
-    let mut to_delete = None;
-    let mut profile_select = ProfileSelect::None;
-    TableBuilder::new(ui)
-        .id_salt("Profiles Table")
-        .striped(true)
-        .auto_shrink(false)
-        .sense(egui::Sense::click_and_drag())
-        .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
-        .column(Column::exact(60.0)) // Enabled
-        .column(Column::exact(60.0)) // Delete
-        .column(Column::remainder()) // Profile Name
-        .header(header_height, |mut header| {
-            header.col(|ui| {
-                ui.strong("Enabled");
-            });
-            header.col(|ui| {
-                ui.strong("Remove");
-            });
-            header.col(|ui| {
-                ui.strong("Name");
-            });
-        })
-        .body(|mut body| {
-            body.row(row_height, |mut row| {
-                let mut dummy = true;
-                row.col(|ui| {
-                    ui.with_layout(
-                        egui::Layout::centered_and_justified(egui::Direction::LeftToRight),
-                        |ui| {
-                            ui.add_enabled(false, egui::Checkbox::without_text(&mut dummy));
-                        },
-                    );
-                });
-                row.col(|ui| {
-                    ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-                        ui.add_enabled_ui(false, |ui| {
-                            ui.add_sized(btn_size, egui::Button::new("✖"));
-                        });
-                    });
-                });
-                row.col(|ui| {
-                    ui.style_mut().interaction.selectable_labels = false;
-                    ui.label("Default Profile");
-                });
-                if row.response().hovered() {
-                    pointing_hand = true;
-                }
-                if row.response().clicked() {
-                    profile_select = ProfileSelect::Default;
-                }
-            });
-            for (i, profile) in args.config.profiles.iter_mut().enumerate() {
-                body.row(row_height, |mut row| {
-                    row.col(|ui| {
-                        ui.with_layout(
-                            egui::Layout::centered_and_justified(egui::Direction::LeftToRight),
-                            |ui| {
-                                ui.add(egui::Checkbox::without_text(&mut profile.enabled));
-                            },
-                        );
-                    });
-                    row.col(|ui| {
-                        ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-                            if ui.add_sized(btn_size, egui::Button::new("✖")).clicked() {
-                                to_delete = Some(i);
-                            };
-                        });
-                    });
-                    row.col(|ui| {
-                        ui.style_mut().interaction.selectable_labels = false;
-                        ui.label(&profile.name);
-                    });
-                    if row.response().hovered() {
-                        pointing_hand = true;
-                    }
-                    if row.response().clicked() {
-                        profile_select = ProfileSelect::Other(i);
-                    }
-                });
-            }
-        });
-    if let Some(to_delete) = to_delete {
-        args.config.profiles.remove(to_delete);
-    }
-    match profile_select {
-        ProfileSelect::None => (),
-        ProfileSelect::Default => {
-            args.gui_local.menu = GuiMenu::DefaultProfile;
-        }
-        ProfileSelect::Other(i) => args.gui_local.menu = GuiMenu::Profile { profile_idx: i },
-    }
-    if pointing_hand {
-        ui.ctx()
-            .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
     }
 }
