@@ -164,7 +164,7 @@ fn ui_open_windows_table(
         .sense(egui::Sense::click_and_drag())
         .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
         .column(Column::exact(200.0)) // Process
-        .column(Column::remainder()) // Window Title
+        .column(Column::remainder().at_most(420.0)) // Window Title
         .header(header_height, |mut header| {
             header.col(|ui| {
                 ui.strong("Process");
@@ -178,11 +178,11 @@ fn ui_open_windows_table(
                 body.row(row_height, |mut row| {
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
-                        ui.label(&window.process);
+                        ui.add(egui::Label::new(&window.process).truncate());
                     });
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
-                        ui.label(&window.title);
+                        ui.add(egui::Label::new(&window.title).truncate());
                     });
                     if row.response().hovered() {
                         pointing_hand = true;

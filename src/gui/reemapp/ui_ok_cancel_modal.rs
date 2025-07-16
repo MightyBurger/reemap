@@ -14,6 +14,8 @@ pub fn ui_ok_cancel_modal(
     let mut cancel = false;
 
     let modal = egui::Modal::new(egui::Id::new("rearrange profiles modal")).show(ui.ctx(), |ui| {
+        ui.set_max_width(650.0);
+        ui.set_max_height(550.0);
         StripBuilder::new(ui)
             .size(Size::exact(400.0))
             .size(Size::exact(20.0))
