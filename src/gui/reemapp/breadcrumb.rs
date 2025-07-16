@@ -40,7 +40,9 @@ fn breadcrumb_display(_ctx: &egui::Context, ui: &mut egui::Ui, args: &ReemApp) -
     let profile_string = &args.config.profiles[profile_idx].name;
     ui.heading(" > ");
     let profile_breadcrumb_response = ui.add(
-        egui::Label::new(egui::RichText::new(profile_string).heading()).sense(egui::Sense::click()),
+        egui::Label::new(egui::RichText::new(profile_string).heading())
+            .truncate()
+            .sense(egui::Sense::click()),
     );
     if profile_breadcrumb_response.hovered() {
         ui.ctx()
@@ -70,7 +72,9 @@ fn breadcrumb_display(_ctx: &egui::Context, ui: &mut egui::Ui, args: &ReemApp) -
     ui.heading(" > ");
 
     let layer_breadcrumb_response = ui.add(
-        egui::Label::new(egui::RichText::new(layer_string).heading()).sense(egui::Sense::click()),
+        egui::Label::new(egui::RichText::new(layer_string).heading())
+            .truncate()
+            .sense(egui::Sense::click()),
     );
     if layer_breadcrumb_response.hovered() {
         ui.ctx()

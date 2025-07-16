@@ -65,7 +65,7 @@ where
                     });
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
-                        ui.label(item.to_string());
+                        ui.add(egui::Label::new(item.to_string()).truncate());
                     });
                     if row.response().hovered() {
                         pointing_hand = true;
@@ -161,7 +161,7 @@ where
                 body.row(row_height, |mut row| {
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
-                        ui.label(item.to_string());
+                        ui.add(egui::Label::new(item.to_string()).truncate());
                     });
                     row.col(|ui| {
                         ui.style_mut().spacing.item_spacing = [2.0, 2.0].into();
