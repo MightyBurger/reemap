@@ -43,6 +43,38 @@ pub struct Config {
     pub profiles: Vec<Profile>,
 }
 
+// -------------------- VersionedProfile --------------------
+// A separate versioned Profile is necessary, because profiles can be shared independently.
+// Preparing for the future when the Profile struct may change.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(tag = "version")]
+pub enum VersionedProfile {
+    V1(Profile),
+}
+
+impl Default for VersionedProfile {
+    fn default() -> Self {
+        Self::V1(Profile::default())
+    }
+}
+
+// Even with future versions, this From<> will be from the latest Profile to VersionedProfile.
+impl From<Profile> for VersionedProfile {
+    fn from(value: Profile) -> Self {
+        Self::V1(value)
+    }
+}
+
+// In future versions, this From<> will need a little more logic to do migration to the newest
+// config version. Right now, as there's only one version of the config, there are no migrations.
+impl From<VersionedProfile> for Profile {
+    fn from(value: VersionedProfile) -> Self {
+        match value {
+            VersionedProfile::V1(profile) => profile,
+        }
+    }
+}
+
 // -------------------- Profile --------------------
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct Profile {

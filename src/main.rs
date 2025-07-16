@@ -109,10 +109,10 @@ fn main() {
                 .set_title("Corrupted configuration file")
                 .set_text(
                     "Reemap could not parse the configuration file. This may happen if you \
-                use a configuration file created in a newer version of Reemap.\n\n\
-                Press Yes to continue with the default configuration. The configuration will be \
-                overwritten when you click \"Apply\" in Reemap.\n\n\
-                Press No to close Reemap.",
+                use a configuration file created in a newer version of the software.\n\n\
+                Press Yes to continue with the default configuration. Reemap will overwrite the \
+                old configuration the next time you click \"Apply\".\n\n\
+                Press No to cancel opening the software.",
                 )
                 .confirm()
                 .show()

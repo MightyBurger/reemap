@@ -11,7 +11,8 @@ mod ui_tables;
 
 use breadcrumb::breadcrumb;
 use std::path::PathBuf;
-use tracing::instrument;
+use tracing::warn;
+use tracing::{info, instrument};
 use ui_base_layer::ui_base_layer;
 use ui_layer::ui_layer;
 use ui_main::ui_main;
@@ -236,13 +237,46 @@ impl crate::gui::TrayApp for ReemApp {
     #[instrument(skip_all, name = "ui")]
     fn update(&mut self, ctx: &egui::Context) {
         // catppuccin_egui::set_theme(ctx, catppuccin_egui::MACCHIATO);
-        egui::TopBottomPanel::bottom("Bottom Panel").show(ctx, |ui| {
-            ui.horizontal(|ui| {
-                egui::Frame::new().inner_margin(2.0).show(ui, |ui| {
-                    ui_status_bar(ctx, ui, self);
+
+        egui::TopBottomPanel::top("menu bar panel")
+            .resizable(false)
+            .show(ctx, |ui| {
+                egui::menu::bar(ui, |ui| {
+                    ui.menu_button("File", |ui| {
+                        if ui.button("Import Profile").clicked() {
+                            if let Some(profile) = import_profile_dialog() {
+                                self.config.profiles.push(profile);
+                            }
+                        }
+                        ui.menu_button("Export Profile", |ui| {
+                            egui::ScrollArea::vertical().show(ui, |ui| {
+                                ui.set_min_width(200.0);
+                                for profile in self.config.profiles.iter() {
+                                    if ui.button(profile.name.clone()).clicked() {
+                                        export_profile_dialog(profile.clone());
+                                    }
+                                }
+                            });
+                        });
+                    });
+                    ui.menu_button("Help", |ui| {
+                        if ui.button("About").clicked() {
+                            todo!();
+                        }
+                    });
                 });
             });
-        });
+
+        egui::TopBottomPanel::bottom("status bar panel")
+            .resizable(false)
+            .show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    egui::Frame::new().inner_margin(2.0).show(ui, |ui| {
+                        ui_status_bar(ctx, ui, self);
+                    });
+                });
+            });
+
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
                 breadcrumb(ctx, ui, self);
@@ -278,5 +312,108 @@ impl crate::gui::TrayApp for ReemApp {
                 }
             });
         });
+    }
+}
+
+fn import_profile_dialog() -> Option<config::Profile> {
+    fn display_warning(text: &str, ctx: impl std::fmt::Display) {
+        let body_text = format!("{text}\n\n{ctx}");
+        native_dialog::DialogBuilder::message()
+            .set_level(native_dialog::MessageLevel::Error)
+            .set_title("Error importing profile")
+            .set_text(&body_text)
+            .alert()
+            .show()
+            .unwrap();
+        warn!("error opening profile: {}", &body_text);
+    }
+
+    let selection = native_dialog::DialogBuilder::file()
+        .add_filter("RON", ["ron"])
+        .open_single_file()
+        .show();
+    let selection = match selection {
+        Ok(Some(path)) => path,
+        Ok(None) => return None,
+        Err(e) => {
+            display_warning("Error with file selection dialog.", e);
+            return None;
+        }
+    };
+
+    let profile_str = match std::fs::read_to_string(selection) {
+        Ok(profile_str) => profile_str,
+        Err(e) => {
+            display_warning("Error opening file.", e);
+            return None;
+        }
+    };
+
+    let versioned_profile: config::VersionedProfile = match ron::from_str(&profile_str) {
+        Ok(prf) => prf,
+        Err(e) => {
+            display_warning(
+                "Error parsing profile. Was this profile made in a newer version of Reemap?",
+                e,
+            );
+            return None;
+        }
+    };
+
+    let profile = config::Profile::from(versioned_profile);
+    native_dialog::DialogBuilder::message()
+        .set_level(native_dialog::MessageLevel::Info)
+        .set_title("Imported profile")
+        .set_text(format!("Imported profile {}", &profile.name))
+        .alert()
+        .show()
+        .unwrap();
+    info!("imported profile {}", &profile.name);
+
+    Some(profile)
+}
+
+fn export_profile_dialog(profile: config::Profile) {
+    let name = profile.name.clone();
+    let selection = native_dialog::DialogBuilder::file()
+        .add_filter("RON", ["ron"])
+        .set_filename(&name)
+        .save_single_file()
+        .show();
+    let versioned_profile = config::VersionedProfile::from(profile);
+    match selection {
+        Ok(None) => (),
+        Ok(Some(path)) => {
+            let profile_str =
+                ron::ser::to_string_pretty(&versioned_profile, ron::ser::PrettyConfig::new())
+                    .unwrap();
+            match std::fs::write(&path, profile_str) {
+                Ok(()) => {
+                    native_dialog::DialogBuilder::message()
+                        .set_level(native_dialog::MessageLevel::Info)
+                        .set_title("Exported profile")
+                        .set_text(format!(
+                            "Exported profile {} to {}",
+                            &name,
+                            path.to_str().unwrap_or("(path not UTF-8)")
+                        ))
+                        .alert()
+                        .show()
+                        .unwrap();
+                    info!("exported profile");
+                }
+                Err(e) => {
+                    native_dialog::DialogBuilder::message()
+                        .set_level(native_dialog::MessageLevel::Warning)
+                        .set_title("Error exporting profile")
+                        .set_text(format!("Reemap could not export the profile.\n\n{e}"))
+                        .alert()
+                        .show()
+                        .unwrap();
+                    warn!(?e, "failed to export profile");
+                }
+            }
+        }
+        Err(e) => warn!(?e, "error opening export dialog"),
     }
 }
