@@ -1,7 +1,9 @@
 use glutin::prelude::NotCurrentGlContext;
 use std::num::NonZeroU32;
 use tracing::debug;
-use winit::raw_window_handle::HasWindowHandle as _;
+use winit::{
+    platform::windows::WindowAttributesExtWindows, raw_window_handle::HasWindowHandle as _,
+};
 
 pub struct GlutinWindowContext {
     window: winit::window::Window,
@@ -12,9 +14,16 @@ pub struct GlutinWindowContext {
 
 impl GlutinWindowContext {
     pub unsafe fn new(event_loop: &winit::event_loop::ActiveEventLoop) -> Self {
+        use super::ICON32_HEIGHT;
+        use super::ICON32_RAW_RGBA;
+        use super::ICON32_WIDTH;
+        use super::ICON256_HEIGHT;
+        use super::ICON256_RAW_RGBA;
+        use super::ICON256_WIDTH;
         use glutin::display::GetGlDisplay as _;
         use glutin::display::GlDisplay as _;
         use glutin::prelude::GlSurface as _;
+
         let winit_window_builder = winit::window::WindowAttributes::default()
             .with_inner_size(crate::gui::SIZE)
             .with_resizable(false)
@@ -28,6 +37,22 @@ impl GlutinWindowContext {
             .with_maximized(false)
             // .with_window_level(winit::window::WindowLevel::AlwaysOnTop)
             // .with_theme(Some(winit::window::Theme::Dark))
+            .with_window_icon(Some(
+                winit::window::Icon::from_rgba(
+                    ICON32_RAW_RGBA.to_vec(),
+                    ICON32_WIDTH,
+                    ICON32_HEIGHT,
+                )
+                .expect("failed to open icon"),
+            ))
+            .with_taskbar_icon(Some(
+                winit::window::Icon::from_rgba(
+                    ICON256_RAW_RGBA.to_vec(),
+                    ICON256_WIDTH,
+                    ICON256_HEIGHT,
+                )
+                .expect("failed to open icon"),
+            ))
             .with_visible(false);
 
         let config_template_builder = glutin::config::ConfigTemplateBuilder::new()

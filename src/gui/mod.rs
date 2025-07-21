@@ -13,6 +13,17 @@ const SIZE: winit::dpi::LogicalSize<f64> = winit::dpi::LogicalSize {
 };
 const START_VISIBLE: bool = true;
 
+// To understand where this constant comes from, look at build.rs.
+// The build script extracts images from the .ico file and saves those images to a temporary
+// compile-time location. The build script then sets ICON{32, 256}_RAW_PATH to point to those files.
+const ICON32_RAW_RGBA: &[u8] = include_bytes!(env!("ICON32_RAW_PATH"));
+const ICON32_WIDTH: u32 = 32;
+const ICON32_HEIGHT: u32 = 32;
+
+const ICON256_RAW_RGBA: &[u8] = include_bytes!(env!("ICON256_RAW_PATH"));
+const ICON256_WIDTH: u32 = 256;
+const ICON256_HEIGHT: u32 = 256;
+
 use std::sync::Arc;
 use tray_icon::TrayIcon;
 
@@ -98,14 +109,15 @@ impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for Glow
 
         // note: creating this has the side effect of creating the tray icon
         let tray_icon = {
-            let path = concat!(env!("CARGO_MANIFEST_DIR"), "/resource/icon.png");
-            let icon = load_icon(std::path::Path::new(path));
+            let icon =
+                tray_icon::Icon::from_rgba(ICON32_RAW_RGBA.to_vec(), ICON32_WIDTH, ICON32_HEIGHT)
+                    .expect("failed to open icon");
 
             tray_icon::TrayIconBuilder::new()
                 .with_menu(Box::new(tray_menu))
-                .with_tooltip("tooltip test")
+                .with_tooltip(TITLE)
                 .with_icon(icon)
-                .with_title("title")
+                .with_title(TITLE)
                 .build()
                 .unwrap()
         };
@@ -245,18 +257,6 @@ fn create_display(
     };
 
     (glutin_window_context, gl)
-}
-
-fn load_icon(path: &std::path::Path) -> tray_icon::Icon {
-    let (icon_rgba, icon_width, icon_height) = {
-        let image = image::open(path)
-            .expect("failed to open icon path")
-            .into_rgba8();
-        let (width, height) = image.dimensions();
-        let rgba = image.into_raw();
-        (rgba, width, height)
-    };
-    tray_icon::Icon::from_rgba(icon_rgba, icon_width, icon_height).expect("failed to open icon")
 }
 
 pub fn run<T>(app: T)
