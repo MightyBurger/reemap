@@ -14,8 +14,8 @@ fn breadcrumb_display(_ctx: &egui::Context, ui: &mut egui::Ui, args: &ReemApp) -
 
     // -------------------- Main Menu Button --------------------
 
-    let main_breadcrumb_response = ui
-        .add(egui::Label::new(egui::RichText::new("Reemap").heading()).sense(egui::Sense::click()));
+    let main_breadcrumb_response =
+        ui.add(egui::Label::new(egui::RichText::new("Home").heading()).sense(egui::Sense::click()));
     if main_breadcrumb_response.hovered() {
         ui.ctx()
             .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);

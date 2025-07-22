@@ -29,138 +29,155 @@ pub fn ui_profile(
     use super::BUTTON_WIDTH;
     use egui_extras::{Size, StripBuilder};
 
-    StripBuilder::new(ui)
-        .size(Size::relative(0.5))
-        .size(Size::remainder())
-        .horizontal(|mut strip| {
-            strip.strip(|builder| {
-                builder
-                    .size(Size::remainder())
-                    .size(Size::initial(BUTTON_HEIGHT))
-                    .vertical(|mut strip| {
-                        strip.cell(|ui| {
-                            ui.label(profile.condition.helper_text());
-                            let edit_response =
-                                ui.add_sized(BUTTON_SIZE, egui::Button::new("Edit"));
-                            if edit_response.clicked() {
-                                *edit_profile_modal = EditProfileModalOpts {
-                                    modal_open: true,
-                                    name: profile.name.clone(),
-                                    condition: match &profile.condition {
-                                        // custom
-                                        config::ProfileCondition::Always => {
-                                            ProfileConditionUI::Always
-                                        }
-                                        config::ProfileCondition::TitleAndProcess { .. } => {
-                                            ProfileConditionUI::TitleAndProcess
-                                        }
-                                        config::ProfileCondition::Title { .. } => {
-                                            ProfileConditionUI::Title
-                                        }
-                                        config::ProfileCondition::Process { .. } => {
-                                            ProfileConditionUI::Process
-                                        }
-                                        // presets
-                                        config::ProfileCondition::OriBF => {
-                                            ProfileConditionUI::OriBF
-                                        }
-                                        config::ProfileCondition::OriBFDE => {
-                                            ProfileConditionUI::OriBFDE
-                                        }
-                                        config::ProfileCondition::OriWotW => {
-                                            ProfileConditionUI::OriWotW
-                                        }
-                                    },
-                                    title: match &profile.condition {
-                                        config::ProfileCondition::TitleAndProcess {
-                                            title,
-                                            process: _,
-                                        } => title.clone(),
-                                        config::ProfileCondition::Title { title } => title.clone(),
-                                        _ => String::new(),
-                                    },
-                                    process: match &profile.condition {
-                                        config::ProfileCondition::TitleAndProcess {
-                                            title: _,
-                                            process,
-                                        } => process.clone(),
-                                        config::ProfileCondition::Process { process } => {
-                                            process.clone()
-                                        }
-                                        _ => String::new(),
-                                    },
-                                    open_windows: query_windows::enumerate_open_windows(),
-                                };
-                            }
-                            ui.add_space(super::SPACING);
-
-                            egui::Frame::new()
-                                .stroke(egui::Stroke {
-                                    width: 1.0,
-                                    color: egui::Color32::DARK_GRAY,
-                                })
-                                .inner_margin(4.0)
-                                .corner_radius(4.0)
-                                .show(ui, |ui| {
-                                    if profile.layers.is_empty() {
-                                        ui.centered_and_justified(|ui| {
-                                            ui.style_mut().interaction.selectable_labels = false;
-                                            ui.label("This profile has no layers.");
-                                        });
-                                    } else {
-                                        let layer_select = ui_enable_clickable_table(
-                                            ui,
-                                            &mut profile.layers,
-                                            "Layer",
-                                        );
-                                        if let Some(i) = layer_select {
-                                            *menu = GuiMenu::ProfileLayer {
-                                                profile_idx,
-                                                layer_idx: i,
-                                            }
-                                        }
+    egui::Frame::new()
+        .shadow(egui::Shadow {
+            offset: [0, 0],
+            blur: 16,
+            spread: 8,
+            color: egui::Color32::from_black_alpha(128),
+        })
+        .show(ui, |ui| {
+            StripBuilder::new(ui)
+                .size(Size::relative(0.5))
+                .size(Size::remainder())
+                .horizontal(|mut strip| {
+                    strip.strip(|builder| {
+                        builder
+                            .size(Size::remainder())
+                            .size(Size::initial(BUTTON_HEIGHT))
+                            .vertical(|mut strip| {
+                                strip.cell(|ui| {
+                                    ui.label(profile.condition.helper_text());
+                                    let edit_response =
+                                        ui.add_sized(BUTTON_SIZE, egui::Button::new("Edit"));
+                                    if edit_response.clicked() {
+                                        *edit_profile_modal = EditProfileModalOpts {
+                                            modal_open: true,
+                                            name: profile.name.clone(),
+                                            condition: match &profile.condition {
+                                                // custom
+                                                config::ProfileCondition::Always => {
+                                                    ProfileConditionUI::Always
+                                                }
+                                                config::ProfileCondition::TitleAndProcess {
+                                                    ..
+                                                } => ProfileConditionUI::TitleAndProcess,
+                                                config::ProfileCondition::Title { .. } => {
+                                                    ProfileConditionUI::Title
+                                                }
+                                                config::ProfileCondition::Process { .. } => {
+                                                    ProfileConditionUI::Process
+                                                }
+                                                // presets
+                                                config::ProfileCondition::OriBF => {
+                                                    ProfileConditionUI::OriBF
+                                                }
+                                                config::ProfileCondition::OriBFDE => {
+                                                    ProfileConditionUI::OriBFDE
+                                                }
+                                                config::ProfileCondition::OriWotW => {
+                                                    ProfileConditionUI::OriWotW
+                                                }
+                                            },
+                                            title: match &profile.condition {
+                                                config::ProfileCondition::TitleAndProcess {
+                                                    title,
+                                                    process: _,
+                                                } => title.clone(),
+                                                config::ProfileCondition::Title { title } => {
+                                                    title.clone()
+                                                }
+                                                _ => String::new(),
+                                            },
+                                            process: match &profile.condition {
+                                                config::ProfileCondition::TitleAndProcess {
+                                                    title: _,
+                                                    process,
+                                                } => process.clone(),
+                                                config::ProfileCondition::Process { process } => {
+                                                    process.clone()
+                                                }
+                                                _ => String::new(),
+                                            },
+                                            open_windows: query_windows::enumerate_open_windows(),
+                                        };
                                     }
-                                });
-                        });
-                        strip.strip(|builder| {
-                            builder
-                                .size(Size::remainder())
-                                .sizes(Size::initial(BUTTON_WIDTH), 2)
-                                .size(Size::remainder())
-                                .horizontal(|mut strip| {
-                                    strip.empty();
-                                    strip.cell(|ui| {
-                                        if ui
-                                            .add_sized(BUTTON_SIZE, egui::Button::new("Add Layer"))
-                                            .clicked()
-                                        {
-                                            *new_layer_modal = EditLayerModalOpts {
-                                                modal_open: true,
-                                                name: String::from("New layer"),
-                                                ..Default::default()
-                                            };
-                                        }
-                                    });
-                                    strip.cell(|ui| {
-                                        if ui
-                                            .add_sized(BUTTON_SIZE, egui::Button::new("Rearrange"))
-                                            .clicked()
-                                        {
-                                            rearrange_layers_modal.new_order =
-                                                profile.layers.clone();
-                                            rearrange_layers_modal.modal_open = true;
-                                        }
-                                    });
-                                    strip.empty();
-                                });
-                        });
-                    });
-            });
-            strip.cell(|ui| {
-                ui_base_layer(ui, &mut profile.base, new_base_remap_modal);
-            });
-        });
+                                    ui.add_space(super::SPACING);
 
+                                    egui::Frame::new()
+                                        .stroke(egui::Stroke {
+                                            width: 1.0,
+                                            color: egui::Color32::DARK_GRAY,
+                                        })
+                                        .inner_margin(4.0)
+                                        .corner_radius(4.0)
+                                        .show(ui, |ui| {
+                                            if profile.layers.is_empty() {
+                                                ui.centered_and_justified(|ui| {
+                                                    ui.style_mut().interaction.selectable_labels =
+                                                        false;
+                                                    ui.label("This profile has no layers.");
+                                                });
+                                            } else {
+                                                let layer_select = ui_enable_clickable_table(
+                                                    ui,
+                                                    &mut profile.layers,
+                                                    "Layer",
+                                                );
+                                                if let Some(i) = layer_select {
+                                                    *menu = GuiMenu::ProfileLayer {
+                                                        profile_idx,
+                                                        layer_idx: i,
+                                                    }
+                                                }
+                                            }
+                                        });
+                                });
+                                strip.strip(|builder| {
+                                    builder
+                                        .size(Size::remainder())
+                                        .sizes(Size::initial(BUTTON_WIDTH), 2)
+                                        .size(Size::remainder())
+                                        .horizontal(|mut strip| {
+                                            strip.empty();
+                                            strip.cell(|ui| {
+                                                if ui
+                                                    .add_sized(
+                                                        BUTTON_SIZE,
+                                                        egui::Button::new("Add Layer"),
+                                                    )
+                                                    .clicked()
+                                                {
+                                                    *new_layer_modal = EditLayerModalOpts {
+                                                        modal_open: true,
+                                                        name: String::from("New layer"),
+                                                        ..Default::default()
+                                                    };
+                                                }
+                                            });
+                                            strip.cell(|ui| {
+                                                if ui
+                                                    .add_sized(
+                                                        BUTTON_SIZE,
+                                                        egui::Button::new("Rearrange"),
+                                                    )
+                                                    .clicked()
+                                                {
+                                                    rearrange_layers_modal.new_order =
+                                                        profile.layers.clone();
+                                                    rearrange_layers_modal.modal_open = true;
+                                                }
+                                            });
+                                            strip.empty();
+                                        });
+                                });
+                            });
+                    });
+                    strip.cell(|ui| {
+                        ui_base_layer(ui, &mut profile.base, new_base_remap_modal);
+                    });
+                });
+        });
     // ----- Rearrange layers modal -----
 
     if rearrange_layers_modal.modal_open {

@@ -16,31 +16,39 @@ pub fn ui_layer(
 ) {
     use super::BUTTON_SIZE;
 
-    ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-        ui.label(layer.condition_helper_text());
-        let edit_response = ui.add_sized(BUTTON_SIZE, egui::Button::new("Edit"));
-        if edit_response.clicked() {
-            *edit_layer_modal = EditLayerModalOpts {
-                modal_open: true,
-                name: layer.name.clone(),
-                layer_type: layer.layer_type.clone(),
-                condition: layer.condition.clone(),
-            };
-        }
-        ui.add_space(super::SPACING);
+    egui::Frame::new()
+        .shadow(egui::Shadow {
+            offset: [0, 0],
+            blur: 16,
+            spread: 8,
+            color: egui::Color32::from_black_alpha(128),
+        })
+        .show(ui, |ui| {
+            ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
+                ui.label(layer.condition_helper_text());
+                let edit_response = ui.add_sized(BUTTON_SIZE, egui::Button::new("Edit"));
+                if edit_response.clicked() {
+                    *edit_layer_modal = EditLayerModalOpts {
+                        modal_open: true,
+                        name: layer.name.clone(),
+                        layer_type: layer.layer_type.clone(),
+                        condition: layer.condition.clone(),
+                    };
+                }
+                ui.add_space(super::SPACING);
 
-        egui::Frame::new()
-            .stroke(egui::Stroke {
-                width: 1.0,
-                color: egui::Color32::DARK_GRAY,
-            })
-            .inner_margin(4.0)
-            .corner_radius(4.0)
-            .show(ui, |ui| {
-                ui_remaps_table(ui, layer, new_remap_modal);
+                egui::Frame::new()
+                    .stroke(egui::Stroke {
+                        width: 1.0,
+                        color: egui::Color32::DARK_GRAY,
+                    })
+                    .inner_margin(4.0)
+                    .corner_radius(4.0)
+                    .show(ui, |ui| {
+                        ui_remaps_table(ui, layer, new_remap_modal);
+                    });
             });
-    });
-
+        });
     // ----- New remap modal -----
 
     if let Some(button) = new_remap_modal.modal_open {
