@@ -11,7 +11,6 @@ mod ui_status_bar;
 mod ui_tables;
 
 use breadcrumb::breadcrumb;
-use egui::Margin;
 use std::path::PathBuf;
 use tracing::warn;
 use tracing::{info, instrument};

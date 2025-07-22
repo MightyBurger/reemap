@@ -8,6 +8,10 @@ pub fn set_reemap_style(ui: &mut egui::Ui) {
         width: 1.0,
         color: egui::Color32::WHITE,
     };
+
+    ui.style_mut().visuals.widgets.active.weak_bg_fill = egui::Color32::from_black_alpha(100);
+    ui.style_mut().visuals.widgets.open.weak_bg_fill = egui::Color32::from_black_alpha(100);
+
     ui.style_mut().visuals.widgets.hovered.weak_bg_fill = egui::Color32::from_white_alpha(16);
 }
 

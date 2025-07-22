@@ -47,7 +47,7 @@ pub fn ui_edit_profile_modal(
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
             ui.label("Profile name");
             ui.text_edit_singleline(&mut modal_opts.name);
-            ui.separator();
+            ui.add_space(super::SPACING);
 
             ui.label("Condition");
             egui::ComboBox::from_id_salt("condition")

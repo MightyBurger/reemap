@@ -154,14 +154,14 @@ fn ui_new_remap_modal(
         ui.separator();
         ui.add_space(super::SPACING);
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
-            egui::ComboBox::from_label("Policy")
+            ui.label("Policy");
+            egui::ComboBox::from_id_salt("policy")
                 .selected_text(format!("{}", &modal_opts.policy))
                 .show_ui(ui, |ui| {
                     ui.selectable_value(&mut modal_opts.policy, RemapPolicyUI::Defer, "Defer");
                     ui.selectable_value(&mut modal_opts.policy, RemapPolicyUI::NoRemap, "No Remap");
                     ui.selectable_value(&mut modal_opts.policy, RemapPolicyUI::Remap, "Remap");
                 });
-
             ui.add_space(super::SPACING);
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {

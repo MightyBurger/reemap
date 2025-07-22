@@ -18,9 +18,10 @@ pub fn ui_edit_layer_modal(
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
             ui.label("Layer name");
             ui.text_edit_singleline(&mut modal_opts.name);
-            ui.separator();
+            ui.add_space(super::SPACING);
 
-            egui::ComboBox::from_label("Layer type")
+            ui.label("Layer type");
+            egui::ComboBox::from_id_salt("layer type")
                 .selected_text(format!("{}", &modal_opts.layer_type))
                 .show_ui(ui, |ui| {
                     ui.selectable_value(
