@@ -96,8 +96,8 @@ pub fn run(sender: oneshot::Sender<HookthreadProxy>, config: config::Config) {
             match HookMessage::from_u32(lpmsg.message) {
                 Some(HookMessage::Quit) => {
                     trace!("handling Quit message");
-                    let _ = input_hooks::remove_hook(mouse_hhk).unwrap();
-                    let _ = input_hooks::remove_hook(keybd_hhk).unwrap();
+                    let _ = input_hooks::remove_hook(mouse_hhk);
+                    let _ = input_hooks::remove_hook(keybd_hhk);
                     let _ = foreground_hook::remove_hook(foreground_hhk);
                     let _ = minimize_end_hook::remove_hook(minimize_end_hhk);
                     WM::PostQuitMessage(0);

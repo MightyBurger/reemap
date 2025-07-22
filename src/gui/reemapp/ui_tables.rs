@@ -23,11 +23,7 @@ impl EnableListItem for config::Layer {
 /// Important: if called multiple times within the same `Ui`, each call must have a different
 /// `name`, or runtime errors will occur.
 /// Returns the index of the item the user clicked.
-pub fn ui_enable_clickable_table<T>(
-    ui: &mut egui::Ui,
-    list: &mut Vec<T>,
-    name: &str,
-) -> Option<usize>
+pub fn ui_enable_clickable_table<T>(ui: &mut egui::Ui, list: &mut [T], name: &str) -> Option<usize>
 where
     T: EnableListItem,
 {

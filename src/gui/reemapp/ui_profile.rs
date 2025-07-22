@@ -43,7 +43,7 @@ pub fn ui_profile(
                         rearrange_layers_modal.modal_open = true;
                     }
                     ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-                        ui.label(&profile.condition.helper_text());
+                        ui.label(profile.condition.helper_text());
                         let edit_response = ui.button("Edit");
                         if edit_response.clicked() {
                             *edit_profile_modal = EditProfileModalOpts {
@@ -101,7 +101,12 @@ pub fn ui_profile(
                             .inner_margin(4.0)
                             .corner_radius(4.0)
                             .show(ui, |ui| {
-                                if profile.layers.len() > 0 {
+                                if profile.layers.is_empty() {
+                                    ui.centered_and_justified(|ui| {
+                                        ui.style_mut().interaction.selectable_labels = false;
+                                        ui.label("This profile has no layers.");
+                                    });
+                                } else {
                                     let layer_select =
                                         ui_enable_clickable_table(ui, &mut profile.layers, "Layer");
                                     if let Some(i) = layer_select {
@@ -110,11 +115,6 @@ pub fn ui_profile(
                                             layer_idx: i,
                                         }
                                     }
-                                } else {
-                                    ui.centered_and_justified(|ui| {
-                                        ui.style_mut().interaction.selectable_labels = false;
-                                        ui.label("This profile has no layers.");
-                                    });
                                 }
                             });
                     });

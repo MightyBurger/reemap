@@ -33,17 +33,17 @@ pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
                 .inner_margin(4.0)
                 .corner_radius(4.0)
                 .show(ui, |ui| {
-                    if args.config.profiles.len() > 0 {
+                    if args.config.profiles.is_empty() {
+                        ui.centered_and_justified(|ui| {
+                            ui.style_mut().interaction.selectable_labels = false;
+                            ui.label("Add a profile to get started.");
+                        });
+                    } else {
                         let profile_select =
                             ui_enable_clickable_table(ui, &mut args.config.profiles, "Profiles");
                         if let Some(profile_idx) = profile_select {
                             args.gui_local.menu = GuiMenu::Profile { profile_idx };
                         }
-                    } else {
-                        ui.centered_and_justified(|ui| {
-                            ui.style_mut().interaction.selectable_labels = false;
-                            ui.label("Add a profile to get started.");
-                        });
                     }
                 });
         });

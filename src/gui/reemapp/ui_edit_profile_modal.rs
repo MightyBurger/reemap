@@ -9,14 +9,14 @@ pub fn ui_edit_profile_modal(
 ) -> Option<bool> {
     use egui_extras::{Size, StripBuilder};
     ui_ok_cancel_modal(ui, |ui| {
-        let enable_title = match modal_opts.condition {
-            ProfileConditionUI::TitleAndProcess | ProfileConditionUI::Title => true,
-            _ => false,
-        };
-        let enable_process = match modal_opts.condition {
-            ProfileConditionUI::TitleAndProcess | ProfileConditionUI::Process => true,
-            _ => false,
-        };
+        let enable_title = matches!(
+            modal_opts.condition,
+            ProfileConditionUI::TitleAndProcess | ProfileConditionUI::Title
+        );
+        let enable_process = matches!(
+            modal_opts.condition,
+            ProfileConditionUI::TitleAndProcess | ProfileConditionUI::Process
+        );
         let enable_table = match modal_opts.condition {
             ProfileConditionUI::TitleAndProcess
             | ProfileConditionUI::Title
@@ -49,7 +49,7 @@ pub fn ui_edit_profile_modal(
 
             ui.label("Condition");
             egui::ComboBox::from_id_salt("condition")
-                .selected_text(&modal_opts.condition.to_string())
+                .selected_text(modal_opts.condition.to_string())
                 .show_ui(ui, |ui| {
                     ui.selectable_value(
                         &mut modal_opts.condition,

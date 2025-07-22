@@ -23,7 +23,7 @@ fn extract_runtime_icon() {
     // 32 x 32 icon raw
     let runtime_icon32_entry = icon_dir
         .entries()
-        .into_iter()
+        .iter()
         .find(|entry| (entry.width(), entry.height()) == (32, 32))
         .expect("the icon does not contain a 32 x 32 icon");
     let image32 = runtime_icon32_entry.decode().unwrap();
@@ -39,7 +39,7 @@ fn extract_runtime_icon() {
     // 256 x 256  icon raw
     let runtime_icon256_entry = icon_dir
         .entries()
-        .into_iter()
+        .iter()
         .find(|entry| (entry.width(), entry.height()) == (256, 256))
         .expect("the icon does not contain a 256 x 256 icon");
     let image256 = runtime_icon256_entry.decode().unwrap();
