@@ -135,7 +135,7 @@ pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
     if args.gui_local.rearrange_profiles_modal.modal_open {
         let modal_opts = &mut args.gui_local.rearrange_profiles_modal;
         let profiles = &mut args.config.profiles;
-        let ok_cancel = ui_ok_cancel_modal(ui, |ui| {
+        let ok_cancel = ui_ok_cancel_modal(ui, "", true, |ui| {
             ui.heading("Rearrange and Delete Profiles");
             ui.separator();
             ui.add_space(SPACING);

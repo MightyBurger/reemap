@@ -10,7 +10,8 @@ pub fn ui_edit_layer_modal(
     modal_opts: &mut EditLayerModalOpts,
     heading: &str,
 ) -> Option<bool> {
-    ui_ok_cancel_modal(ui, |ui| {
+    let helper_text = config::Layer::from(modal_opts.clone()).condition_helper_text();
+    ui_ok_cancel_modal(ui, &helper_text, true, |ui| {
         ui.heading(heading);
         ui.separator();
         ui.add_space(super::SPACING);
@@ -38,7 +39,6 @@ pub fn ui_edit_layer_modal(
             ui.add_space(super::SPACING);
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                ui.label(config::Layer::from(modal_opts.clone()).condition_helper_text());
                 ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
                     ui.columns_const(|[col_1, col_2]| {
                         egui::Frame::new()

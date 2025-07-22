@@ -221,7 +221,7 @@ fn ui_rearrange_layers_modal(
     modal_opts: &mut RearrangeLayersModalOpts,
     layers: &mut Vec<config::Layer>,
 ) {
-    let ok_cancel = ui_ok_cancel_modal(ui, |ui| {
+    let ok_cancel = ui_ok_cancel_modal(ui, "", true, |ui| {
         ui.heading("Rearrange and Delete Layers");
         ui.separator();
         ui.add_space(SPACING);

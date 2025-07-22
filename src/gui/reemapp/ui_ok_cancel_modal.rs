@@ -5,9 +5,14 @@
 pub fn ui_ok_cancel_modal(
     //
     ui: &mut egui::Ui,
+    helper_text: &str,
+    enable_ok: bool,
     add_contents: impl FnOnce(&mut egui::Ui),
 ) -> Option<bool> {
+    use super::BUTTON_HEIGHT;
     use super::BUTTON_SIZE;
+    use super::BUTTON_WIDTH;
+    use super::SPACING;
     use crate::gui::reemapp::style;
     use egui_extras::{Size, StripBuilder};
 
@@ -33,22 +38,46 @@ pub fn ui_ok_cancel_modal(
             ui.set_max_height(550.0);
             StripBuilder::new(ui)
                 .size(Size::exact(400.0))
-                .size(Size::exact(20.0))
+                .size(Size::exact(SPACING))
+                .size(Size::initial(BUTTON_HEIGHT).at_most(BUTTON_HEIGHT + 5.0))
                 .vertical(|mut strip| {
                     strip.cell(add_contents);
-                    strip.cell(|ui| {
-                        ui.separator();
-                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            if ui
-                                .add_sized(BUTTON_SIZE, egui::Button::new("Cancel"))
-                                .clicked()
-                            {
-                                cancel = true;
-                            }
-                            if ui.add_sized(BUTTON_SIZE, egui::Button::new("OK")).clicked() {
-                                ok = true;
-                            }
-                        });
+                    strip.empty();
+                    strip.strip(|builder| {
+                        builder
+                            .size(Size::remainder())
+                            .size(Size::initial(BUTTON_WIDTH * 2.0)) // 2 for two buttons
+                            .horizontal(|mut strip| {
+                                strip.cell(|ui| {
+                                    ui.with_layout(
+                                        egui::Layout::left_to_right(egui::Align::BOTTOM),
+                                        |ui| {
+                                            ui.add(egui::Label::new(helper_text).truncate());
+                                        },
+                                    );
+                                });
+                                strip.cell(|ui| {
+                                    ui.with_layout(
+                                        egui::Layout::right_to_left(egui::Align::Center),
+                                        |ui| {
+                                            if ui
+                                                .add_sized(BUTTON_SIZE, egui::Button::new("Cancel"))
+                                                .clicked()
+                                            {
+                                                cancel = true;
+                                            }
+                                            ui.add_enabled_ui(enable_ok, |ui| {
+                                                if ui
+                                                    .add_sized(BUTTON_SIZE, egui::Button::new("OK"))
+                                                    .clicked()
+                                                {
+                                                    ok = true;
+                                                }
+                                            });
+                                        },
+                                    );
+                                });
+                            });
                     });
                 });
         });
@@ -59,7 +88,7 @@ pub fn ui_ok_cancel_modal(
     if modal.should_close() {
         cancel = true;
     }
-    if ok {
+    if ok && enable_ok {
         Some(true)
     } else if cancel {
         Some(false)

@@ -108,7 +108,9 @@ fn ui_new_base_remap_modal(
     button: buttons::Button,
     policy: &mut config::BaseRemapPolicy,
 ) {
-    let ok_cancel = ui_ok_cancel_modal(ui, |ui| {
+    let helper_text =
+        get_new_remap_helper_text_base(&button, &modal_opts.outputs, &modal_opts.policy);
+    let ok_cancel = ui_ok_cancel_modal(ui, &helper_text, true, |ui| {
         ui.heading(format!("Remaps for {button}"));
         ui.separator();
         ui.add_space(super::SPACING);
@@ -127,11 +129,6 @@ fn ui_new_base_remap_modal(
             ui.add_space(super::SPACING);
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                ui.label(get_new_remap_helper_text_base(
-                    &button,
-                    &modal_opts.outputs,
-                    &modal_opts.policy,
-                ));
                 ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
                     let enable_tables = match modal_opts.policy {
                         BaseRemapPolicyUI::NoRemap => false,

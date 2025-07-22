@@ -1,5 +1,5 @@
 use crate::gui::reemapp::ui_ok_cancel_modal::ui_ok_cancel_modal;
-use crate::gui::reemapp::{EditProfileModalOpts, ProfileConditionUI, SPACING};
+use crate::gui::reemapp::{EditProfileModalOpts, ProfileConditionUI};
 use crate::query_windows;
 
 pub fn ui_edit_profile_modal(
@@ -10,7 +10,23 @@ pub fn ui_edit_profile_modal(
     use super::BUTTON_SIZE;
     use egui_extras::{Size, StripBuilder};
 
-    ui_ok_cancel_modal(ui, |ui| {
+    let valid = match modal_opts.condition {
+        ProfileConditionUI::TitleAndProcess => {
+            !modal_opts.title.is_empty() && !modal_opts.process.is_empty()
+        }
+        ProfileConditionUI::Title => !modal_opts.title.is_empty(),
+        ProfileConditionUI::Process => !modal_opts.process.is_empty(),
+        ProfileConditionUI::Always
+        | ProfileConditionUI::OriBF
+        | ProfileConditionUI::OriBFDE
+        | ProfileConditionUI::OriWotW => true,
+    };
+    let helper_text = if valid {
+        modal_opts.clone().extract_condition().helper_text()
+    } else {
+        String::from("Window title or process is empty")
+    };
+    ui_ok_cancel_modal(ui, &helper_text, valid, |ui| {
         let enable_title = matches!(
             modal_opts.condition,
             ProfileConditionUI::TitleAndProcess | ProfileConditionUI::Title
@@ -28,21 +44,8 @@ pub fn ui_edit_profile_modal(
             | ProfileConditionUI::OriBFDE
             | ProfileConditionUI::OriWotW => false,
         };
-        // TODO: use again
-        let valid = |modal_opts: &mut EditProfileModalOpts| match modal_opts.condition {
-            ProfileConditionUI::TitleAndProcess => {
-                !modal_opts.title.is_empty() && !modal_opts.process.is_empty()
-            }
-            ProfileConditionUI::Title => !modal_opts.title.is_empty(),
-            ProfileConditionUI::Process => !modal_opts.process.is_empty(),
-            ProfileConditionUI::Always
-            | ProfileConditionUI::OriBF
-            | ProfileConditionUI::OriBFDE
-            | ProfileConditionUI::OriWotW => true,
-        };
         ui.heading(heading);
         ui.separator();
-        // ui.add_space(super::SPACING);
 
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
             ui.label("Profile name");
@@ -96,7 +99,6 @@ pub fn ui_edit_profile_modal(
             StripBuilder::new(ui)
                 .size(Size::exact(300.0))
                 .size(Size::exact(20.0))
-                .size(Size::exact(20.0))
                 .vertical(|mut strip| {
                     strip.cell(|ui| {
                         ui.columns_const(|[col_1, col_2]| {
@@ -143,10 +145,6 @@ pub fn ui_edit_profile_modal(
                                 }
                             });
                         });
-                    });
-                    strip.cell(|ui| {
-                        ui.add_space(SPACING);
-                        ui.label(modal_opts.clone().extract_condition().helper_text());
                     });
                 });
         });
