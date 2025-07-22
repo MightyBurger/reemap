@@ -38,9 +38,10 @@ pub fn ui_base_remaps_table(
     layer: &mut config::BaseLayer,
     new_base_remap_modal: &mut NewBaseRemapModalOpts,
 ) {
+    use super::HEADER_HEIGHT;
+    use super::ROW_HEIGHT;
     use egui_extras::{Column, TableBuilder};
-    let header_height = 12.0;
-    let row_height = 20.0;
+
     let mut pointing_hand = false;
     let mut button_select = None;
     TableBuilder::new(ui)
@@ -51,7 +52,7 @@ pub fn ui_base_remaps_table(
         .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
         .column(Column::exact(120.0)) // Enabled
         .column(Column::remainder()) // Profile Name
-        .header(header_height, |mut header| {
+        .header(HEADER_HEIGHT, |mut header| {
             header.col(|ui| {
                 ui.strong("Input");
             });
@@ -65,7 +66,7 @@ pub fn ui_base_remaps_table(
             let wheel_iter = buttons::wheel::MouseWheelButton::iter().map(buttons::Button::from);
 
             for button in key_iter.chain(mouse_iter).chain(wheel_iter) {
-                body.row(row_height, |mut row| {
+                body.row(ROW_HEIGHT, |mut row| {
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
                         ui.label(format!("{button}"));

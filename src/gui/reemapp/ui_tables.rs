@@ -31,9 +31,10 @@ pub fn ui_enable_clickable_table<T>(
 where
     T: EnableListItem,
 {
+    use super::HEADER_HEIGHT;
+    use super::ROW_HEIGHT;
     use egui_extras::{Column, TableBuilder};
-    let header_height = 12.0;
-    let row_height = 20.0;
+
     let mut pointing_hand = false;
     let mut selected = None;
     TableBuilder::new(ui)
@@ -44,7 +45,7 @@ where
         .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
         .column(Column::exact(60.0)) // Enabled
         .column(Column::remainder()) // Profile Name
-        .header(header_height, |mut header| {
+        .header(HEADER_HEIGHT, |mut header| {
             header.col(|ui| {
                 ui.strong("Enabled");
             });
@@ -54,7 +55,7 @@ where
         })
         .body(|mut body| {
             for (i, item) in list.iter_mut().enumerate() {
-                body.row(row_height, |mut row| {
+                body.row(ROW_HEIGHT, |mut row| {
                     row.col(|ui| {
                         ui.with_layout(
                             egui::Layout::centered_and_justified(egui::Direction::LeftToRight),
@@ -132,9 +133,10 @@ where
     L: RearrangeableList<T>,
     T: RearrangeableListItem,
 {
+    use super::HEADER_HEIGHT;
+    use super::ROW_HEIGHT;
     use egui_extras::{Column, TableBuilder};
-    let header_height = 12.0;
-    let row_height = 20.0;
+
     let btn_size = [20.0, 20.0];
     let mut to_delete = None;
     let list_len = list.as_slice().len();
@@ -146,7 +148,7 @@ where
         .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
         .column(Column::remainder()) // Profile Name
         .column(Column::exact(70.0))
-        .header(header_height, |mut header| {
+        .header(HEADER_HEIGHT, |mut header| {
             header.col(|ui| {
                 ui.strong(name);
             });
@@ -158,7 +160,7 @@ where
             for (i, item) in list.as_mut_slice().iter_mut().enumerate() {
                 let first = i == 0;
                 let last = i == list_len - 1;
-                body.row(row_height, |mut row| {
+                body.row(ROW_HEIGHT, |mut row| {
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
                         ui.add(egui::Label::new(item.to_string()).truncate());
@@ -191,9 +193,10 @@ where
 }
 
 pub fn ui_available_remaps_table(ui: &mut egui::Ui, remaps: &mut config::Output) {
+    use super::HEADER_HEIGHT;
+    use super::ROW_HEIGHT;
     use egui_extras::{Column, TableBuilder};
-    let header_height = 12.0;
-    let row_height = 20.0;
+
     let mut button_select = None;
     let mut pointing_hand = false;
     TableBuilder::new(ui)
@@ -203,7 +206,7 @@ pub fn ui_available_remaps_table(ui: &mut egui::Ui, remaps: &mut config::Output)
         .sense(egui::Sense::click_and_drag())
         .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
         .column(Column::remainder()) // Button Name
-        .header(header_height, |mut header| {
+        .header(HEADER_HEIGHT, |mut header| {
             header.col(|ui| {
                 ui.strong("Button");
             });
@@ -215,7 +218,7 @@ pub fn ui_available_remaps_table(ui: &mut egui::Ui, remaps: &mut config::Output)
 
             for button in key_iter.chain(mouse_iter).chain(wheel_iter) {
                 let enabled = !remaps.contains(&button);
-                body.row(row_height, |mut row| {
+                body.row(ROW_HEIGHT, |mut row| {
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
                         ui.add_enabled(enabled, egui::Label::new(format!("{button}")));

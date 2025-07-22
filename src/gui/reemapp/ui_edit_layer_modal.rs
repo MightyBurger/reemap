@@ -72,9 +72,10 @@ pub fn ui_edit_layer_modal(
 }
 
 fn ui_available_layer_conditions_table(ui: &mut egui::Ui, remaps: &mut Vec<buttons::HoldButton>) {
+    use super::HEADER_HEIGHT;
+    use super::ROW_HEIGHT;
     use egui_extras::{Column, TableBuilder};
-    let header_height = 12.0;
-    let row_height = 20.0;
+
     let mut button_select = None;
     let mut pointing_hand = false;
     TableBuilder::new(ui)
@@ -84,7 +85,7 @@ fn ui_available_layer_conditions_table(ui: &mut egui::Ui, remaps: &mut Vec<butto
         .sense(egui::Sense::click_and_drag())
         .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
         .column(Column::remainder()) // Button Name
-        .header(header_height, |mut header| {
+        .header(HEADER_HEIGHT, |mut header| {
             header.col(|ui| {
                 ui.strong("Button");
             });
@@ -95,7 +96,7 @@ fn ui_available_layer_conditions_table(ui: &mut egui::Ui, remaps: &mut Vec<butto
 
             for button in key_iter.chain(mouse_iter) {
                 let enabled = !remaps.contains(&button);
-                body.row(row_height, |mut row| {
+                body.row(ROW_HEIGHT, |mut row| {
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
                         ui.add_enabled(enabled, egui::Label::new(format!("{button}")));

@@ -152,9 +152,10 @@ fn ui_open_windows_table(
     ui: &mut egui::Ui,
     windows: &[query_windows::WindowInfo],
 ) -> Option<query_windows::WindowInfo> {
+    use super::HEADER_HEIGHT;
+    use super::ROW_HEIGHT;
     use egui_extras::{Column, TableBuilder};
-    let header_height = 12.0;
-    let row_height = 20.0;
+
     let mut pointing_hand = false;
     let mut window_select = None;
     TableBuilder::new(ui)
@@ -165,7 +166,7 @@ fn ui_open_windows_table(
         .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
         .column(Column::exact(200.0)) // Process
         .column(Column::remainder().at_most(420.0)) // Window Title
-        .header(header_height, |mut header| {
+        .header(HEADER_HEIGHT, |mut header| {
             header.col(|ui| {
                 ui.strong("Process");
             });
@@ -175,7 +176,7 @@ fn ui_open_windows_table(
         })
         .body(|mut body| {
             for window in windows {
-                body.row(row_height, |mut row| {
+                body.row(ROW_HEIGHT, |mut row| {
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
                         ui.add(egui::Label::new(&window.process).truncate());

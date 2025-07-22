@@ -26,6 +26,8 @@ use crate::hooks;
 use crate::query_windows;
 
 const SPACING: f32 = 8.0;
+const HEADER_HEIGHT: f32 = 12.0;
+const ROW_HEIGHT: f32 = 20.0;
 
 // Thought the name was clever. Don't get too mad, please.
 #[derive(Debug)]
