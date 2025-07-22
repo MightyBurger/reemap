@@ -1,4 +1,5 @@
 mod breadcrumb;
+mod style;
 mod ui_base_layer;
 mod ui_edit_layer_modal;
 mod ui_edit_profile_modal;
@@ -296,18 +297,7 @@ impl crate::gui::TrayApp for ReemApp {
                     .paint_at(ui, [[0.0, 0.0].into(), [800.0, 600.0].into()].into());
                 egui::Frame::new().inner_margin(12.0).show(ui, |ui| {
                     ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-                        ui.style_mut().visuals.widgets.inactive.weak_bg_fill =
-                            egui::Color32::TRANSPARENT;
-                        ui.style_mut().visuals.widgets.inactive.bg_stroke = egui::Stroke {
-                            width: 1.0,
-                            color: egui::Color32::DARK_GRAY,
-                        };
-                        ui.style_mut().visuals.widgets.inactive.fg_stroke = egui::Stroke {
-                            width: 1.0,
-                            color: egui::Color32::WHITE,
-                        };
-                        ui.style_mut().visuals.widgets.hovered.weak_bg_fill =
-                            egui::Color32::from_white_alpha(16);
+                        style::set_reemap_style(ui);
 
                         breadcrumb(ctx, ui, self);
 

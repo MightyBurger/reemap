@@ -13,6 +13,7 @@ pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
     use super::BUTTON_HEIGHT;
     use super::BUTTON_SIZE;
     use super::BUTTON_WIDTH;
+    use crate::gui::reemapp::style::REEMAP_SHADOW;
     use egui_extras::{Size, StripBuilder};
 
     StripBuilder::new(ui)
@@ -30,51 +31,37 @@ pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
                     .vertical(|mut strip| {
                         strip.empty();
                         strip.cell(|ui| {
-                            egui::Frame::new()
-                                .shadow(egui::Shadow {
-                                    offset: [0, 0],
-                                    blur: 16,
-                                    spread: 8,
-                                    color: egui::Color32::from_black_alpha(128),
-                                })
-                                .show(ui, |ui| {
-                                    ui.with_layout(
-                                        egui::Layout::top_down(egui::Align::Center),
-                                        |ui| {
-                                            ui.add_space(super::SPACING);
-                                            egui::Frame::new()
-                                                .stroke(egui::Stroke {
-                                                    width: 1.0,
-                                                    color: egui::Color32::DARK_GRAY,
-                                                })
-                                                .inner_margin(4.0)
-                                                .corner_radius(4.0)
-                                                .show(ui, |ui| {
-                                                    if args.config.profiles.is_empty() {
-                                                        ui.centered_and_justified(|ui| {
-                                                            ui.style_mut()
-                                                                .interaction
-                                                                .selectable_labels = false;
-                                                            ui.label(
-                                                                "Add a profile to get started.",
-                                                            );
-                                                        });
-                                                    } else {
-                                                        let profile_select =
-                                                            ui_enable_clickable_table(
-                                                                ui,
-                                                                &mut args.config.profiles,
-                                                                "Profiles",
-                                                            );
-                                                        if let Some(profile_idx) = profile_select {
-                                                            args.gui_local.menu =
-                                                                GuiMenu::Profile { profile_idx };
-                                                        }
-                                                    }
+                            egui::Frame::new().shadow(REEMAP_SHADOW).show(ui, |ui| {
+                                ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+                                    ui.add_space(super::SPACING);
+                                    egui::Frame::new()
+                                        .stroke(egui::Stroke {
+                                            width: 1.0,
+                                            color: egui::Color32::DARK_GRAY,
+                                        })
+                                        .inner_margin(4.0)
+                                        .corner_radius(4.0)
+                                        .show(ui, |ui| {
+                                            if args.config.profiles.is_empty() {
+                                                ui.centered_and_justified(|ui| {
+                                                    ui.style_mut().interaction.selectable_labels =
+                                                        false;
+                                                    ui.label("Add a profile to get started.");
                                                 });
-                                        },
-                                    );
+                                            } else {
+                                                let profile_select = ui_enable_clickable_table(
+                                                    ui,
+                                                    &mut args.config.profiles,
+                                                    "Profiles",
+                                                );
+                                                if let Some(profile_idx) = profile_select {
+                                                    args.gui_local.menu =
+                                                        GuiMenu::Profile { profile_idx };
+                                                }
+                                            }
+                                        });
                                 });
+                            });
                         });
                         strip.strip(|builder| {
                             builder
