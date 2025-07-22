@@ -10,8 +10,13 @@ use super::GuiMenu;
 use super::ReemApp;
 
 pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
+    use super::BUTTON_SIZE;
+
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-        if ui.button("Add Profile").clicked() {
+        if ui
+            .add_sized(BUTTON_SIZE, egui::Button::new("Add Profile"))
+            .clicked()
+        {
             args.gui_local.new_profile_modal = EditProfileModalOpts {
                 modal_open: true,
                 name: String::from("New Profile"),
@@ -19,7 +24,10 @@ pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
                 ..Default::default()
             };
         }
-        if ui.button("Rearrange").clicked() {
+        if ui
+            .add_sized(BUTTON_SIZE, egui::Button::new("Rearrange"))
+            .clicked()
+        {
             args.gui_local.rearrange_profiles_modal.new_order = args.config.profiles.clone();
             args.gui_local.rearrange_profiles_modal.modal_open = true;
         }

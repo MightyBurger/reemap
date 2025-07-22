@@ -24,27 +24,35 @@ pub fn ui_profile(
     profile_idx: usize,
     menu: &mut GuiMenu,
 ) {
+    use super::BUTTON_SIZE;
     use egui_extras::{Size, StripBuilder};
+
     StripBuilder::new(ui)
         .size(Size::relative(0.5))
         .size(Size::remainder())
         .horizontal(|mut strip| {
             strip.cell(|ui| {
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                    if ui.button("Add Layer").clicked() {
+                    if ui
+                        .add_sized(BUTTON_SIZE, egui::Button::new("Add Layer"))
+                        .clicked()
+                    {
                         *new_layer_modal = EditLayerModalOpts {
                             modal_open: true,
                             name: String::from("New layer"),
                             ..Default::default()
                         };
                     }
-                    if ui.button("Rearrange").clicked() {
+                    if ui
+                        .add_sized(BUTTON_SIZE, egui::Button::new("Rearrange"))
+                        .clicked()
+                    {
                         rearrange_layers_modal.new_order = profile.layers.clone();
                         rearrange_layers_modal.modal_open = true;
                     }
                     ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
                         ui.label(profile.condition.helper_text());
-                        let edit_response = ui.button("Edit");
+                        let edit_response = ui.add_sized(BUTTON_SIZE, egui::Button::new("Edit"));
                         if edit_response.clicked() {
                             *edit_profile_modal = EditProfileModalOpts {
                                 modal_open: true,

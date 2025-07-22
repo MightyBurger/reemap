@@ -7,13 +7,14 @@ pub fn ui_ok_cancel_modal(
     ui: &mut egui::Ui,
     add_contents: impl FnOnce(&mut egui::Ui),
 ) -> Option<bool> {
+    use super::BUTTON_SIZE;
     use egui_extras::{Size, StripBuilder};
 
-    let ok_cancel_width = 60.0;
     let mut ok = false;
     let mut cancel = false;
 
     let modal = egui::Modal::new(egui::Id::new("rearrange profiles modal")).show(ui.ctx(), |ui| {
+        // Max width and height are arbitrary, but some limit is required. Change when needed.
         ui.set_max_width(650.0);
         ui.set_max_height(550.0);
         StripBuilder::new(ui)
@@ -25,21 +26,12 @@ pub fn ui_ok_cancel_modal(
                     ui.separator();
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         if ui
-                            .add_sized(
-                                [ok_cancel_width, ui.available_height()],
-                                egui::Button::new("Cancel"),
-                            )
+                            .add_sized(BUTTON_SIZE, egui::Button::new("Cancel"))
                             .clicked()
                         {
                             cancel = true;
                         }
-                        if ui
-                            .add_sized(
-                                [ok_cancel_width, ui.available_height()],
-                                egui::Button::new("OK"),
-                            )
-                            .clicked()
-                        {
+                        if ui.add_sized(BUTTON_SIZE, egui::Button::new("OK")).clicked() {
                             ok = true;
                         }
                     });

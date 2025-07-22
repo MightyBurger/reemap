@@ -14,9 +14,11 @@ pub fn ui_layer(
     new_remap_modal: &mut NewRemapModalOpts,
     edit_layer_modal: &mut EditLayerModalOpts,
 ) {
+    use super::BUTTON_SIZE;
+
     ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
         ui.label(layer.condition_helper_text());
-        let edit_response = ui.button("Edit");
+        let edit_response = ui.add_sized(BUTTON_SIZE, egui::Button::new("Edit"));
         if edit_response.clicked() {
             *edit_layer_modal = EditLayerModalOpts {
                 modal_open: true,

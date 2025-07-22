@@ -3,6 +3,8 @@ use tracing::error;
 use crate::config;
 
 pub fn ui_status_bar(_ctx: &egui::Context, ui: &mut egui::Ui, app: &mut super::ReemApp) {
+    use super::BUTTON_SIZE;
+
     let left_to_right = egui::Layout {
         main_dir: egui::Direction::LeftToRight,
         main_wrap: false,
@@ -62,7 +64,10 @@ pub fn ui_status_bar(_ctx: &egui::Context, ui: &mut egui::Ui, app: &mut super::R
         // ui.label(format!("{profile_str} | {active_layers_str}"));
     });
     ui.with_layout(right_to_left, |ui| {
-        if ui.button("Apply").clicked() {
+        if ui
+            .add_sized(BUTTON_SIZE, egui::Button::new("Apply"))
+            .clicked()
+        {
             // Two things happen on Apply.
             // 1. UI therad saves configuration to %APPDATA%
             // 2. UI thread sends config over to hookthread to update the remaps

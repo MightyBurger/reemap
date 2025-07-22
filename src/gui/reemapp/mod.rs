@@ -28,6 +28,9 @@ use crate::query_windows;
 const SPACING: f32 = 8.0;
 const HEADER_HEIGHT: f32 = 12.0;
 const ROW_HEIGHT: f32 = 20.0;
+const BUTTON_WIDTH: f32 = 80.0;
+const BUTTON_HEIGHT: f32 = 20.0;
+const BUTTON_SIZE: [f32; 2] = [BUTTON_WIDTH, BUTTON_HEIGHT];
 
 // Thought the name was clever. Don't get too mad, please.
 #[derive(Debug)]

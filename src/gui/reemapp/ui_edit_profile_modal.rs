@@ -7,7 +7,9 @@ pub fn ui_edit_profile_modal(
     modal_opts: &mut EditProfileModalOpts,
     heading: &str,
 ) -> Option<bool> {
+    use super::BUTTON_SIZE;
     use egui_extras::{Size, StripBuilder};
+
     ui_ok_cancel_modal(ui, |ui| {
         let enable_title = matches!(
             modal_opts.condition,
@@ -132,7 +134,10 @@ pub fn ui_edit_profile_modal(
                     strip.cell(|ui| {
                         ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                             ui.add_enabled_ui(enable_table, |ui| {
-                                if ui.button("Refresh").clicked() {
+                                if ui
+                                    .add_sized(BUTTON_SIZE, egui::Button::new("Refresh"))
+                                    .clicked()
+                                {
                                     modal_opts.open_windows =
                                         query_windows::enumerate_open_windows();
                                 }
