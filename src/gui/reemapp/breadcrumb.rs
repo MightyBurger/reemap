@@ -1,12 +1,65 @@
 use super::GuiMenu;
 use super::ReemApp;
+use crate::config;
+use tracing::error;
 
 pub fn breadcrumb(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp) {
-    ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-        if let Some(click) = breadcrumb_display(ctx, ui, args) {
-            args.gui_local.menu = click;
-        }
-    });
+    use super::BUTTON_HEIGHT;
+    use super::BUTTON_SIZE;
+    use super::BUTTON_WIDTH;
+    use egui_extras::{Size, StripBuilder};
+
+    ui.set_height(25.0);
+
+    StripBuilder::new(ui)
+        .size(Size::remainder())
+        .size(Size::initial(BUTTON_WIDTH))
+        .horizontal(|mut strip| {
+            strip.cell(|ui| {
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                    if let Some(click) = breadcrumb_display(ctx, ui, args) {
+                        args.gui_local.menu = click;
+                    }
+                });
+            });
+            strip.cell(|ui| {
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
+                    if ui
+                        .add_sized(BUTTON_SIZE, egui::Button::new("Apply"))
+                        .clicked()
+                    {
+                        // Two things happen on Apply.
+                        // 1. UI therad saves configuration to %APPDATA%
+                        // 2. UI thread sends config over to hookthread to update the remaps
+
+                        let config_str = ron::ser::to_string_pretty(
+                            &config::VersionedConfig::from(args.config.clone()),
+                            ron::ser::PrettyConfig::new(),
+                        )
+                        .unwrap();
+                        match std::fs::write(&args.config_path, config_str) {
+                            Ok(()) => (),
+                            Err(e) => {
+                                error!("could not write to config file: {e}");
+                                native_dialog::DialogBuilder::message()
+                                    .set_level(native_dialog::MessageLevel::Error)
+                                    .set_title("Error writing file")
+                                    .set_text(format!(
+                                        "Reemap could not write to the configuration file.\n\n\
+                            The applied remaps will take effect, but they will not be saved.\n\n\
+                            {e}"
+                                    ))
+                                    .alert()
+                                    .show()
+                                    .unwrap();
+                            }
+                        }
+
+                        args.hookthread_proxy.update(args.config.clone());
+                    }
+                });
+            });
+        });
 }
 
 fn breadcrumb_display(_ctx: &egui::Context, ui: &mut egui::Ui, args: &ReemApp) -> Option<GuiMenu> {

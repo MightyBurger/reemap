@@ -7,7 +7,6 @@ mod ui_layer;
 mod ui_main;
 mod ui_ok_cancel_modal;
 mod ui_profile;
-mod ui_status_bar;
 mod ui_tables;
 
 use breadcrumb::breadcrumb;
@@ -22,7 +21,6 @@ use ui_profile::ui_profile;
 use crate::buttons;
 use crate::config;
 use crate::config::Output;
-use crate::gui::reemapp::ui_status_bar::ui_status_bar;
 use crate::hooks;
 use crate::query_windows;
 
@@ -245,6 +243,8 @@ impl crate::gui::TrayApp for ReemApp {
         egui_extras::install_image_loaders(ctx);
         // catppuccin_egui::set_theme(ctx, catppuccin_egui::MACCHIATO);
 
+        use egui_extras::{Size, StripBuilder};
+
         egui::TopBottomPanel::top("menu bar panel")
             .resizable(false)
             .show(ctx, |ui| {
@@ -274,16 +274,6 @@ impl crate::gui::TrayApp for ReemApp {
                 });
             });
 
-        egui::TopBottomPanel::bottom("status bar panel")
-            .resizable(false)
-            .show(ctx, |ui| {
-                ui.horizontal(|ui| {
-                    egui::Frame::new().inner_margin(2.0).show(ui, |ui| {
-                        ui_status_bar(ctx, ui, self);
-                    });
-                });
-            });
-
         egui::CentralPanel::default()
             .frame(
                 egui::Frame::new()
@@ -298,38 +288,45 @@ impl crate::gui::TrayApp for ReemApp {
                     ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
                         style::set_reemap_style(ui);
 
-                        breadcrumb(ctx, ui, self);
-
-                        ui.separator();
-                        ui.add_space(SPACING);
-
-                        let menu = self.gui_local.menu.clone();
-                        match menu {
-                            GuiMenu::Main => ui_main(ui, self),
-                            GuiMenu::Profile { profile_idx } => ui_profile(
-                                ui,
-                                &mut self.config.profiles[profile_idx],
-                                &mut self.gui_local.rearrange_layers_modal,
-                                &mut self.gui_local.edit_profile_modal,
-                                &mut self.gui_local.edit_layer_modal,
-                                &mut self.gui_local.new_base_remap_modal,
-                                profile_idx,
-                                &mut self.gui_local.menu,
-                            ),
-                            GuiMenu::ProfileLayer {
-                                profile_idx,
-                                layer_idx,
-                            } => {
-                                let layer =
-                                    &mut self.config.profiles[profile_idx].layers[layer_idx];
-                                ui_layer(
-                                    ui,
-                                    layer,
-                                    &mut self.gui_local.new_remap_modal,
-                                    &mut self.gui_local.edit_layer_modal,
-                                );
-                            }
-                        }
+                        StripBuilder::new(ui)
+                            .size(Size::exact(25.0))
+                            .size(Size::remainder())
+                            .vertical(|mut strip| {
+                                strip.cell(|ui| {
+                                    breadcrumb(ctx, ui, self);
+                                    ui.separator();
+                                    ui.add_space(SPACING);
+                                });
+                                strip.cell(|ui| {
+                                    let menu = self.gui_local.menu.clone();
+                                    match menu {
+                                        GuiMenu::Main => ui_main(ui, self),
+                                        GuiMenu::Profile { profile_idx } => ui_profile(
+                                            ui,
+                                            &mut self.config.profiles[profile_idx],
+                                            &mut self.gui_local.rearrange_layers_modal,
+                                            &mut self.gui_local.edit_profile_modal,
+                                            &mut self.gui_local.edit_layer_modal,
+                                            &mut self.gui_local.new_base_remap_modal,
+                                            profile_idx,
+                                            &mut self.gui_local.menu,
+                                        ),
+                                        GuiMenu::ProfileLayer {
+                                            profile_idx,
+                                            layer_idx,
+                                        } => {
+                                            let layer = &mut self.config.profiles[profile_idx]
+                                                .layers[layer_idx];
+                                            ui_layer(
+                                                ui,
+                                                layer,
+                                                &mut self.gui_local.new_remap_modal,
+                                                &mut self.gui_local.edit_layer_modal,
+                                            );
+                                        }
+                                    }
+                                });
+                            });
                     });
                 });
             });
