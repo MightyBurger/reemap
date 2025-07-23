@@ -5,6 +5,7 @@ use crate::gui::reemapp::EditProfileModalOpts;
 use crate::gui::reemapp::NewBaseRemapModalOpts;
 use crate::gui::reemapp::ProfileConditionUI;
 use crate::gui::reemapp::RearrangeLayersModalOpts;
+use crate::gui::reemapp::RemapsSearchOpts;
 use crate::gui::reemapp::SPACING;
 use crate::gui::reemapp::ui_base_layer;
 use crate::gui::reemapp::ui_edit_layer_modal::ui_edit_layer_modal;
@@ -23,6 +24,7 @@ pub fn ui_profile(
     new_base_remap_modal: &mut NewBaseRemapModalOpts,
     profile_idx: usize,
     menu: &mut GuiMenu,
+    remaps_search: &mut RemapsSearchOpts,
 ) {
     use super::BUTTON_HEIGHT;
     use super::BUTTON_SIZE;
@@ -168,7 +170,7 @@ pub fn ui_profile(
                         });
                 });
                 strip.cell(|ui| {
-                    ui_base_layer(ui, &mut profile.base, new_base_remap_modal);
+                    ui_base_layer(ui, &mut profile.base, new_base_remap_modal, remaps_search);
                 });
             });
     });

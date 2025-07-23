@@ -122,6 +122,8 @@ impl std::fmt::Display for RemapPolicyUI {
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct GuiLocal {
     menu: GuiMenu,
+    remaps_search_base: RemapsSearchOpts,
+    remaps_search_layer: RemapsSearchOpts,
     new_profile_modal: EditProfileModalOpts,
     edit_profile_modal: EditProfileModalOpts,
     rearrange_profiles_modal: RearrangeProfilesModalOpts,
@@ -130,6 +132,13 @@ pub struct GuiLocal {
     rearrange_layers_modal: RearrangeLayersModalOpts,
     new_remap_modal: NewRemapModalOpts,
     new_base_remap_modal: NewBaseRemapModalOpts,
+    about_modal: bool,
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct RemapsSearchOpts {
+    search_string: String,
+    hide_unmapped: bool,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -266,7 +275,7 @@ impl crate::gui::TrayApp for ReemApp {
                     });
                     ui.menu_button("Help", |ui| {
                         if ui.button("About").clicked() {
-                            todo!();
+                            self.gui_local.about_modal = true;
                         }
                     });
                 });
@@ -301,6 +310,7 @@ impl crate::gui::TrayApp for ReemApp {
                             &mut self.gui_local.new_base_remap_modal,
                             profile_idx,
                             &mut self.gui_local.menu,
+                            &mut self.gui_local.remaps_search_base,
                         ),
                         GuiMenu::ProfileLayer {
                             profile_idx,
@@ -312,56 +322,42 @@ impl crate::gui::TrayApp for ReemApp {
                                 layer,
                                 &mut self.gui_local.new_remap_modal,
                                 &mut self.gui_local.edit_layer_modal,
+                                &mut self.gui_local.remaps_search_layer,
                             );
                         }
                     }
                 });
+
+                if self.gui_local.about_modal {
+                    about_modal(ui, &mut self.gui_local.about_modal);
+                }
             });
     }
 }
 
-// style::set_reemap_style(ui);
-
-// StripBuilder::new(ui)
-//     .size(Size::initial(40.0))
-//     .size(Size::remainder())
-//     .vertical(|mut strip| {
-//         strip.cell(|ui| {
-//             breadcrumb(ctx, ui, self);
-//             // ui.separator();
-//             // ui.add_space(SPACING);
-//         });
-//         strip.cell(|ui| {
-//             info!("available: {:?}", ui.available_size());
-//             let menu = self.gui_local.menu.clone();
-//             match menu {
-//                 GuiMenu::Main => ui_main(ui, self),
-//                 GuiMenu::Profile { profile_idx } => ui_profile(
-//                     ui,
-//                     &mut self.config.profiles[profile_idx],
-//                     &mut self.gui_local.rearrange_layers_modal,
-//                     &mut self.gui_local.edit_profile_modal,
-//                     &mut self.gui_local.edit_layer_modal,
-//                     &mut self.gui_local.new_base_remap_modal,
-//                     profile_idx,
-//                     &mut self.gui_local.menu,
-//                 ),
-//                 GuiMenu::ProfileLayer {
-//                     profile_idx,
-//                     layer_idx,
-//                 } => {
-//                     let layer = &mut self.config.profiles[profile_idx].layers
-//                         [layer_idx];
-//                     ui_layer(
-//                         ui,
-//                         layer,
-//                         &mut self.gui_local.new_remap_modal,
-//                         &mut self.gui_local.edit_layer_modal,
-//                     );
-//                 }
-//             }
-//         });
-//     });
+fn about_modal(ui: &mut egui::Ui, modal_opts: &mut bool) {
+    use egui::special_emojis::GITHUB;
+    let modal = egui::Modal::new(egui::Id::new("about modal"))
+        .backdrop_color(style::MODAL_BACKDROP_COLOR)
+        .frame(style::MODAL_FRAME)
+        .show(ui.ctx(), |ui| {
+            style::set_reemap_style(ui);
+            let version = env!("CARGO_PKG_VERSION");
+            ui.heading("Reemap");
+            ui.label(version);
+            ui.add_space(SPACING);
+            ui.label("Reemap is an input remapping tool.");
+            ui.add_space(SPACING);
+            ui.label("Reemap is free to use. The source code is available under a permissive license. See the repository for more information.");
+            ui.add_space(SPACING);
+            ui.hyperlink_to(format!("{GITHUB} Reemap on Github"), "https://github.com/MightyBurger/reemap");
+            ui.add_space(SPACING);
+            ui.label("Copyright © 2025 Jordan Johnson");
+        });
+    if modal.should_close() {
+        *modal_opts = false;
+    }
+}
 
 fn import_profile_dialog() -> Option<config::Profile> {
     fn display_warning(text: &str, ctx: impl std::fmt::Display) {

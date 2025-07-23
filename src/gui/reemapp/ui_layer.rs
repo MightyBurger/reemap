@@ -1,5 +1,6 @@
 use crate::buttons;
 use crate::config;
+use crate::gui::reemapp::RemapsSearchOpts;
 use crate::gui::reemapp::ui_edit_layer_modal::ui_edit_layer_modal;
 use crate::gui::reemapp::ui_ok_cancel_modal::ui_ok_cancel_modal;
 use crate::gui::reemapp::ui_tables::ui_available_remaps_table;
@@ -13,9 +14,12 @@ pub fn ui_layer(
     layer: &mut config::Layer,
     new_remap_modal: &mut NewRemapModalOpts,
     edit_layer_modal: &mut EditLayerModalOpts,
+    remaps_search: &mut RemapsSearchOpts,
 ) {
+    use super::BUTTON_HEIGHT;
     use super::BUTTON_SIZE;
     use crate::gui::reemapp::style::REEMAP_SHADOW;
+    use egui_extras::{Size, StripBuilder};
 
     egui::Frame::new().shadow(REEMAP_SHADOW).show(ui, |ui| {
         ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
@@ -30,19 +34,47 @@ pub fn ui_layer(
                 };
             }
             ui.add_space(super::SPACING);
-
-            egui::Frame::new()
-                .stroke(egui::Stroke {
-                    width: 1.0,
-                    color: egui::Color32::DARK_GRAY,
-                })
-                .inner_margin(4.0)
-                .corner_radius(4.0)
-                .show(ui, |ui| {
-                    ui_remaps_table(ui, layer, new_remap_modal);
+            StripBuilder::new(ui)
+                .size(Size::remainder())
+                .size(Size::initial(BUTTON_HEIGHT))
+                .vertical(|mut strip| {
+                    strip.cell(|ui| {
+                        egui::Frame::new()
+                            .stroke(egui::Stroke {
+                                width: 1.0,
+                                color: egui::Color32::DARK_GRAY,
+                            })
+                            .inner_margin(4.0)
+                            .corner_radius(4.0)
+                            .show(ui, |ui| {
+                                ui_remaps_table(ui, layer, new_remap_modal, remaps_search);
+                            });
+                    });
+                    strip.strip(|builder| {
+                        builder
+                            .size(Size::relative(0.35))
+                            .size(Size::remainder())
+                            .horizontal(|mut strip| {
+                                strip.cell(|ui| {
+                                    ui.add(
+                                        egui::TextEdit::singleline(
+                                            &mut remaps_search.search_string,
+                                        )
+                                        .hint_text("Search"),
+                                    );
+                                });
+                                strip.cell(|ui| {
+                                    ui.add(egui::Checkbox::new(
+                                        &mut remaps_search.hide_unmapped,
+                                        "Hide deferred",
+                                    ));
+                                });
+                            });
+                    });
                 });
         });
     });
+
     // ----- New remap modal -----
 
     if let Some(button) = new_remap_modal.modal_open {
@@ -77,6 +109,7 @@ fn ui_remaps_table(
     ui: &mut egui::Ui,
     layer: &mut config::Layer,
     new_remap_modal: &mut NewRemapModalOpts,
+    remaps_search: &RemapsSearchOpts,
 ) {
     use super::HEADER_HEIGHT;
     use super::ROW_HEIGHT;
@@ -105,7 +138,31 @@ fn ui_remaps_table(
             let mouse_iter = buttons::mouse::MouseButton::iter().map(buttons::Button::from);
             let wheel_iter = buttons::wheel::MouseWheelButton::iter().map(buttons::Button::from);
 
-            for button in key_iter.chain(mouse_iter).chain(wheel_iter) {
+            for button in key_iter
+                .chain(mouse_iter)
+                .chain(wheel_iter)
+                .filter(|button| {
+                    remaps_search.search_string.is_empty()
+                        || button
+                            .to_string()
+                            .contains(remaps_search.search_string.trim())
+                        || if let config::RemapPolicy::Remap(ref outputs) = layer.policy[*button]
+                            && outputs.iter().any(|output| {
+                                output
+                                    .to_string()
+                                    .contains(remaps_search.search_string.trim())
+                            })
+                        {
+                            true
+                        } else {
+                            false
+                        }
+                })
+                .filter(|button| {
+                    !remaps_search.hide_unmapped
+                        || !matches!(layer.policy[*button], config::RemapPolicy::Defer)
+                })
+            {
                 body.row(ROW_HEIGHT, |mut row| {
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;

@@ -20,17 +20,8 @@ pub fn ui_ok_cancel_modal(
     let mut cancel = false;
 
     let modal = egui::Modal::new(egui::Id::new("rearrange profiles modal"))
-        .backdrop_color(egui::Color32::from_black_alpha(200))
-        .frame(
-            egui::Frame::new()
-                .stroke(egui::Stroke {
-                    width: 1.0,
-                    color: egui::Color32::DARK_GRAY,
-                })
-                .inner_margin(4.0)
-                .corner_radius(4.0)
-                .fill(egui::Color32::from_black_alpha(128)),
-        )
+        .backdrop_color(style::MODAL_BACKDROP_COLOR)
+        .frame(style::MODAL_FRAME)
         .show(ui.ctx(), |ui| {
             style::set_reemap_style(ui);
             // Max width and height are arbitrary, but some limit is required. Change when needed.

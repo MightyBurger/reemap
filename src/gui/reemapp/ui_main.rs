@@ -52,7 +52,7 @@ pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
                                                 let profile_select = ui_enable_clickable_table(
                                                     ui,
                                                     &mut args.config.profiles,
-                                                    "Profiles",
+                                                    "Profile",
                                                 );
                                                 if let Some(profile_idx) = profile_select {
                                                     args.gui_local.menu =
