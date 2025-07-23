@@ -243,8 +243,6 @@ impl crate::gui::TrayApp for ReemApp {
         egui_extras::install_image_loaders(ctx);
         // catppuccin_egui::set_theme(ctx, catppuccin_egui::MACCHIATO);
 
-        use egui_extras::{Size, StripBuilder};
-
         egui::TopBottomPanel::top("menu bar panel")
             .resizable(false)
             .show(ctx, |ui| {
@@ -285,53 +283,85 @@ impl crate::gui::TrayApp for ReemApp {
                     .tint(egui::Color32::from_gray(64))
                     .paint_at(ui, [[0.0, 0.0].into(), [800.0, 600.0].into()].into());
                 egui::Frame::new().inner_margin(12.0).show(ui, |ui| {
-                    ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-                        style::set_reemap_style(ui);
+                    style::set_reemap_style(ui);
 
-                        StripBuilder::new(ui)
-                            .size(Size::exact(25.0))
-                            .size(Size::remainder())
-                            .vertical(|mut strip| {
-                                strip.cell(|ui| {
-                                    breadcrumb(ctx, ui, self);
-                                    ui.separator();
-                                    ui.add_space(SPACING);
-                                });
-                                strip.cell(|ui| {
-                                    let menu = self.gui_local.menu.clone();
-                                    match menu {
-                                        GuiMenu::Main => ui_main(ui, self),
-                                        GuiMenu::Profile { profile_idx } => ui_profile(
-                                            ui,
-                                            &mut self.config.profiles[profile_idx],
-                                            &mut self.gui_local.rearrange_layers_modal,
-                                            &mut self.gui_local.edit_profile_modal,
-                                            &mut self.gui_local.edit_layer_modal,
-                                            &mut self.gui_local.new_base_remap_modal,
-                                            profile_idx,
-                                            &mut self.gui_local.menu,
-                                        ),
-                                        GuiMenu::ProfileLayer {
-                                            profile_idx,
-                                            layer_idx,
-                                        } => {
-                                            let layer = &mut self.config.profiles[profile_idx]
-                                                .layers[layer_idx];
-                                            ui_layer(
-                                                ui,
-                                                layer,
-                                                &mut self.gui_local.new_remap_modal,
-                                                &mut self.gui_local.edit_layer_modal,
-                                            );
-                                        }
-                                    }
-                                });
-                            });
-                    });
+                    breadcrumb(ctx, ui, self);
+                    ui.separator();
+                    ui.add_space(SPACING);
+
+                    let menu = self.gui_local.menu.clone();
+                    match menu {
+                        GuiMenu::Main => ui_main(ui, self),
+                        GuiMenu::Profile { profile_idx } => ui_profile(
+                            ui,
+                            &mut self.config.profiles[profile_idx],
+                            &mut self.gui_local.rearrange_layers_modal,
+                            &mut self.gui_local.edit_profile_modal,
+                            &mut self.gui_local.edit_layer_modal,
+                            &mut self.gui_local.new_base_remap_modal,
+                            profile_idx,
+                            &mut self.gui_local.menu,
+                        ),
+                        GuiMenu::ProfileLayer {
+                            profile_idx,
+                            layer_idx,
+                        } => {
+                            let layer = &mut self.config.profiles[profile_idx].layers[layer_idx];
+                            ui_layer(
+                                ui,
+                                layer,
+                                &mut self.gui_local.new_remap_modal,
+                                &mut self.gui_local.edit_layer_modal,
+                            );
+                        }
+                    }
                 });
             });
     }
 }
+
+// style::set_reemap_style(ui);
+
+// StripBuilder::new(ui)
+//     .size(Size::initial(40.0))
+//     .size(Size::remainder())
+//     .vertical(|mut strip| {
+//         strip.cell(|ui| {
+//             breadcrumb(ctx, ui, self);
+//             // ui.separator();
+//             // ui.add_space(SPACING);
+//         });
+//         strip.cell(|ui| {
+//             info!("available: {:?}", ui.available_size());
+//             let menu = self.gui_local.menu.clone();
+//             match menu {
+//                 GuiMenu::Main => ui_main(ui, self),
+//                 GuiMenu::Profile { profile_idx } => ui_profile(
+//                     ui,
+//                     &mut self.config.profiles[profile_idx],
+//                     &mut self.gui_local.rearrange_layers_modal,
+//                     &mut self.gui_local.edit_profile_modal,
+//                     &mut self.gui_local.edit_layer_modal,
+//                     &mut self.gui_local.new_base_remap_modal,
+//                     profile_idx,
+//                     &mut self.gui_local.menu,
+//                 ),
+//                 GuiMenu::ProfileLayer {
+//                     profile_idx,
+//                     layer_idx,
+//                 } => {
+//                     let layer = &mut self.config.profiles[profile_idx].layers
+//                         [layer_idx];
+//                     ui_layer(
+//                         ui,
+//                         layer,
+//                         &mut self.gui_local.new_remap_modal,
+//                         &mut self.gui_local.edit_layer_modal,
+//                     );
+//                 }
+//             }
+//         });
+//     });
 
 fn import_profile_dialog() -> Option<config::Profile> {
     fn display_warning(text: &str, ctx: impl std::fmt::Display) {
