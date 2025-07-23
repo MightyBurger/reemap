@@ -15,6 +15,7 @@ use crate::gui::reemapp::ui_tables::ui_enable_clickable_table;
 use crate::gui::reemapp::ui_tables::ui_rearrange_table;
 use crate::query_windows;
 
+// someone tame this function :(
 pub fn ui_profile(
     ui: &mut egui::Ui,
     profile: &mut config::Profile,
@@ -25,6 +26,7 @@ pub fn ui_profile(
     profile_idx: usize,
     menu: &mut GuiMenu,
     remaps_search: &mut RemapsSearchOpts,
+    show_rare_keys: bool,
 ) {
     use super::BUTTON_HEIGHT;
     use super::BUTTON_SIZE;
@@ -170,7 +172,13 @@ pub fn ui_profile(
                         });
                 });
                 strip.cell(|ui| {
-                    ui_base_layer(ui, &mut profile.base, new_base_remap_modal, remaps_search);
+                    ui_base_layer(
+                        ui,
+                        &mut profile.base,
+                        new_base_remap_modal,
+                        remaps_search,
+                        show_rare_keys,
+                    );
                 });
             });
     });

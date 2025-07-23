@@ -41,6 +41,7 @@ impl From<VersionedConfig> for Config {
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct Config {
     pub profiles: Vec<Profile>,
+    pub show_rare_keys: bool,
 }
 
 // -------------------- VersionedProfile --------------------

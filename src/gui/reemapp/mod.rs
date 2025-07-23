@@ -133,6 +133,7 @@ pub struct GuiLocal {
     new_remap_modal: NewRemapModalOpts,
     new_base_remap_modal: NewBaseRemapModalOpts,
     about_modal: bool,
+    settings_modal: SettingsModalOpts,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -225,6 +226,12 @@ pub struct NewBaseRemapModalOpts {
     outputs: Output,
 }
 
+#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct SettingsModalOpts {
+    modal_open: bool,
+    show_rare_keys: bool,
+}
+
 // All the possible menus the GUI can be in at any point in time.
 // Sure, you could break this into some sort of tree of nested enums.
 // But this app has limited scope, and sometimes just solving the problem directly is easier.
@@ -276,6 +283,10 @@ impl crate::gui::TrayApp for ReemApp {
                                 }
                             });
                         });
+                        ui.separator();
+                        if ui.button("Settings").clicked() {
+                            self.gui_local.settings_modal.modal_open = true;
+                        }
                     });
                     ui.menu_button("Help", |ui| {
                         if ui.button("About").clicked() {
@@ -315,6 +326,7 @@ impl crate::gui::TrayApp for ReemApp {
                             profile_idx,
                             &mut self.gui_local.menu,
                             &mut self.gui_local.remaps_search_base,
+                            self.config.show_rare_keys,
                         ),
                         GuiMenu::ProfileLayer {
                             profile_idx,
@@ -327,15 +339,54 @@ impl crate::gui::TrayApp for ReemApp {
                                 &mut self.gui_local.new_remap_modal,
                                 &mut self.gui_local.edit_layer_modal,
                                 &mut self.gui_local.remaps_search_layer,
+                                self.config.show_rare_keys,
                             );
                         }
                     }
                 });
 
+                if self.gui_local.settings_modal.modal_open {
+                    settings_modal(ui, &mut self.gui_local.settings_modal, &mut self.config);
+                }
                 if self.gui_local.about_modal {
                     about_modal(ui, &mut self.gui_local.about_modal);
                 }
             });
+    }
+}
+
+fn settings_modal(
+    ui: &mut egui::Ui,
+    modal_opts: &mut SettingsModalOpts,
+    config: &mut config::Config,
+) {
+    use ui_ok_cancel_modal::ui_ok_cancel_modal;
+    let ok_cancel = ui_ok_cancel_modal(ui, "", true, |ui| {
+        ui.heading("Reemap Settings");
+        ui.separator();
+        ui.add_space(SPACING);
+        ui.checkbox(&mut modal_opts.show_rare_keys, "Show unusual keys");
+        ui.add_space(SPACING);
+        ui.label(
+            "Unusual keyboard keys include keys that are uncommon in modern hardware and keys you \
+probably do not want to remap. Examples include \"mouse-button-as-key\" keys and \
+Input Method Editor (IME) keys. Remaps may behave strangely depending on the key. Check this box \
+if you need to remap these keys.
+
+Note: even with this setting enabled, some keys are unavailable. This includes every key \
+Windows defines as reserved, undefined, or unassigned. This also includes the Scroll \
+Lock key, which Reemap uses as an escape-hatch to disable all remaps.",
+        );
+    });
+    match ok_cancel {
+        Some(true) => {
+            config.show_rare_keys = modal_opts.show_rare_keys;
+            modal_opts.modal_open = false;
+        }
+        Some(false) => {
+            modal_opts.modal_open = false;
+        }
+        None => (),
     }
 }
 

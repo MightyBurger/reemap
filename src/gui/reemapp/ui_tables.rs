@@ -188,9 +188,14 @@ where
     }
 }
 
-pub fn ui_available_remaps_table(ui: &mut egui::Ui, remaps: &mut config::Output) {
+pub fn ui_available_remaps_table(
+    ui: &mut egui::Ui,
+    remaps: &mut config::Output,
+    show_rare_keys: bool,
+) {
     use super::HEADER_HEIGHT;
     use super::ROW_HEIGHT;
+    use buttons::key::KeyType;
     use egui_extras::{Column, TableBuilder};
 
     let mut button_select = None;
@@ -208,7 +213,13 @@ pub fn ui_available_remaps_table(ui: &mut egui::Ui, remaps: &mut config::Output)
             });
         })
         .body(|mut body| {
-            let key_iter = buttons::key::KeyButton::iter().map(buttons::Button::from);
+            let key_iter = buttons::key::KeyButton::iter()
+                .filter(|key| match (show_rare_keys, key.key_type()) {
+                    (true, KeyType::Common | KeyType::Rare) => true,
+                    (false, KeyType::Common) => true,
+                    _ => false,
+                })
+                .map(buttons::Button::from);
             let mouse_iter = buttons::mouse::MouseButton::iter().map(buttons::Button::from);
             let wheel_iter = buttons::wheel::MouseWheelButton::iter().map(buttons::Button::from);
 

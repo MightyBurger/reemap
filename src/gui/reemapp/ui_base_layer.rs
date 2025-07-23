@@ -13,6 +13,7 @@ pub fn ui_base_layer(
     layer: &mut config::BaseLayer,
     new_base_remap_modal: &mut NewBaseRemapModalOpts,
     remaps_search: &mut RemapsSearchOpts,
+    show_rare_keys: bool,
 ) {
     use super::BUTTON_HEIGHT;
     use egui_extras::{Size, StripBuilder};
@@ -30,7 +31,13 @@ pub fn ui_base_layer(
                     .inner_margin(4.0)
                     .corner_radius(4.0)
                     .show(ui, |ui| {
-                        ui_base_remaps_table(ui, layer, new_base_remap_modal, remaps_search);
+                        ui_base_remaps_table(
+                            ui,
+                            layer,
+                            new_base_remap_modal,
+                            remaps_search,
+                            show_rare_keys,
+                        );
                     });
             });
             strip.strip(|builder| {
@@ -58,7 +65,7 @@ pub fn ui_base_layer(
 
     if let Some(button) = new_base_remap_modal.modal_open {
         let policy = &mut layer.policy[button];
-        ui_new_base_remap_modal(ui, new_base_remap_modal, button, policy);
+        ui_new_base_remap_modal(ui, new_base_remap_modal, button, policy, show_rare_keys);
     }
 }
 
@@ -67,9 +74,11 @@ pub fn ui_base_remaps_table(
     layer: &mut config::BaseLayer,
     new_base_remap_modal: &mut NewBaseRemapModalOpts,
     remaps_search: &RemapsSearchOpts,
+    show_rare_keys: bool,
 ) {
     use super::HEADER_HEIGHT;
     use super::ROW_HEIGHT;
+    use buttons::key::KeyType;
     use egui_extras::{Column, TableBuilder};
 
     let mut pointing_hand = false;
@@ -91,7 +100,23 @@ pub fn ui_base_remaps_table(
             });
         })
         .body(|mut body| {
-            let key_iter = buttons::key::KeyButton::iter().map(buttons::Button::from);
+            let key_iter = buttons::key::KeyButton::iter()
+                .filter(|key| {
+                    match (
+                        &layer.policy[buttons::Button::from(*key)],
+                        show_rare_keys,
+                        key.key_type(),
+                    ) {
+                        // If a remap exists for a key, show it no matter what.
+                        (config::BaseRemapPolicy::Remap(_), _, _) => true,
+                        // Otherwise, if show_rare_keys is true, show if it's a common or rare key.
+                        (_, true, KeyType::Common | KeyType::Rare) => true,
+                        // Otherwise, only show if it's a common key.
+                        (_, false, KeyType::Common) => true,
+                        _ => false,
+                    }
+                })
+                .map(buttons::Button::from);
             let mouse_iter = buttons::mouse::MouseButton::iter().map(buttons::Button::from);
             let wheel_iter = buttons::wheel::MouseWheelButton::iter().map(buttons::Button::from);
 
@@ -162,6 +187,7 @@ fn ui_new_base_remap_modal(
     modal_opts: &mut NewBaseRemapModalOpts,
     button: buttons::Button,
     policy: &mut config::BaseRemapPolicy,
+    show_rare_keys: bool,
 ) {
     let helper_text =
         get_new_remap_helper_text_base(&button, &modal_opts.outputs, &modal_opts.policy);
@@ -209,7 +235,11 @@ fn ui_new_base_remap_modal(
                                 .inner_margin(4.0)
                                 .corner_radius(4.0)
                                 .show(col_2, |ui| {
-                                    ui_available_remaps_table(ui, &mut modal_opts.outputs);
+                                    ui_available_remaps_table(
+                                        ui,
+                                        &mut modal_opts.outputs,
+                                        show_rare_keys,
+                                    );
                                 });
                         });
                     });
