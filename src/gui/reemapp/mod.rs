@@ -265,9 +265,13 @@ impl crate::gui::TrayApp for ReemApp {
                         ui.menu_button("Export Profile", |ui| {
                             egui::ScrollArea::vertical().show(ui, |ui| {
                                 ui.set_min_width(200.0);
-                                for profile in self.config.profiles.iter() {
-                                    if ui.button(profile.name.clone()).clicked() {
-                                        export_profile_dialog(profile.clone());
+                                if self.config.profiles.is_empty() {
+                                    ui.label("(no profiles)");
+                                } else {
+                                    for profile in self.config.profiles.iter() {
+                                        if ui.button(profile.name.clone()).clicked() {
+                                            export_profile_dialog(profile.clone());
+                                        }
                                     }
                                 }
                             });
