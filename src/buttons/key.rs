@@ -18,12 +18,37 @@ use windows::Win32::UI::Input::KeyboardAndMouse;
     Deserialize,
 )]
 #[repr(u8)]
+#[allow(non_camel_case_types)] // Just for here, to be consistent with VK codes...
 pub enum KeyButton {
-    LeftShift = 0xA0,
-    RightShift = 0xA1,
-    Space = 0x20,
-    LeftCtrl = 0xA2,
-    RightCtrl = 0xA3,
+    LBUTTON = 0x01, // TODO check
+    RBUTTON = 0x02, // TODO check
+    // CANCEL = 0x03,   // Control-break processing... ?????
+    MBUTTON = 0x04,  // TODO check
+    XBUTTON1 = 0x05, // TODO check
+    XBUTTON2 = 0x06, // TODO check
+    // Reserved = 0x07,
+    BACK = 0x08,
+    TAB = 0x09,
+    // Reserved = 0x0A,
+    // Reserved = 0x0B,
+    CLEAR = 0x0C, // What is this??
+    RETURN = 0x0D,
+    // Reserved = 0x0E,
+    // Reserved = 0x0F,
+    SHIFT = 0x10,   // TODO check - not left or right?
+    CONTROL = 0x11, // TODO check
+    MENU = 0x12,    // TODO check (just one alt)
+    PAUSE = 0x13,   // TODO check
+    CAPITAL = 0x14,
+    KANA_HANGUL = 0x15, // TODO unusual
+    IME_ON = 0x16,      // TODO unusual
+    JUNJA = 0x17,       // TODO unusual
+    FINAL = 0x18,       // TODO unusual
+    HANJA_KANJI = 0x19, // TODO unusual
+    IME_OFF = 0x1A,     // TODO unusual
+    ESCAPE = 0x1B,
+
+    SPACE = 0x20,
     A = 0x41,
     B = 0x42,
     C = 0x43,
@@ -50,6 +75,10 @@ pub enum KeyButton {
     X = 0x58,
     Y = 0x59,
     Z = 0x5A,
+    LSHIFT = 0xA0,
+    RSHIFT = 0xA1,
+    LCONTROL = 0xA2,
+    RCONTROL = 0xA3,
 }
 
 impl KeyButton {
@@ -99,11 +128,30 @@ impl KeyButton {
 impl std::fmt::Display for KeyButton {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::LeftShift => write!(f, "Left Shift"),
-            Self::RightShift => write!(f, "Right Shift"),
-            Self::Space => write!(f, "Space"),
-            Self::LeftCtrl => write!(f, "Left Ctrl"),
-            Self::RightCtrl => write!(f, "Right Ctrl"),
+            Self::LBUTTON => write!(f, "Left Click as key"),
+            Self::RBUTTON => write!(f, "Right Click as key"),
+            // Self::CANCEL => write!(f, "Cancel"),
+            Self::MBUTTON => write!(f, "Middle Click as key"),
+            Self::XBUTTON1 => write!(f, "Mouse X1 as key"),
+            Self::XBUTTON2 => write!(f, "Mouse X2 as key"),
+            Self::BACK => write!(f, "Backspace"),
+            Self::TAB => write!(f, "Tab"),
+            Self::CLEAR => write!(f, "Clear"),
+            Self::RETURN => write!(f, "Enter"),
+            Self::SHIFT => write!(f, "Shift (ambidextrous)"),
+            Self::CONTROL => write!(f, "Ctrl (ambidextrous)"),
+            Self::MENU => write!(f, "Alt (ambidextrous)"),
+            Self::PAUSE => write!(f, "Pause"),
+            Self::CAPITAL => write!(f, "Caps Lock"),
+            Self::KANA_HANGUL => write!(f, "IME Kana/Hangul"),
+            Self::IME_ON => write!(f, "IME On"),
+            Self::JUNJA => write!(f, "IME Junja"),
+            Self::FINAL => write!(f, "IME Final"),
+            Self::HANJA_KANJI => write!(f, "IME Hanja/Kanji"),
+            Self::IME_OFF => write!(f, "IME Off"),
+            Self::ESCAPE => write!(f, "Escape"),
+
+            Self::SPACE => write!(f, "Space"),
             Self::A => write!(f, "A"),
             Self::B => write!(f, "B"),
             Self::C => write!(f, "C"),
@@ -130,6 +178,10 @@ impl std::fmt::Display for KeyButton {
             Self::X => write!(f, "X"),
             Self::Y => write!(f, "Y"),
             Self::Z => write!(f, "Z"),
+            Self::LSHIFT => write!(f, "Left Shift"),
+            Self::RSHIFT => write!(f, "Right Shift"),
+            Self::LCONTROL => write!(f, "Left Ctrl"),
+            Self::RCONTROL => write!(f, "Right Ctrl"),
         }
     }
 }
