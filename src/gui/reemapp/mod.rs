@@ -285,6 +285,8 @@ impl crate::gui::TrayApp for ReemApp {
                         });
                         ui.separator();
                         if ui.button("Settings").clicked() {
+                            self.gui_local.settings_modal.show_rare_keys =
+                                self.config.show_rare_keys;
                             self.gui_local.settings_modal.modal_open = true;
                         }
                     });
@@ -361,13 +363,17 @@ fn settings_modal(
     config: &mut config::Config,
 ) {
     use ui_ok_cancel_modal::ui_ok_cancel_modal;
-    let ok_cancel = ui_ok_cancel_modal(ui, "", true, |ui| {
-        ui.heading("Reemap Settings");
-        ui.separator();
-        ui.add_space(SPACING);
-        ui.checkbox(&mut modal_opts.show_rare_keys, "Show unusual keys");
-        ui.add_space(SPACING);
-        ui.label(
+    let ok_cancel = ui_ok_cancel_modal(
+        ui,
+        "Settings will apply immediately but will only be saved once you click \"Apply\".",
+        true,
+        |ui| {
+            ui.heading("Reemap Settings");
+            ui.separator();
+            ui.add_space(SPACING);
+            ui.checkbox(&mut modal_opts.show_rare_keys, "Show unusual keys");
+            ui.add_space(SPACING);
+            ui.label(
             "Unusual keyboard keys include keys that are uncommon in modern hardware and keys you \
 probably do not want to remap. Examples include \"mouse-button-as-key\" keys and \
 Input Method Editor (IME) keys. Remaps may behave strangely depending on the key. Check this box \
@@ -377,7 +383,8 @@ Note: even with this setting enabled, some keys are unavailable. This includes e
 Windows defines as reserved, undefined, or unassigned. This also includes the Scroll \
 Lock key, which Reemap uses as an escape-hatch to disable all remaps.",
         );
-    });
+        },
+    );
     match ok_cancel {
         Some(true) => {
             config.show_rare_keys = modal_opts.show_rare_keys;
