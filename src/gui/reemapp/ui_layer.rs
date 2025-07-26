@@ -96,6 +96,7 @@ pub fn ui_layer(
             ui,
             edit_layer_modal,
             &format!("Editing layer {}", layer.name),
+            show_rare_keys,
         );
         match ok_cancel {
             Some(true) => {

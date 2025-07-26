@@ -9,6 +9,7 @@ pub fn ui_edit_layer_modal(
     ui: &mut egui::Ui,
     modal_opts: &mut EditLayerModalOpts,
     heading: &str,
+    show_rare_keys: bool,
 ) -> Option<bool> {
     let helper_text = config::Layer::from(modal_opts.clone()).condition_helper_text();
     ui_ok_cancel_modal(ui, &helper_text, true, |ui| {
@@ -63,7 +64,11 @@ pub fn ui_edit_layer_modal(
                             .inner_margin(4.0)
                             .corner_radius(4.0)
                             .show(col_2, |ui| {
-                                ui_available_layer_conditions_table(ui, &mut modal_opts.condition);
+                                ui_available_layer_conditions_table(
+                                    ui,
+                                    &mut modal_opts.condition,
+                                    show_rare_keys,
+                                );
                             });
                     });
                 });
@@ -72,9 +77,14 @@ pub fn ui_edit_layer_modal(
     })
 }
 
-fn ui_available_layer_conditions_table(ui: &mut egui::Ui, remaps: &mut Vec<buttons::HoldButton>) {
+fn ui_available_layer_conditions_table(
+    ui: &mut egui::Ui,
+    remaps: &mut Vec<buttons::HoldButton>,
+    show_rare_keys: bool,
+) {
     use super::HEADER_HEIGHT;
     use super::ROW_HEIGHT;
+    use buttons::key::KeyType;
     use egui_extras::{Column, TableBuilder};
 
     let mut button_select = None;
@@ -92,7 +102,13 @@ fn ui_available_layer_conditions_table(ui: &mut egui::Ui, remaps: &mut Vec<butto
             });
         })
         .body(|mut body| {
-            let key_iter = buttons::key::KeyButton::iter().map(buttons::HoldButton::from);
+            let key_iter = buttons::key::KeyButton::iter()
+                .filter(|key| match (show_rare_keys, key.key_type()) {
+                    (true, KeyType::Common | KeyType::Rare) => true,
+                    (false, KeyType::Common) => true,
+                    _ => false,
+                })
+                .map(buttons::HoldButton::from);
             let mouse_iter = buttons::mouse::MouseButton::iter().map(buttons::HoldButton::from);
 
             for button in key_iter.chain(mouse_iter) {

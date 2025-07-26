@@ -212,7 +212,7 @@ pub fn ui_profile(
     // ----- New layer modal -----
 
     if new_layer_modal.modal_open {
-        let ok_cancel = ui_edit_layer_modal(ui, new_layer_modal, "New layer");
+        let ok_cancel = ui_edit_layer_modal(ui, new_layer_modal, "New layer", show_rare_keys);
         match ok_cancel {
             Some(true) => {
                 profile.layers.push(new_layer_modal.clone().into());
