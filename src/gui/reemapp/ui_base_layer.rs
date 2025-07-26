@@ -78,6 +78,7 @@ pub fn ui_base_remaps_table(
 ) {
     use super::HEADER_HEIGHT;
     use super::ROW_HEIGHT;
+    use buttons::Button;
     use buttons::key::KeyType;
     use egui_extras::{Column, TableBuilder};
 
@@ -89,9 +90,13 @@ pub fn ui_base_remaps_table(
         .auto_shrink(false)
         .sense(egui::Sense::click_and_drag())
         .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
-        .column(Column::exact(120.0)) // Enabled
-        .column(Column::remainder()) // Profile Name
+        .column(Column::exact(60.0)) // Device
+        .column(Column::exact(120.0)) // Button
+        .column(Column::remainder()) // Policy
         .header(HEADER_HEIGHT, |mut header| {
+            header.col(|ui| {
+                ui.strong("Device");
+            });
             header.col(|ui| {
                 ui.strong("Input");
             });
@@ -147,6 +152,14 @@ pub fn ui_base_remaps_table(
                 })
             {
                 body.row(ROW_HEIGHT, |mut row| {
+                    row.col(|ui| {
+                        ui.style_mut().interaction.selectable_labels = false;
+                        let device = match button {
+                            Button::Key(_) => "Keyboard",
+                            Button::Mouse(_) | Button::Wheel(_) => "Mouse",
+                        };
+                        ui.label(format!("{device}"));
+                    });
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
                         ui.label(format!("{button}"));

@@ -84,6 +84,7 @@ fn ui_available_layer_conditions_table(
 ) {
     use super::HEADER_HEIGHT;
     use super::ROW_HEIGHT;
+    use buttons::HoldButton;
     use buttons::key::KeyType;
     use egui_extras::{Column, TableBuilder};
 
@@ -95,8 +96,12 @@ fn ui_available_layer_conditions_table(
         .auto_shrink(false)
         .sense(egui::Sense::click_and_drag())
         .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
+        .column(Column::exact(60.0)) // Device
         .column(Column::remainder()) // Button Name
         .header(HEADER_HEIGHT, |mut header| {
+            header.col(|ui| {
+                ui.strong("Device");
+            });
             header.col(|ui| {
                 ui.strong("Button");
             });
@@ -114,6 +119,14 @@ fn ui_available_layer_conditions_table(
             for button in key_iter.chain(mouse_iter) {
                 let enabled = !remaps.contains(&button);
                 body.row(ROW_HEIGHT, |mut row| {
+                    row.col(|ui| {
+                        ui.style_mut().interaction.selectable_labels = false;
+                        let device = match button {
+                            HoldButton::Key(_) => "Keyboard",
+                            HoldButton::Mouse(_) => "Mouse",
+                        };
+                        ui.add_enabled(enabled, egui::Label::new(format!("{device}")));
+                    });
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
                         ui.add_enabled(enabled, egui::Label::new(format!("{button}")));

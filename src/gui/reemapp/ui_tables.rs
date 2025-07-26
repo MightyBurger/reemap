@@ -195,6 +195,7 @@ pub fn ui_available_remaps_table(
 ) {
     use super::HEADER_HEIGHT;
     use super::ROW_HEIGHT;
+    use buttons::Button;
     use buttons::key::KeyType;
     use egui_extras::{Column, TableBuilder};
 
@@ -206,8 +207,12 @@ pub fn ui_available_remaps_table(
         .auto_shrink(false)
         .sense(egui::Sense::click_and_drag())
         .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
+        .column(Column::exact(60.0)) // Device
         .column(Column::remainder()) // Button Name
         .header(HEADER_HEIGHT, |mut header| {
+            header.col(|ui| {
+                ui.strong("Device");
+            });
             header.col(|ui| {
                 ui.strong("Button");
             });
@@ -226,6 +231,14 @@ pub fn ui_available_remaps_table(
             for button in key_iter.chain(mouse_iter).chain(wheel_iter) {
                 let enabled = !remaps.contains(&button);
                 body.row(ROW_HEIGHT, |mut row| {
+                    row.col(|ui| {
+                        ui.style_mut().interaction.selectable_labels = false;
+                        let device = match button {
+                            Button::Key(_) => "Keyboard",
+                            Button::Mouse(_) | Button::Wheel(_) => "Mouse",
+                        };
+                        ui.add_enabled(enabled, egui::Label::new(format!("{device}")));
+                    });
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
                         ui.add_enabled(enabled, egui::Label::new(format!("{button}")));
