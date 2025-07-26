@@ -34,7 +34,7 @@ where
     let mut pointing_hand = false;
     let mut selected = None;
     TableBuilder::new(ui)
-        .id_salt(format!("layers table for {name}"))
+        .id_salt(format!("enable-clickable table for {name}"))
         .striped(true)
         .auto_shrink(false)
         .sense(egui::Sense::click_and_drag())
@@ -60,6 +60,59 @@ where
                             },
                         );
                     });
+                    row.col(|ui| {
+                        ui.style_mut().interaction.selectable_labels = false;
+                        ui.add(egui::Label::new(item.to_string()).truncate());
+                    });
+                    if row.response().hovered() {
+                        pointing_hand = true;
+                    }
+                    if row.response().clicked() {
+                        selected = Some(i);
+                    }
+                });
+            }
+        });
+    if pointing_hand {
+        ui.ctx()
+            .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+    }
+    selected
+}
+
+pub trait ClickListItem: std::fmt::Display {}
+impl ClickListItem for config::Profile {}
+impl ClickListItem for config::Layer {}
+
+/// Display a table that allows the user to click on an item in the list.
+/// Important: if called multiple times within the same `Ui`, each call must have a different
+/// `name`, or runtime errors will occur.
+/// Returns the index of the item the user clicked.
+pub fn ui_clickable_table<T>(ui: &mut egui::Ui, list: &[T], name: &str) -> Option<usize>
+where
+    T: ClickListItem,
+{
+    use super::HEADER_HEIGHT;
+    use super::ROW_HEIGHT;
+    use egui_extras::{Column, TableBuilder};
+
+    let mut pointing_hand = false;
+    let mut selected = None;
+    TableBuilder::new(ui)
+        .id_salt(format!("clickable table for {name}"))
+        .striped(true)
+        .auto_shrink(false)
+        .sense(egui::Sense::click_and_drag())
+        .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
+        .column(Column::remainder()) // Item Name
+        .header(HEADER_HEIGHT, |mut header| {
+            header.col(|ui| {
+                ui.strong(name);
+            });
+        })
+        .body(|mut body| {
+            for (i, item) in list.iter().enumerate() {
+                body.row(ROW_HEIGHT, |mut row| {
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
                         ui.add(egui::Label::new(item.to_string()).truncate());

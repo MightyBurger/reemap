@@ -1,5 +1,6 @@
 use crate::gui::reemapp::EditProfileModalOpts;
 use crate::gui::reemapp::SPACING;
+use crate::gui::reemapp::ui_copy_modal::ui_copy_modal;
 use crate::gui::reemapp::ui_edit_profile_modal::ui_edit_profile_modal;
 use crate::gui::reemapp::ui_ok_cancel_modal::ui_ok_cancel_modal;
 use crate::gui::reemapp::ui_tables::ui_enable_clickable_table;
@@ -66,7 +67,7 @@ pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
                         strip.strip(|builder| {
                             builder
                                 .size(Size::remainder())
-                                .sizes(Size::initial(BUTTON_WIDTH), 2) // 2 buttons
+                                .sizes(Size::initial(BUTTON_WIDTH), 3) // 3 buttons
                                 .size(Size::remainder())
                                 .horizontal(|mut strip| {
                                     strip.empty();
@@ -86,6 +87,17 @@ pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
                                                         query_windows::enumerate_open_windows(),
                                                     ..Default::default()
                                                 };
+                                        }
+                                    });
+                                    strip.cell(|ui| {
+                                        if ui
+                                            .add_sized(
+                                                BUTTON_SIZE,
+                                                egui::Button::new("Copy Profile"),
+                                            )
+                                            .clicked()
+                                        {
+                                            args.gui_local.copy_profile_modal = true;
                                         }
                                     });
                                     strip.cell(|ui| {
@@ -128,6 +140,17 @@ pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
             }
             None => (),
         }
+    }
+
+    // ----- Copy profile modal -----
+
+    if args.gui_local.copy_profile_modal {
+        ui_copy_modal(
+            ui,
+            &mut args.gui_local.copy_profile_modal,
+            &mut args.config.profiles,
+            "Profile",
+        );
     }
 
     // ----- Rearrange profiles modal -----

@@ -8,6 +8,7 @@ use crate::gui::reemapp::RearrangeLayersModalOpts;
 use crate::gui::reemapp::RemapsSearchOpts;
 use crate::gui::reemapp::SPACING;
 use crate::gui::reemapp::ui_base_layer;
+use crate::gui::reemapp::ui_copy_modal::ui_copy_modal;
 use crate::gui::reemapp::ui_edit_layer_modal::ui_edit_layer_modal;
 use crate::gui::reemapp::ui_edit_profile_modal::ui_edit_profile_modal;
 use crate::gui::reemapp::ui_ok_cancel_modal::ui_ok_cancel_modal;
@@ -19,6 +20,7 @@ use crate::query_windows;
 pub fn ui_profile(
     ui: &mut egui::Ui,
     profile: &mut config::Profile,
+    copy_layers_modal: &mut bool,
     rearrange_layers_modal: &mut RearrangeLayersModalOpts,
     edit_profile_modal: &mut EditProfileModalOpts,
     new_layer_modal: &mut EditLayerModalOpts,
@@ -134,7 +136,7 @@ pub fn ui_profile(
                             strip.strip(|builder| {
                                 builder
                                     .size(Size::remainder())
-                                    .sizes(Size::initial(BUTTON_WIDTH), 2)
+                                    .sizes(Size::initial(BUTTON_WIDTH), 3) // 3 buttons
                                     .size(Size::remainder())
                                     .horizontal(|mut strip| {
                                         strip.empty();
@@ -151,6 +153,17 @@ pub fn ui_profile(
                                                     name: String::from("New layer"),
                                                     ..Default::default()
                                                 };
+                                            }
+                                        });
+                                        strip.cell(|ui| {
+                                            if ui
+                                                .add_sized(
+                                                    BUTTON_SIZE,
+                                                    egui::Button::new("Copy Layer"),
+                                                )
+                                                .clicked()
+                                            {
+                                                *copy_layers_modal = true;
                                             }
                                         });
                                         strip.cell(|ui| {
@@ -182,6 +195,13 @@ pub fn ui_profile(
                 });
             });
     });
+
+    // ----- Copy layer modal -----
+
+    if *copy_layers_modal {
+        ui_copy_modal(ui, copy_layers_modal, &mut profile.layers, "Layer");
+    }
+
     // ----- Rearrange layers modal -----
 
     if rearrange_layers_modal.modal_open {

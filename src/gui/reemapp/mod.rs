@@ -1,6 +1,7 @@
 mod breadcrumb;
 mod style;
 mod ui_base_layer;
+mod ui_copy_modal;
 mod ui_edit_layer_modal;
 mod ui_edit_profile_modal;
 mod ui_layer;
@@ -126,9 +127,11 @@ pub struct GuiLocal {
     remaps_search_layer: RemapsSearchOpts,
     new_profile_modal: EditProfileModalOpts,
     edit_profile_modal: EditProfileModalOpts,
+    copy_profile_modal: bool,
     rearrange_profiles_modal: RearrangeProfilesModalOpts,
     new_layer_modal: EditLayerModalOpts,
     edit_layer_modal: EditLayerModalOpts,
+    copy_layer_modal: bool,
     rearrange_layers_modal: RearrangeLayersModalOpts,
     new_remap_modal: NewRemapModalOpts,
     new_base_remap_modal: NewBaseRemapModalOpts,
@@ -321,6 +324,7 @@ impl crate::gui::TrayApp for ReemApp {
                         GuiMenu::Profile { profile_idx } => ui_profile(
                             ui,
                             &mut self.config.profiles[profile_idx],
+                            &mut self.gui_local.copy_layer_modal,
                             &mut self.gui_local.rearrange_layers_modal,
                             &mut self.gui_local.edit_profile_modal,
                             &mut self.gui_local.edit_layer_modal,

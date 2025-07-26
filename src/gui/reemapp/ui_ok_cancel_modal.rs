@@ -3,7 +3,6 @@
 //  Some(false) if cancelled
 //  Some(true) if accepted
 pub fn ui_ok_cancel_modal(
-    //
     ui: &mut egui::Ui,
     helper_text: &str,
     enable_ok: bool,
@@ -19,7 +18,7 @@ pub fn ui_ok_cancel_modal(
     let mut ok = false;
     let mut cancel = false;
 
-    let modal = egui::Modal::new(egui::Id::new("rearrange profiles modal"))
+    let modal = egui::Modal::new(egui::Id::new("ok-cancel modal"))
         .backdrop_color(style::MODAL_BACKDROP_COLOR)
         .frame(style::MODAL_FRAME)
         .show(ui.ctx(), |ui| {
