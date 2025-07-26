@@ -156,28 +156,32 @@ pub fn ui_profile(
                                             }
                                         });
                                         strip.cell(|ui| {
-                                            if ui
-                                                .add_sized(
-                                                    BUTTON_SIZE,
-                                                    egui::Button::new("Copy Layer"),
-                                                )
-                                                .clicked()
-                                            {
-                                                *copy_layers_modal = true;
-                                            }
+                                            ui.add_enabled_ui(!profile.layers.is_empty(), |ui| {
+                                                if ui
+                                                    .add_sized(
+                                                        BUTTON_SIZE,
+                                                        egui::Button::new("Copy Layer"),
+                                                    )
+                                                    .clicked()
+                                                {
+                                                    *copy_layers_modal = true;
+                                                }
+                                            });
                                         });
                                         strip.cell(|ui| {
-                                            if ui
-                                                .add_sized(
-                                                    BUTTON_SIZE,
-                                                    egui::Button::new("Rearrange"),
-                                                )
-                                                .clicked()
-                                            {
-                                                rearrange_layers_modal.new_order =
-                                                    profile.layers.clone();
-                                                rearrange_layers_modal.modal_open = true;
-                                            }
+                                            ui.add_enabled_ui(!profile.layers.is_empty(), |ui| {
+                                                if ui
+                                                    .add_sized(
+                                                        BUTTON_SIZE,
+                                                        egui::Button::new("Rearrange"),
+                                                    )
+                                                    .clicked()
+                                                {
+                                                    rearrange_layers_modal.new_order =
+                                                        profile.layers.clone();
+                                                    rearrange_layers_modal.modal_open = true;
+                                                }
+                                            });
                                         });
                                         strip.empty();
                                     });

@@ -90,26 +90,34 @@ pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
                                         }
                                     });
                                     strip.cell(|ui| {
-                                        if ui
-                                            .add_sized(
-                                                BUTTON_SIZE,
-                                                egui::Button::new("Copy Profile"),
-                                            )
-                                            .clicked()
-                                        {
-                                            args.gui_local.copy_profile_modal = true;
-                                        }
+                                        ui.add_enabled_ui(!args.config.profiles.is_empty(), |ui| {
+                                            if ui
+                                                .add_sized(
+                                                    BUTTON_SIZE,
+                                                    egui::Button::new("Copy Profile"),
+                                                )
+                                                .clicked()
+                                            {
+                                                args.gui_local.copy_profile_modal = true;
+                                            }
+                                        });
                                     });
                                     strip.cell(|ui| {
-                                        if ui
-                                            .add_sized(BUTTON_SIZE, egui::Button::new("Rearrange"))
-                                            .clicked()
-                                        {
-                                            args.gui_local.rearrange_profiles_modal.new_order =
-                                                args.config.profiles.clone();
-                                            args.gui_local.rearrange_profiles_modal.modal_open =
-                                                true;
-                                        }
+                                        ui.add_enabled_ui(!args.config.profiles.is_empty(), |ui| {
+                                            if ui
+                                                .add_sized(
+                                                    BUTTON_SIZE,
+                                                    egui::Button::new("Rearrange"),
+                                                )
+                                                .clicked()
+                                            {
+                                                args.gui_local.rearrange_profiles_modal.new_order =
+                                                    args.config.profiles.clone();
+                                                args.gui_local
+                                                    .rearrange_profiles_modal
+                                                    .modal_open = true;
+                                            }
+                                        });
                                     });
                                     strip.empty();
                                 });
