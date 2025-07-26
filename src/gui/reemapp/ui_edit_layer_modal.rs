@@ -116,7 +116,7 @@ fn ui_available_layer_conditions_table(
                 .map(buttons::HoldButton::from);
             let mouse_iter = buttons::mouse::MouseButton::iter().map(buttons::HoldButton::from);
 
-            for button in key_iter.chain(mouse_iter) {
+            for button in mouse_iter.chain(key_iter) {
                 let enabled = !remaps.contains(&button);
                 body.row(ROW_HEIGHT, |mut row| {
                     row.col(|ui| {

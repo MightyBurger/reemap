@@ -228,7 +228,7 @@ pub fn ui_available_remaps_table(
             let mouse_iter = buttons::mouse::MouseButton::iter().map(buttons::Button::from);
             let wheel_iter = buttons::wheel::MouseWheelButton::iter().map(buttons::Button::from);
 
-            for button in key_iter.chain(mouse_iter).chain(wheel_iter) {
+            for button in mouse_iter.chain(wheel_iter).chain(key_iter) {
                 let enabled = !remaps.contains(&button);
                 body.row(ROW_HEIGHT, |mut row| {
                     row.col(|ui| {

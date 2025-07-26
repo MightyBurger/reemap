@@ -125,9 +125,9 @@ pub fn ui_base_remaps_table(
             let mouse_iter = buttons::mouse::MouseButton::iter().map(buttons::Button::from);
             let wheel_iter = buttons::wheel::MouseWheelButton::iter().map(buttons::Button::from);
 
-            for button in key_iter
-                .chain(mouse_iter)
+            for button in mouse_iter
                 .chain(wheel_iter)
+                .chain(key_iter)
                 .filter(|button| {
                     remaps_search.search_string.is_empty()
                         || button
