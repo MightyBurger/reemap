@@ -24,7 +24,7 @@ pub fn ui_edit_profile_modal(
     let helper_text = if valid {
         modal_opts.clone().extract_condition().helper_text()
     } else {
-        String::from("Window title or process is empty")
+        String::from("Choose a window title or process")
     };
     ui_ok_cancel_modal(ui, &helper_text, valid, |ui| {
         let enable_title = matches!(
@@ -50,6 +50,12 @@ pub fn ui_edit_profile_modal(
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
             ui.label("Profile name");
             ui.text_edit_singleline(&mut modal_opts.name);
+            ui.add_space(super::SPACING);
+            ui.label(
+                "Reemap decides which profile to use based off what window is in focus. \
+                Only one profile is active at a time. \
+                Choose a window below.",
+            );
             ui.add_space(super::SPACING);
 
             ui.label("Condition");

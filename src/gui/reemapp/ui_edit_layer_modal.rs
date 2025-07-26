@@ -21,6 +21,12 @@ pub fn ui_edit_layer_modal(
             ui.label("Layer name");
             ui.text_edit_singleline(&mut modal_opts.name);
             ui.add_space(super::SPACING);
+            ui.label(
+                "Layers let you override a profile's remaps when you hold down or toggle a key. \
+                Multiple layers can be active at the same time. \
+                Choose when this layer should be active below.",
+            );
+            ui.add_space(super::SPACING);
 
             ui.label("Layer type");
             egui::ComboBox::from_id_salt("layer type")

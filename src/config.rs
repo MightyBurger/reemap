@@ -121,7 +121,7 @@ pub enum ProfileCondition {
 impl ProfileCondition {
     pub fn helper_text(&self) -> String {
         match self {
-            Self::Always => "Always active".to_string(),
+            Self::Always => "Always active, regardless of which window is in focus".to_string(),
             Self::TitleAndProcess { title, process } => {
                 format!("Active when {title} ({process}) is in focus")
             }
@@ -187,10 +187,10 @@ impl Layer {
         };
         match self.layer_type {
             LayerType::Modifier => {
-                format!("Active when these buttons are held: {condition_buttons_str}")
+                format!("Active when these buttons are all held: {condition_buttons_str}")
             }
             LayerType::Toggle => {
-                format!("Toggled when these buttons are pressed: {condition_buttons_str}")
+                format!("Toggled when these buttons are all pressed: {condition_buttons_str}")
             }
         }
     }
