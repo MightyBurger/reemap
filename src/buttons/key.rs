@@ -18,7 +18,7 @@ use windows::Win32::UI::Input::KeyboardAndMouse;
     Deserialize,
 )]
 #[repr(u8)]
-#[allow(non_camel_case_types)] // Just for here, to be consistent with VK codes...
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)] // Just for here, to be consistent with VK codes...
 pub enum KeyButton {
     LBUTTON = 0x01,
     RBUTTON = 0x02,
