@@ -222,40 +222,32 @@ fn ui_new_base_remap_modal(
                 });
             ui.add_space(super::SPACING);
 
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-                    let enable_tables = match modal_opts.policy {
-                        BaseRemapPolicyUI::NoRemap => false,
-                        BaseRemapPolicyUI::Remap => true,
-                    };
-                    ui.add_enabled_ui(enable_tables, |ui| {
-                        ui.columns_const(|[col_1, col_2]| {
-                            egui::Frame::new()
-                                .stroke(egui::Stroke {
-                                    width: 1.0,
-                                    color: egui::Color32::DARK_GRAY,
-                                })
-                                .inner_margin(4.0)
-                                .corner_radius(4.0)
-                                .show(col_1, |ui| {
-                                    ui_rearrange_table(ui, &mut modal_opts.outputs, "Output");
-                                });
-                            egui::Frame::new()
-                                .stroke(egui::Stroke {
-                                    width: 1.0,
-                                    color: egui::Color32::DARK_GRAY,
-                                })
-                                .inner_margin(4.0)
-                                .corner_radius(4.0)
-                                .show(col_2, |ui| {
-                                    ui_available_remaps_table(
-                                        ui,
-                                        &mut modal_opts.outputs,
-                                        show_rare_keys,
-                                    );
-                                });
+            let enable_tables = match modal_opts.policy {
+                BaseRemapPolicyUI::NoRemap => false,
+                BaseRemapPolicyUI::Remap => true,
+            };
+            ui.add_enabled_ui(enable_tables, |ui| {
+                ui.columns_const(|[col_1, col_2]| {
+                    egui::Frame::new()
+                        .stroke(egui::Stroke {
+                            width: 1.0,
+                            color: egui::Color32::DARK_GRAY,
+                        })
+                        .inner_margin(4.0)
+                        .corner_radius(4.0)
+                        .show(col_1, |ui| {
+                            ui_rearrange_table(ui, &mut modal_opts.outputs, "Output");
                         });
-                    });
+                    egui::Frame::new()
+                        .stroke(egui::Stroke {
+                            width: 1.0,
+                            color: egui::Color32::DARK_GRAY,
+                        })
+                        .inner_margin(4.0)
+                        .corner_radius(4.0)
+                        .show(col_2, |ui| {
+                            ui_available_remaps_table(ui, &mut modal_opts.outputs, show_rare_keys);
+                        });
                 });
             });
         });
