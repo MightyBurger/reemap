@@ -28,6 +28,7 @@ use std::sync::Arc;
 use tray_icon::TrayIcon;
 
 #[derive(Debug)]
+#[allow(dead_code)] // I'd like to keep SetWindowVisibility here in case the GUI ever needs it.
 pub enum ReemapGuiEvent {
     Redraw(std::time::Duration),
     SetWindowVisibility(bool),
@@ -228,7 +229,7 @@ impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for Glow
             ReemapGuiEvent::ChangedProfile(name) => {
                 let title = match name {
                     Some(name) => format!("{name} - Reemap"),
-                    None => format!("Reemap"),
+                    None => "Reemap".to_string(),
                 };
                 if let Some(ref gl_window) = self.gl_window {
                     gl_window.window().set_title(&title);

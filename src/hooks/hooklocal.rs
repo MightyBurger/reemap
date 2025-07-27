@@ -8,7 +8,7 @@ use crate::query_windows::get_foreground_window;
 use enum_map::EnumMap;
 use smallvec::SmallVec;
 use std::sync::Mutex;
-use tracing::{info, trace, warn};
+use tracing::{info, warn};
 use windows::Win32::Foundation;
 
 /*

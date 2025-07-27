@@ -131,11 +131,11 @@ fn ui_available_layer_conditions_table(
                             HoldButton::Key(_) => "Keyboard",
                             HoldButton::Mouse(_) => "Mouse",
                         };
-                        ui.add_enabled(enabled, egui::Label::new(format!("{device}")));
+                        ui.add_enabled(enabled, egui::Label::new(device));
                     });
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
-                        ui.add_enabled(enabled, egui::Label::new(format!("{button}")));
+                        ui.add_enabled(enabled, egui::Label::new(button.to_string()));
                     });
                     if enabled && row.response().hovered() {
                         pointing_hand = true;

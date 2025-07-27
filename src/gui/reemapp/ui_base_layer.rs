@@ -158,16 +158,16 @@ pub fn ui_base_remaps_table(
                             Button::Key(_) => "Keyboard",
                             Button::Mouse(_) | Button::Wheel(_) => "Mouse",
                         };
-                        ui.label(format!("{device}"));
+                        ui.label(device);
                     });
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
-                        ui.label(format!("{button}"));
+                        ui.label(button.to_string());
                     });
                     row.col(|ui| {
                         let policy = layer.policy[button].clone();
                         ui.style_mut().interaction.selectable_labels = false;
-                        ui.label(format!("{policy}"));
+                        ui.label(policy.to_string());
                     });
                     if row.response().hovered() {
                         pointing_hand = true;

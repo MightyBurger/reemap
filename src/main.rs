@@ -8,7 +8,6 @@ mod query_windows;
 
 use etcetera::BaseStrategy;
 use tracing::{error, info, instrument, warn};
-use windows::Win32::UI::WindowsAndMessaging as WM;
 
 use crate::gui::ReemapGuiEvent;
 

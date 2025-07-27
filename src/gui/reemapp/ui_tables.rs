@@ -290,11 +290,11 @@ pub fn ui_available_remaps_table(
                             Button::Key(_) => "Keyboard",
                             Button::Mouse(_) | Button::Wheel(_) => "Mouse",
                         };
-                        ui.add_enabled(enabled, egui::Label::new(format!("{device}")));
+                        ui.add_enabled(enabled, egui::Label::new(device));
                     });
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
-                        ui.add_enabled(enabled, egui::Label::new(format!("{button}")));
+                        ui.add_enabled(enabled, egui::Label::new(button.to_string()));
                     });
                     if enabled && row.response().hovered() {
                         pointing_hand = true;
