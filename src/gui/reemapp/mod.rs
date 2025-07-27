@@ -304,9 +304,17 @@ impl crate::gui::TrayApp for ReemApp {
 
         // Display a message to inform the user if remaps are disabled
         if unsafe { KeyboardAndMouse::GetKeyState(KeyboardAndMouse::VK_SCROLL.0.into()) & 1 > 0 } {
-            egui::TopBottomPanel::bottom("ui_warn_panel").show(ctx, |ui| {
-                ui.strong("Remaps are disabled! Scroll lock is on.");
-            });
+            let warning_frame = egui::Frame::new().fill(egui::Color32::DARK_RED);
+            egui::TopBottomPanel::bottom("ui_warn_panel")
+                .frame(warning_frame)
+                .show(ctx, |ui| {
+                    ui.with_layout(
+                        egui::Layout::centered_and_justified(egui::Direction::BottomUp),
+                        |ui| {
+                            ui.strong("Remaps are disabled because Scroll Lock is on!");
+                        },
+                    );
+                });
         }
 
         egui::CentralPanel::default()
