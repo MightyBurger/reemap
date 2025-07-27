@@ -157,7 +157,4 @@ fn main() {
         // We should close Reemap, so let's stop the hookthread.
         hookthread_proxy.quit();
     });
-
-    // Reemap can clip the cursor. Let's be sure to undo that whenever it closes.
-    let _ = unsafe { WM::ClipCursor(None) };
 }
