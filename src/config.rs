@@ -84,6 +84,7 @@ pub struct Profile {
     pub condition: ProfileCondition,
     pub base: BaseLayer,
     pub layers: Vec<Layer>,
+    pub clip_cursor: bool,
 }
 
 impl Default for Profile {
@@ -94,6 +95,7 @@ impl Default for Profile {
             condition: ProfileCondition::OriBFDE,
             base: BaseLayer::default(),
             layers: Vec::new(),
+            clip_cursor: false,
         }
     }
 }

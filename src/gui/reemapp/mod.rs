@@ -122,7 +122,7 @@ impl std::fmt::Display for RemapPolicyUI {
     }
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct GuiLocal {
     menu: GuiMenu,
     remaps_search_base: RemapsSearchOpts,
@@ -159,7 +159,7 @@ pub struct RearrangeLayersModalOpts {
     new_order: Vec<config::Layer>,
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct EditProfileModalOpts {
     modal_open: bool,
     name: String,

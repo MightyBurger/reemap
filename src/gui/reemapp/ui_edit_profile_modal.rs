@@ -130,8 +130,11 @@ pub fn ui_edit_profile_modal(
                                 .inner_margin(4.0)
                                 .corner_radius(4.0)
                                 .show(ui, |ui| {
-                                    if let Some(query_windows::WindowInfo { title, process }) =
-                                        ui_open_windows_table(ui, &modal_opts.open_windows)
+                                    if let Some(query_windows::WindowInfo {
+                                        title,
+                                        process,
+                                        rect: _,
+                                    }) = ui_open_windows_table(ui, &modal_opts.open_windows)
                                     {
                                         modal_opts.title = title;
                                         modal_opts.process = process;

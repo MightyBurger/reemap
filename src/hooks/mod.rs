@@ -161,6 +161,9 @@ pub fn run(
     if let Err(e) = unsafe { WM::KillTimer(None, timer_id) } {
         warn!(?e, "error killing timer");
     }
+    if let Err(e) = unsafe { WM::ClipCursor(None) } {
+        warn!(?e, "error removing the cursor clip");
+    };
     debug!("exiting hook thread");
 }
 

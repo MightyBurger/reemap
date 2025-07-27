@@ -2,6 +2,7 @@
 
 use std::path::PathBuf;
 use thiserror::Error;
+use tracing::warn;
 use windows::Win32::Foundation as FN;
 use windows::Win32::System::Threading as TH;
 use windows::Win32::UI::WindowsAndMessaging as WM;
@@ -9,10 +10,11 @@ use windows::core::PWSTR;
 
 const CAP: usize = 512;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct WindowInfo {
     pub title: String,
     pub process: String,
+    pub rect: Option<FN::RECT>,
 }
 
 #[derive(Debug, Error, Clone)]
@@ -84,6 +86,7 @@ pub unsafe fn get_window_info_unchecked(hwnd: FN::HWND) -> WindowResult<WindowIn
         return Ok(WindowInfo {
             title: String::from("Reemap"),
             process: String::from("reemap.exe"),
+            rect: None,
         });
     }
 
@@ -131,7 +134,24 @@ pub unsafe fn get_window_info_unchecked(hwnd: FN::HWND) -> WindowResult<WindowIn
         String::from(title.to_string_lossy())
     };
 
-    Ok(WindowInfo { title, process })
+    let rect = {
+        let mut rect = FN::RECT::default();
+        let rect_ptr = &mut rect as *mut FN::RECT;
+        let result = unsafe { WM::GetWindowRect(hwnd, rect_ptr) };
+        match result {
+            Ok(()) => Some(rect),
+            Err(e) => {
+                warn!(?e, "could not get window rect");
+                None
+            }
+        }
+    };
+
+    Ok(WindowInfo {
+        title,
+        process,
+        rect,
+    })
 }
 
 /// Get every visible window.

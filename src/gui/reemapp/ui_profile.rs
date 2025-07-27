@@ -103,6 +103,8 @@ pub fn ui_profile(
                                     };
                                 }
                                 ui.add_space(super::SPACING);
+                                ui.checkbox(&mut profile.clip_cursor, "Confine cursor to window");
+                                ui.add_space(super::SPACING);
 
                                 egui::Frame::new()
                                     .stroke(egui::Stroke {

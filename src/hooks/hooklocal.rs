@@ -8,7 +8,8 @@ use crate::query_windows::get_foreground_window;
 use enum_map::EnumMap;
 use smallvec::SmallVec;
 use std::sync::Mutex;
-use tracing::{info, warn};
+use tracing::{info, trace, warn};
+use windows::Win32::Foundation;
 
 /*
     This is the runtime storage for the Hook thread.
@@ -34,6 +35,7 @@ pub struct HookLocalData {
     pub button_state: EnumMap<buttons::HoldButton, HoldButtonState>,
     pub active_profile: Option<usize>,
     pub active_layers_profile: Vec<SmallVec<[bool; REMAP_SMALLVEC_LEN]>>, // Outer vec: over profiles. Inner vec: over layers.
+    pub last_clip: Option<Foundation::RECT>,
 }
 
 impl HookLocalData {
@@ -48,6 +50,7 @@ impl HookLocalData {
             button_state: Default::default(),
             active_profile: Default::default(),
             active_layers_profile: Default::default(),
+            last_clip: Default::default(),
         };
         result.update_config(config);
         result
@@ -84,7 +87,15 @@ impl HookLocalData {
 
     /// Update the active profile using information about the current foreground window.
     pub fn update_from_foreground(&mut self, info: WindowInfo) {
-        let WindowInfo { title, process } = info;
+        use windows::Win32::UI::Input::KeyboardAndMouse as KBM;
+        use windows::Win32::UI::WindowsAndMessaging as WM;
+
+        let WindowInfo {
+            title,
+            process,
+            rect,
+        } = info;
+
         let mut new_profile = None;
         for (i, profile_condition) in self
             .config
@@ -165,6 +176,52 @@ impl HookLocalData {
             }
         }
         self.active_profile = new_profile;
+
+        // Finally, update the cursor clip.
+        // We should clip only if:
+        //  -   scroll lock is not enabled, and
+        //  -   the profile wants it, and
+        //  -   we successfully got the window bounds
+        let profile_wants_to_clip_cursor = match self.active_profile {
+            None => false,
+            Some(idx) => self.config.profiles[idx].clip_cursor,
+        };
+
+        let scroll_lock = unsafe { KBM::GetKeyState(KBM::VK_SCROLL.0.into()) & 1 > 0 };
+
+        let will_clip_to = if !scroll_lock
+            && profile_wants_to_clip_cursor
+            && let Some(rect) = rect
+        {
+            Some(rect)
+        } else {
+            None
+        };
+
+        // Avoid calling ClipCursor excessively.
+        // This is more important for not calling ClipCursor(None) all the time. We don't want to
+        // stop other programs from clipping the cursor as they please. We just want to release
+        // our cursor clip when we're done.
+        if will_clip_to == self.last_clip {
+            return;
+        }
+        self.last_clip = will_clip_to;
+
+        info!(?will_clip_to, "clipping");
+
+        // Clip the cursor!
+        // as_ref() is preferable to this, except Option<&T> doesn't get coerced to Option<*const T>
+        let clip_result = unsafe {
+            match will_clip_to {
+                None => WM::ClipCursor(None),
+                Some(rect) => WM::ClipCursor(Some(&rect)),
+            }
+        };
+
+        match clip_result {
+            Ok(()) => (),
+            Err(e) => warn!(?e, "failed to clip cursor"),
+        }
     }
 }
 

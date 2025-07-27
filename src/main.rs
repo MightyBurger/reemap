@@ -8,7 +8,7 @@ mod query_windows;
 
 use etcetera::BaseStrategy;
 use tracing::{error, info, instrument, warn};
-use winit::event;
+use windows::Win32::UI::WindowsAndMessaging as WM;
 
 use crate::gui::ReemapGuiEvent;
 
@@ -157,4 +157,7 @@ fn main() {
         // We should close Reemap, so let's stop the hookthread.
         hookthread_proxy.quit();
     });
+
+    // Reemap can clip the cursor. Let's be sure to undo that whenever it closes.
+    let _ = unsafe { WM::ClipCursor(None) };
 }
