@@ -25,6 +25,8 @@ use crate::config::Output;
 use crate::hooks;
 use crate::query_windows;
 
+use windows::Win32::UI::Input::KeyboardAndMouse;
+
 const SPACING: f32 = 8.0;
 const HEADER_HEIGHT: f32 = 12.0;
 const ROW_HEIGHT: f32 = 20.0;
@@ -300,6 +302,13 @@ impl crate::gui::TrayApp for ReemApp {
                     });
                 });
             });
+
+        // Display a message to inform the user if remaps are disabled
+        if unsafe { KeyboardAndMouse::GetKeyState(KeyboardAndMouse::VK_SCROLL.0.into()) & 1 > 0 } {
+            egui::TopBottomPanel::bottom("ui_warn_panel").show(ctx, |ui| {
+                ui.strong("Remaps are disabled! Scroll lock is on.");
+            });
+        }
 
         egui::CentralPanel::default()
             .frame(
