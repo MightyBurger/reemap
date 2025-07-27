@@ -1,6 +1,8 @@
 use crate::buttons;
 use crate::config;
 use crate::config::REMAP_SMALLVEC_LEN;
+use crate::gui;
+use crate::gui::ReemapGuiEvent;
 use crate::query_windows::WindowInfo;
 use crate::query_windows::get_foreground_window;
 use enum_map::EnumMap;
@@ -25,8 +27,9 @@ use tracing::{info, warn};
 pub static HOOKLOCAL: Mutex<Option<HookLocalData>> = Mutex::new(None);
 
 // -------------------- HookLocalData --------------------
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct HookLocalData {
+    pub ui_proxy: winit::event_loop::EventLoopProxy<gui::ReemapGuiEvent>,
     pub config: config::Config,
     pub button_state: EnumMap<buttons::HoldButton, HoldButtonState>,
     pub active_profile: Option<usize>,
@@ -35,8 +38,17 @@ pub struct HookLocalData {
 
 impl HookLocalData {
     /// Create a new HookLocalData struct instance from an initial configuration.
-    pub fn init_settings(config: config::Config) -> Self {
-        let mut result = Self::default();
+    pub fn init_settings(
+        config: config::Config,
+        ui_proxy: winit::event_loop::EventLoopProxy<ReemapGuiEvent>,
+    ) -> Self {
+        let mut result = Self {
+            ui_proxy,
+            config: Default::default(),
+            button_state: Default::default(),
+            active_profile: Default::default(),
+            active_layers_profile: Default::default(),
+        };
         result.update_config(config);
         result
     }
@@ -133,6 +145,17 @@ impl HookLocalData {
             }
         }
         if self.active_profile != new_profile {
+            // Inform the UI thread the profile changed.
+            // There's a possibility the UI thread just barely stopped, so this may fail.
+            // That's OK, so we intentionally ignore any errors.
+            let ui_send_result = self
+                .ui_proxy
+                .send_event(gui::ReemapGuiEvent::ChangedProfile(
+                    new_profile.map(|profile_idx| self.config.profiles[profile_idx].name.clone()),
+                ));
+            if ui_send_result.is_err() {
+                warn!("failed to send message to UI thread");
+            }
             match new_profile {
                 None => info!(?new_profile, "no profile enabled"),
                 Some(profile_idx) => info!(

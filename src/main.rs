@@ -8,6 +8,9 @@ mod query_windows;
 
 use etcetera::BaseStrategy;
 use tracing::{error, info, instrument, warn};
+use winit::event;
+
+use crate::gui::ReemapGuiEvent;
 
 #[instrument]
 fn main() {
@@ -131,8 +134,15 @@ fn main() {
 
     // Reminder: all threads are joined at the end of a std::thread::scope
     std::thread::scope(|s| {
-        // Start the hook thread. It will be spawned as a separate thread.
-        let hookthread_proxy = hooks::spawn_scoped(s, config.clone());
+        // Build the event loop so we can grab a proxy to the UI thread.
+        let event_loop = winit::event_loop::EventLoop::<ReemapGuiEvent>::with_user_event()
+            .build()
+            .unwrap();
+        let ui_proxy = event_loop.create_proxy();
+
+        // Then run the hook thread, giving the UI thread proxy and also getting a proxy to the
+        // hookthread at the same time.
+        let hookthread_proxy = hooks::spawn_scoped(s, config.clone(), ui_proxy);
 
         // Run the GUI. It will be ran on this thread, the main thread.
         let app = gui::reemapp::ReemApp {
@@ -141,7 +151,7 @@ fn main() {
             gui_local: gui::reemapp::GuiLocal::default(),
             config_path,
         };
-        gui::run(app);
+        gui::run(app, event_loop);
 
         // At this point, the GUI closed and is done running.
         // We should close Reemap, so let's stop the hookthread.

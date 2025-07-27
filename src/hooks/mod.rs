@@ -4,6 +4,7 @@ mod input_hooks;
 mod minimize_end_hook;
 
 use crate::config;
+use crate::gui;
 use crate::query_windows::get_foreground_window;
 use hooklocal::HOOKLOCAL;
 use tracing::{debug, info, instrument, trace, warn};
@@ -22,10 +23,11 @@ const CHECK_FOREGROUND_INTERVAL_MS: u32 = 500;
 pub fn spawn_scoped<'scope, 'env>(
     s: &'scope std::thread::Scope<'scope, 'env>,
     config: config::Config,
+    ui_proxy: winit::event_loop::EventLoopProxy<gui::ReemapGuiEvent>,
 ) -> HookthreadProxy {
     let (oneshot_sender, oneshot_receiver) = oneshot::channel();
     s.spawn(|| {
-        run(oneshot_sender, config);
+        run(oneshot_sender, config, ui_proxy);
     });
     oneshot_receiver.recv().unwrap()
 }
@@ -33,7 +35,11 @@ pub fn spawn_scoped<'scope, 'env>(
 // Run the hook thread and return a proxy through the oneshot.
 // Panics if the hook thread is already running.
 #[instrument(skip_all, name = "hooks")]
-pub fn run(sender: oneshot::Sender<HookthreadProxy>, config: config::Config) {
+pub fn run(
+    sender: oneshot::Sender<HookthreadProxy>,
+    config: config::Config,
+    ui_proxy: winit::event_loop::EventLoopProxy<gui::ReemapGuiEvent>,
+) {
     debug!("entering hook thread");
     use WindowsAndMessaging as WM;
     use num_traits::FromPrimitive;
@@ -51,7 +57,7 @@ pub fn run(sender: oneshot::Sender<HookthreadProxy>, config: config::Config) {
     // Initialize the persistent thread data.
     trace!("locking HOOKLOCAL");
     let mut hooklocal = HOOKLOCAL.lock().unwrap();
-    *hooklocal = Some(hooklocal::HookLocalData::init_settings(config));
+    *hooklocal = Some(hooklocal::HookLocalData::init_settings(config, ui_proxy));
     trace!("unlocking HOOKLOCAL");
     std::mem::drop(hooklocal);
 

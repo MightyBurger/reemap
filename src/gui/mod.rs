@@ -28,11 +28,12 @@ use std::sync::Arc;
 use tray_icon::TrayIcon;
 
 #[derive(Debug)]
-enum ReemapGuiEvent {
+pub enum ReemapGuiEvent {
     Redraw(std::time::Duration),
     SetWindowVisibility(bool),
     TrayIconEvent(tray_icon::TrayIconEvent),
     TrayMenuEvent(tray_icon::menu::MenuEvent),
+    ChangedProfile(Option<String>),
 }
 
 pub trait TrayApp {
@@ -224,6 +225,15 @@ impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for Glow
                     panic!("unrecognized menu ID")
                 }
             },
+            ReemapGuiEvent::ChangedProfile(name) => {
+                let title = match name {
+                    Some(name) => format!("{name} - Reemap"),
+                    None => format!("Reemap"),
+                };
+                if let Some(ref gl_window) = self.gl_window {
+                    gl_window.window().set_title(&title);
+                }
+            }
             _ => (),
         }
     }
@@ -259,14 +269,11 @@ fn create_display(
     (glutin_window_context, gl)
 }
 
-pub fn run<T>(app: T)
+// Pass in the event_loop so the caller has the opportunity to create a proxy first.
+pub fn run<T>(app: T, event_loop: winit::event_loop::EventLoop<ReemapGuiEvent>)
 where
     T: TrayApp,
 {
-    let event_loop = winit::event_loop::EventLoop::<ReemapGuiEvent>::with_user_event()
-        .build()
-        .unwrap();
-
     let proxy = event_loop.create_proxy();
     tray_icon::TrayIconEvent::set_event_handler(Some(move |event| {
         proxy
