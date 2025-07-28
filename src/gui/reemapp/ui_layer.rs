@@ -176,15 +176,12 @@ fn ui_remaps_table(
                 .chain(wheel_iter)
                 .chain(key_iter)
                 .filter(|button| {
-                    remaps_search.search_string.is_empty()
-                        || button
-                            .to_string()
-                            .contains(remaps_search.search_string.trim())
+                    let mod_search = remaps_search.search_string.trim().to_lowercase();
+                    mod_search.is_empty()
+                        || button.to_string().to_lowercase().contains(&mod_search)
                         || if let config::RemapPolicy::Remap(ref outputs) = layer.policy[*button]
                             && outputs.iter().any(|output| {
-                                output
-                                    .to_string()
-                                    .contains(remaps_search.search_string.trim())
+                                output.to_string().to_lowercase().contains(&mod_search)
                             })
                         {
                             true

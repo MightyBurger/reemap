@@ -285,7 +285,10 @@ pub fn ui_available_remaps_table(
             for button in mouse_iter
                 .chain(wheel_iter)
                 .chain(key_iter)
-                .filter(|button| search.is_empty() || button.to_string().contains(search.trim()))
+                .filter(|button| {
+                    let mod_search = search.trim().to_lowercase();
+                    mod_search.is_empty() || button.to_string().to_lowercase().contains(&mod_search)
+                })
             {
                 let enabled = !remaps.contains(&button);
                 body.row(ROW_HEIGHT, |mut row| {

@@ -133,10 +133,10 @@ fn ui_available_layer_conditions_table(
                 .map(buttons::HoldButton::from);
             let mouse_iter = buttons::mouse::MouseButton::iter().map(buttons::HoldButton::from);
 
-            for button in mouse_iter
-                .chain(key_iter)
-                .filter(|button| search.is_empty() || button.to_string().contains(search.trim()))
-            {
+            for button in mouse_iter.chain(key_iter).filter(|button| {
+                let mod_search = search.trim().to_lowercase();
+                mod_search.is_empty() || button.to_string().to_lowercase().contains(&mod_search)
+            }) {
                 let enabled = !remaps.contains(&button);
                 body.row(ROW_HEIGHT, |mut row| {
                     row.col(|ui| {
