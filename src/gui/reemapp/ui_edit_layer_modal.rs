@@ -11,6 +11,9 @@ pub fn ui_edit_layer_modal(
     heading: &str,
     show_rare_keys: bool,
 ) -> Option<bool> {
+    use crate::gui::reemapp::BUTTON_HEIGHT;
+    use egui_extras::{Size, StripBuilder};
+
     let helper_text = config::Layer::from(modal_opts.clone()).condition_helper_text();
     ui_ok_cancel_modal(ui, &helper_text, true, |ui| {
         ui.heading(heading);
@@ -45,39 +48,46 @@ pub fn ui_edit_layer_modal(
                 });
             ui.add_space(super::SPACING);
 
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-                    ui.columns_const(|[col_1, col_2]| {
-                        egui::Frame::new()
-                            .stroke(egui::Stroke {
-                                width: 1.0,
-                                color: egui::Color32::DARK_GRAY,
-                            })
-                            .inner_margin(4.0)
-                            .corner_radius(4.0)
-                            .show(col_1, |ui| {
-                                ui_rearrange_table(
-                                    ui,
-                                    &mut modal_opts.condition,
-                                    "Layer conditions",
-                                );
-                            });
-                        egui::Frame::new()
-                            .stroke(egui::Stroke {
-                                width: 1.0,
-                                color: egui::Color32::DARK_GRAY,
-                            })
-                            .inner_margin(4.0)
-                            .corner_radius(4.0)
-                            .show(col_2, |ui| {
-                                ui_available_layer_conditions_table(
-                                    ui,
-                                    &mut modal_opts.condition,
-                                    show_rare_keys,
-                                );
-                            });
+            ui.columns_const(|[col_1, col_2]| {
+                egui::Frame::new()
+                    .stroke(egui::Stroke {
+                        width: 1.0,
+                        color: egui::Color32::DARK_GRAY,
+                    })
+                    .inner_margin(4.0)
+                    .corner_radius(4.0)
+                    .show(col_1, |ui| {
+                        ui_rearrange_table(ui, &mut modal_opts.condition, "Layer conditions");
                     });
-                });
+                StripBuilder::new(col_2)
+                    .size(Size::remainder())
+                    .size(Size::initial(BUTTON_HEIGHT))
+                    .vertical(|mut strip| {
+                        strip.cell(|ui| {
+                            egui::Frame::new()
+                                .stroke(egui::Stroke {
+                                    width: 1.0,
+                                    color: egui::Color32::DARK_GRAY,
+                                })
+                                .inner_margin(4.0)
+                                .corner_radius(4.0)
+                                .show(ui, |ui| {
+                                    ui_available_layer_conditions_table(
+                                        ui,
+                                        &mut modal_opts.condition,
+                                        &modal_opts.search,
+                                        show_rare_keys,
+                                    );
+                                });
+                        });
+                        strip.cell(|ui| {
+                            ui.add_sized(
+                                [ui.available_width(), BUTTON_HEIGHT],
+                                egui::TextEdit::singleline(&mut modal_opts.search)
+                                    .hint_text("Search"),
+                            );
+                        });
+                    });
             });
         });
     })
@@ -86,6 +96,7 @@ pub fn ui_edit_layer_modal(
 fn ui_available_layer_conditions_table(
     ui: &mut egui::Ui,
     remaps: &mut Vec<buttons::HoldButton>,
+    search: &str,
     show_rare_keys: bool,
 ) {
     use super::HEADER_HEIGHT;
@@ -122,7 +133,10 @@ fn ui_available_layer_conditions_table(
                 .map(buttons::HoldButton::from);
             let mouse_iter = buttons::mouse::MouseButton::iter().map(buttons::HoldButton::from);
 
-            for button in mouse_iter.chain(key_iter) {
+            for button in mouse_iter
+                .chain(key_iter)
+                .filter(|button| search.is_empty() || button.to_string().contains(search.trim()))
+            {
                 let enabled = !remaps.contains(&button);
                 body.row(ROW_HEIGHT, |mut row| {
                     row.col(|ui| {

@@ -32,6 +32,7 @@ pub fn ui_layer(
                     name: layer.name.clone(),
                     layer_type: layer.layer_type.clone(),
                     condition: layer.condition.clone(),
+                    search: String::new(),
                 };
             }
             ui.add_space(super::SPACING);
@@ -224,15 +225,18 @@ fn ui_remaps_table(
             }
         });
     if let Some(button) = button_select {
-        new_remap_modal.modal_open = Some(button);
-        new_remap_modal.policy = match layer.policy[button] {
-            config::RemapPolicy::Defer => RemapPolicyUI::Defer,
-            config::RemapPolicy::NoRemap => RemapPolicyUI::NoRemap,
-            config::RemapPolicy::Remap(_) => RemapPolicyUI::Remap,
-        };
-        new_remap_modal.outputs = match layer.policy[button] {
-            config::RemapPolicy::Defer | config::RemapPolicy::NoRemap => SmallVec::new(),
-            config::RemapPolicy::Remap(ref output) => output.clone(),
+        *new_remap_modal = NewRemapModalOpts {
+            modal_open: Some(button),
+            policy: match layer.policy[button] {
+                config::RemapPolicy::Defer => RemapPolicyUI::Defer,
+                config::RemapPolicy::NoRemap => RemapPolicyUI::NoRemap,
+                config::RemapPolicy::Remap(_) => RemapPolicyUI::Remap,
+            },
+            outputs: match layer.policy[button] {
+                config::RemapPolicy::Defer | config::RemapPolicy::NoRemap => SmallVec::new(),
+                config::RemapPolicy::Remap(ref output) => output.clone(),
+            },
+            search: String::new(),
         };
     }
     if pointing_hand {
@@ -248,6 +252,9 @@ fn ui_new_remap_modal(
     policy: &mut config::RemapPolicy,
     show_rare_keys: bool,
 ) {
+    use crate::gui::reemapp::BUTTON_HEIGHT;
+    use egui_extras::{Size, StripBuilder};
+
     let helper_text = get_new_remap_helper_text(&button, &modal_opts.outputs, &modal_opts.policy);
     let ok_cancel = ui_ok_cancel_modal(ui, &helper_text, true, |ui| {
         ui.heading(format!("Remaps for {button}"));
@@ -280,15 +287,34 @@ fn ui_new_remap_modal(
                         .show(col_1, |ui| {
                             ui_rearrange_table(ui, &mut modal_opts.outputs, "Output");
                         });
-                    egui::Frame::new()
-                        .stroke(egui::Stroke {
-                            width: 1.0,
-                            color: egui::Color32::DARK_GRAY,
-                        })
-                        .inner_margin(4.0)
-                        .corner_radius(4.0)
-                        .show(col_2, |ui| {
-                            ui_available_remaps_table(ui, &mut modal_opts.outputs, show_rare_keys);
+                    StripBuilder::new(col_2)
+                        .size(Size::remainder())
+                        .size(Size::initial(BUTTON_HEIGHT))
+                        .vertical(|mut strip| {
+                            strip.cell(|ui| {
+                                egui::Frame::new()
+                                    .stroke(egui::Stroke {
+                                        width: 1.0,
+                                        color: egui::Color32::DARK_GRAY,
+                                    })
+                                    .inner_margin(4.0)
+                                    .corner_radius(4.0)
+                                    .show(ui, |ui| {
+                                        ui_available_remaps_table(
+                                            ui,
+                                            &mut modal_opts.outputs,
+                                            &modal_opts.search,
+                                            show_rare_keys,
+                                        );
+                                    });
+                            });
+                            strip.cell(|ui| {
+                                ui.add_sized(
+                                    [ui.available_width(), BUTTON_HEIGHT],
+                                    egui::TextEdit::singleline(&mut modal_opts.search)
+                                        .hint_text("Search"),
+                                );
+                            });
                         });
                 });
             });

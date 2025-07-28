@@ -203,6 +203,7 @@ pub struct NewRemapModalOpts {
     modal_open: Option<buttons::Button>,
     policy: RemapPolicyUI,
     outputs: Output,
+    search: String,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -211,6 +212,7 @@ pub struct EditLayerModalOpts {
     name: String,
     layer_type: config::LayerType,
     condition: Vec<buttons::HoldButton>,
+    search: String,
 }
 
 impl From<EditLayerModalOpts> for config::Layer {
@@ -229,6 +231,7 @@ pub struct NewBaseRemapModalOpts {
     modal_open: Option<buttons::Button>,
     policy: BaseRemapPolicyUI,
     outputs: Output,
+    search: String,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]

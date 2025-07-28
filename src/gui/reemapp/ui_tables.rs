@@ -244,6 +244,7 @@ where
 pub fn ui_available_remaps_table(
     ui: &mut egui::Ui,
     remaps: &mut config::Output,
+    search: &str,
     show_rare_keys: bool,
 ) {
     use super::HEADER_HEIGHT;
@@ -281,7 +282,11 @@ pub fn ui_available_remaps_table(
             let mouse_iter = buttons::mouse::MouseButton::iter().map(buttons::Button::from);
             let wheel_iter = buttons::wheel::MouseWheelButton::iter().map(buttons::Button::from);
 
-            for button in mouse_iter.chain(wheel_iter).chain(key_iter) {
+            for button in mouse_iter
+                .chain(wheel_iter)
+                .chain(key_iter)
+                .filter(|button| search.is_empty() || button.to_string().contains(search.trim()))
+            {
                 let enabled = !remaps.contains(&button);
                 body.row(ROW_HEIGHT, |mut row| {
                     row.col(|ui| {
