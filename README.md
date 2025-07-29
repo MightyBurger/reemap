@@ -2,7 +2,7 @@
 
 # Reemap
 
-Lightweight input remaps
+Simple, efficient input remaps
 
 ![reemap screenshot](resource/example.png)
 
