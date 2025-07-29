@@ -338,8 +338,8 @@ On button up:
 
         b.  If the input is "HeldWithRemap", immediately send the specified inputs as UP inputs.
 
-        c.  If the input is "NotHeld", well, this shouldn't have happened. We got a KEYDOWN or
-            MOUSEDOWN without remembering seeing a corresponding KEYUP or MOUSEUP. Ah well - let's
+        c.  If the input is "NotHeld", well, this shouldn't have happened. We got a KEYUP or
+            MOUSEUP without remembering seeing a corresponding KEYDOWN or MOUSEDOWN. Ah well - let's
             just forward the input unmodified.
 
     (Notice we do not check the mappings in the layers on a button up.)
