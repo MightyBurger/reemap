@@ -14,8 +14,14 @@ pub fn ui_edit_layer_modal(
     use crate::gui::reemapp::BUTTON_HEIGHT;
     use egui_extras::{Size, StripBuilder};
 
-    let helper_text = config::Layer::from(modal_opts.clone()).condition_helper_text();
-    ui_ok_cancel_modal(ui, &helper_text, true, |ui| {
+    let valid = !modal_opts.condition.is_empty();
+    let helper_text = if valid {
+        config::Layer::from(modal_opts.clone()).condition_helper_text()
+    } else {
+        String::from("Choose one or more inputs")
+    };
+
+    ui_ok_cancel_modal(ui, &helper_text, valid, |ui| {
         ui.heading(heading);
         ui.separator();
         ui.add_space(super::SPACING);
