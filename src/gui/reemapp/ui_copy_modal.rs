@@ -1,7 +1,6 @@
-use crate::{
-    config,
-    gui::reemapp::ui_tables::{ClickListItem, ui_clickable_table},
-};
+use crate::config;
+use crate::gui::reemapp::style;
+use crate::gui::reemapp::ui_tables::{ClickListItem, ui_clickable_table};
 
 pub trait CopyListItem: ClickListItem + Clone {
     fn clone_new_name(&self) -> Self;
@@ -35,21 +34,14 @@ pub fn ui_copy_modal<T>(
         ui.heading(format!("Copy {list_name}"));
         ui.separator();
         ui.add_space(super::SPACING);
-        egui::Frame::new()
-            .stroke(egui::Stroke {
-                width: 1.0,
-                color: egui::Color32::DARK_GRAY,
-            })
-            .inner_margin(4.0)
-            .corner_radius(4.0)
-            .show(ui, |ui| {
-                let item_select = ui_clickable_table(ui, list, list_name);
-                if let Some(item_select) = item_select {
-                    let new_item = list[item_select].clone_new_name();
-                    list.insert(item_select + 1, new_item); // place new item right after the old one
-                    *modal_opts = false;
-                }
-            });
+        style::UI_FRAME.show(ui, |ui| {
+            let item_select = ui_clickable_table(ui, list, list_name);
+            if let Some(item_select) = item_select {
+                let new_item = list[item_select].clone_new_name();
+                list.insert(item_select + 1, new_item); // place new item right after the old one
+                *modal_opts = false;
+            }
+        });
     });
     if modal_response {
         *modal_opts = false;

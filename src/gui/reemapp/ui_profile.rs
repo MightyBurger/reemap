@@ -7,6 +7,7 @@ use crate::gui::reemapp::ProfileConditionUI;
 use crate::gui::reemapp::RearrangeLayersModalOpts;
 use crate::gui::reemapp::RemapsSearchOpts;
 use crate::gui::reemapp::SPACING;
+use crate::gui::reemapp::style;
 use crate::gui::reemapp::ui_base_layer;
 use crate::gui::reemapp::ui_copy_modal::ui_copy_modal;
 use crate::gui::reemapp::ui_edit_layer_modal::ui_edit_layer_modal;
@@ -106,34 +107,26 @@ pub fn ui_profile(
                                 ui.checkbox(&mut profile.clip_cursor, "Confine cursor to window");
                                 ui.add_space(super::SPACING);
 
-                                egui::Frame::new()
-                                    .stroke(egui::Stroke {
-                                        width: 1.0,
-                                        color: egui::Color32::DARK_GRAY,
-                                    })
-                                    .inner_margin(4.0)
-                                    .corner_radius(4.0)
-                                    .show(ui, |ui| {
-                                        if profile.layers.is_empty() {
-                                            ui.centered_and_justified(|ui| {
-                                                ui.style_mut().interaction.selectable_labels =
-                                                    false;
-                                                ui.label("This profile has no layers.");
-                                            });
-                                        } else {
-                                            let layer_select = ui_enable_clickable_table(
-                                                ui,
-                                                &mut profile.layers,
-                                                "Layer",
-                                            );
-                                            if let Some(i) = layer_select {
-                                                *menu = GuiMenu::ProfileLayer {
-                                                    profile_idx,
-                                                    layer_idx: i,
-                                                }
+                                style::UI_FRAME.show(ui, |ui| {
+                                    if profile.layers.is_empty() {
+                                        ui.centered_and_justified(|ui| {
+                                            ui.style_mut().interaction.selectable_labels = false;
+                                            ui.label("This profile has no layers.");
+                                        });
+                                    } else {
+                                        let layer_select = ui_enable_clickable_table(
+                                            ui,
+                                            &mut profile.layers,
+                                            "Layer",
+                                        );
+                                        if let Some(i) = layer_select {
+                                            *menu = GuiMenu::ProfileLayer {
+                                                profile_idx,
+                                                layer_idx: i,
                                             }
                                         }
-                                    });
+                                    }
+                                });
                             });
                             strip.strip(|builder| {
                                 builder
@@ -262,16 +255,9 @@ fn ui_rearrange_layers_modal(
         ui.separator();
         ui.add_space(SPACING);
 
-        egui::Frame::new()
-            .stroke(egui::Stroke {
-                width: 1.0,
-                color: egui::Color32::DARK_GRAY,
-            })
-            .inner_margin(4.0)
-            .corner_radius(4.0)
-            .show(ui, |ui| {
-                ui_rearrange_table(ui, &mut modal_opts.new_order, "Layer");
-            });
+        style::UI_FRAME.show(ui, |ui| {
+            ui_rearrange_table(ui, &mut modal_opts.new_order, "Layer");
+        });
     });
 
     match ok_cancel {

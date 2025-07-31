@@ -1,3 +1,4 @@
+use crate::gui::reemapp::style;
 use crate::gui::reemapp::ui_ok_cancel_modal::ui_ok_cancel_modal;
 use crate::gui::reemapp::{EditProfileModalOpts, ProfileConditionUI};
 use crate::query_windows;
@@ -122,24 +123,17 @@ pub fn ui_edit_profile_modal(
                         ui.add_space(super::SPACING);
 
                         ui.add_enabled_ui(enable_table, |ui| {
-                            egui::Frame::new()
-                                .stroke(egui::Stroke {
-                                    width: 1.0,
-                                    color: egui::Color32::DARK_GRAY,
-                                })
-                                .inner_margin(4.0)
-                                .corner_radius(4.0)
-                                .show(ui, |ui| {
-                                    if let Some(query_windows::WindowInfo {
-                                        title,
-                                        process,
-                                        rect: _,
-                                    }) = ui_open_windows_table(ui, &modal_opts.open_windows)
-                                    {
-                                        modal_opts.title = title;
-                                        modal_opts.process = process;
-                                    }
-                                });
+                            style::UI_FRAME.show(ui, |ui| {
+                                if let Some(query_windows::WindowInfo {
+                                    title,
+                                    process,
+                                    rect: _,
+                                }) = ui_open_windows_table(ui, &modal_opts.open_windows)
+                                {
+                                    modal_opts.title = title;
+                                    modal_opts.process = process;
+                                }
+                            });
                         });
                     });
                     strip.cell(|ui| {

@@ -1,5 +1,6 @@
 use crate::gui::reemapp::EditProfileModalOpts;
 use crate::gui::reemapp::SPACING;
+use crate::gui::reemapp::style;
 use crate::gui::reemapp::ui_copy_modal::ui_copy_modal;
 use crate::gui::reemapp::ui_edit_profile_modal::ui_edit_profile_modal;
 use crate::gui::reemapp::ui_ok_cancel_modal::ui_ok_cancel_modal;
@@ -35,32 +36,25 @@ pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
                             egui::Frame::new().shadow(REEMAP_SHADOW).show(ui, |ui| {
                                 ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
                                     ui.add_space(super::SPACING);
-                                    egui::Frame::new()
-                                        .stroke(egui::Stroke {
-                                            width: 1.0,
-                                            color: egui::Color32::DARK_GRAY,
-                                        })
-                                        .inner_margin(4.0)
-                                        .corner_radius(4.0)
-                                        .show(ui, |ui| {
-                                            if args.config.profiles.is_empty() {
-                                                ui.centered_and_justified(|ui| {
-                                                    ui.style_mut().interaction.selectable_labels =
-                                                        false;
-                                                    ui.label("Add a profile to get started.");
-                                                });
-                                            } else {
-                                                let profile_select = ui_enable_clickable_table(
-                                                    ui,
-                                                    &mut args.config.profiles,
-                                                    "Profile",
-                                                );
-                                                if let Some(profile_idx) = profile_select {
-                                                    args.gui_local.menu =
-                                                        GuiMenu::Profile { profile_idx };
-                                                }
+                                    style::UI_FRAME.show(ui, |ui| {
+                                        if args.config.profiles.is_empty() {
+                                            ui.centered_and_justified(|ui| {
+                                                ui.style_mut().interaction.selectable_labels =
+                                                    false;
+                                                ui.label("Add a profile to get started.");
+                                            });
+                                        } else {
+                                            let profile_select = ui_enable_clickable_table(
+                                                ui,
+                                                &mut args.config.profiles,
+                                                "Profile",
+                                            );
+                                            if let Some(profile_idx) = profile_select {
+                                                args.gui_local.menu =
+                                                    GuiMenu::Profile { profile_idx };
                                             }
-                                        });
+                                        }
+                                    });
                                 });
                             });
                         });
@@ -171,16 +165,9 @@ pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
             ui.separator();
             ui.add_space(SPACING);
 
-            egui::Frame::new()
-                .stroke(egui::Stroke {
-                    width: 1.0,
-                    color: egui::Color32::DARK_GRAY,
-                })
-                .inner_margin(4.0)
-                .corner_radius(4.0)
-                .show(ui, |ui| {
-                    ui_rearrange_table(ui, &mut modal_opts.new_order, "Profile");
-                });
+            style::UI_FRAME.show(ui, |ui| {
+                ui_rearrange_table(ui, &mut modal_opts.new_order, "Profile");
+            });
         });
         match ok_cancel {
             Some(true) => {

@@ -1,6 +1,7 @@
 use crate::buttons;
 use crate::config;
 use crate::gui::reemapp::EditLayerModalOpts;
+use crate::gui::reemapp::style;
 use crate::gui::reemapp::ui_ok_cancel_modal::ui_ok_cancel_modal;
 use crate::gui::reemapp::ui_tables::ui_rearrange_table;
 use strum::IntoEnumIterator;
@@ -55,36 +56,22 @@ pub fn ui_edit_layer_modal(
             ui.add_space(super::SPACING);
 
             ui.columns_const(|[col_1, col_2]| {
-                egui::Frame::new()
-                    .stroke(egui::Stroke {
-                        width: 1.0,
-                        color: egui::Color32::DARK_GRAY,
-                    })
-                    .inner_margin(4.0)
-                    .corner_radius(4.0)
-                    .show(col_1, |ui| {
-                        ui_rearrange_table(ui, &mut modal_opts.condition, "Layer conditions");
-                    });
+                style::UI_FRAME.show(col_1, |ui| {
+                    ui_rearrange_table(ui, &mut modal_opts.condition, "Layer conditions");
+                });
                 StripBuilder::new(col_2)
                     .size(Size::remainder())
                     .size(Size::initial(BUTTON_HEIGHT))
                     .vertical(|mut strip| {
                         strip.cell(|ui| {
-                            egui::Frame::new()
-                                .stroke(egui::Stroke {
-                                    width: 1.0,
-                                    color: egui::Color32::DARK_GRAY,
-                                })
-                                .inner_margin(4.0)
-                                .corner_radius(4.0)
-                                .show(ui, |ui| {
-                                    ui_available_layer_conditions_table(
-                                        ui,
-                                        &mut modal_opts.condition,
-                                        &modal_opts.search,
-                                        show_rare_keys,
-                                    );
-                                });
+                            style::UI_FRAME.show(ui, |ui| {
+                                ui_available_layer_conditions_table(
+                                    ui,
+                                    &mut modal_opts.condition,
+                                    &modal_opts.search,
+                                    show_rare_keys,
+                                );
+                            });
                         });
                         strip.cell(|ui| {
                             ui.add_sized(
