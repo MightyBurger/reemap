@@ -68,16 +68,6 @@ pub fn ui_profile(
                                             config::ProfileCondition::Process { .. } => {
                                                 ProfileConditionUI::Process
                                             }
-                                            // presets
-                                            config::ProfileCondition::OriBF => {
-                                                ProfileConditionUI::OriBF
-                                            }
-                                            config::ProfileCondition::OriBFDE => {
-                                                ProfileConditionUI::OriBFDE
-                                            }
-                                            config::ProfileCondition::OriWotW => {
-                                                ProfileConditionUI::OriWotW
-                                            }
                                         },
                                         title: match &profile.condition {
                                             config::ProfileCondition::TitleAndProcess {

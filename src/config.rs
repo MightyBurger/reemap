@@ -92,7 +92,7 @@ impl Default for Profile {
         Self {
             name: String::from("New Profile"),
             enabled: true,
-            condition: ProfileCondition::OriBFDE,
+            condition: ProfileCondition::default(),
             base: BaseLayer::default(),
             layers: Vec::new(),
             clip_cursor: false,
@@ -109,15 +109,19 @@ impl std::fmt::Display for Profile {
 // -------------------- ProfileCondition --------------------
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum ProfileCondition {
-    // custom
     Always,
     TitleAndProcess { title: String, process: String },
     Title { title: String },
     Process { process: String },
-    // presets
-    OriBF,
-    OriBFDE,
-    OriWotW,
+}
+
+impl Default for ProfileCondition {
+    fn default() -> Self {
+        Self::TitleAndProcess {
+            title: String::new(),
+            process: String::new(),
+        }
+    }
 }
 
 impl ProfileCondition {
@@ -133,11 +137,6 @@ impl ProfileCondition {
             Self::Process { process } => {
                 format!("Active when the process {process} is in focus")
             }
-            Self::OriBF => "Active when Ori and the Blind Forest is in focus".to_string(),
-            Self::OriBFDE => {
-                "Active when Ori and the Blind Forest: Definitive Edition is in focus".to_string()
-            }
-            Self::OriWotW => "Active when Ori and the Will of the Wisps is in focus".to_string(),
         }
     }
 }

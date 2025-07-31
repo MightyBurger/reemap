@@ -133,26 +133,6 @@ impl HookLocalData {
                         new_profile = Some(i);
                     }
                 }
-
-                config::ProfileCondition::OriBF => {
-                    if title == "Ori And The Blind Forest" && process == "ori.exe" {
-                        new_profile = Some(i);
-                    }
-                }
-
-                config::ProfileCondition::OriBFDE => {
-                    if title == "Ori And The Blind Forest: Definitive Edition"
-                        && process == "oriDE.exe"
-                    {
-                        new_profile = Some(i);
-                    }
-                }
-
-                config::ProfileCondition::OriWotW => {
-                    if title == "OriAndTheWilloftheWisps" && process == "oriwotw.exe" {
-                        new_profile = Some(i);
-                    }
-                }
             }
         }
         if self.active_profile != new_profile {

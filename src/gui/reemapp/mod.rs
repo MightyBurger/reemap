@@ -175,9 +175,18 @@ impl EditProfileModalOpts {
             ProfileConditionUI::Process => config::ProfileCondition::Process {
                 process: self.process,
             },
-            ProfileConditionUI::OriBF => config::ProfileCondition::OriBF,
-            ProfileConditionUI::OriBFDE => config::ProfileCondition::OriBFDE,
-            ProfileConditionUI::OriWotW => config::ProfileCondition::OriWotW,
+            ProfileConditionUI::OriBF => config::ProfileCondition::TitleAndProcess {
+                title: "Ori and the Blind Forest".to_string(),
+                process: "ori.exe".to_string(),
+            },
+            ProfileConditionUI::OriBFDE => config::ProfileCondition::TitleAndProcess {
+                title: "Ori And The Blind Forest: Definitive Edition".to_string(),
+                process: "oriDE.exe".to_string(),
+            },
+            ProfileConditionUI::OriWotW => config::ProfileCondition::TitleAndProcess {
+                title: "OriAndTheWilloftheWisps".to_string(),
+                process: "oriwotw.exe".to_string(),
+            },
         }
     }
 }
