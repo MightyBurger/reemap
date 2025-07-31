@@ -7,7 +7,7 @@ Simple, efficient input remaps
 ![reemap screenshot](resource/example.png)
 
 **NOTE: Reemap is currently in development.** It still has important issues that must be resolved before
-a release. See [Development Status](#development-status). ️⚠️
+a release. ️⚠️
 
 </div>
 
@@ -54,29 +54,6 @@ To compile Reemap, you will need:
 - [Windows SDK]
 
 Clone the repository. Then, in the repository root, run `cargo build --release`.
-
-## Development Status
-
-This section will be removed on the first release of Reemap.
-
-- [x] allow exporting, importing profiles
-- [x] allow reordering profiles, layers, remap outputs
-- [x] check process name or window name
-- [x] enumerate all open windows
-- [x] app icon
-- [x] add background to UI, touch up UI
-- [x] search/filter buttons
-- [x] allow copying profiles, layers
-- [x] clip mouse
-- [x] some UI code is repetative; other UI code is in weird spots; just do a clean-up pass (not perfect but good enough for now)
-- [ ] only re-render GUI when necessary (note; currently fine when minimized to tray)
-- [ ] write tutorial
-- [ ] better support different keyboard layouts - possibly switch to scancodes instead of virtual
-key codes?
-- [ ] could possibly do with an abstraction for hooks to clean up the hook thread's code; it's a
-little ugly right now
-- [ ] API for variants
-- [ ] create a distributable installer (signing certificate?)
 
 ## License
 
