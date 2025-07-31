@@ -22,6 +22,7 @@ use ui_profile::ui_profile;
 use crate::buttons;
 use crate::config;
 use crate::config::Output;
+use crate::gui::reemapp::ui_profile::UiProfileModals;
 use crate::hooks;
 use crate::query_windows;
 
@@ -343,15 +344,17 @@ impl crate::gui::TrayApp for ReemApp {
                         GuiMenu::Profile { profile_idx } => ui_profile(
                             ui,
                             &mut self.config.profiles[profile_idx],
-                            &mut self.gui_local.copy_layer_modal,
-                            &mut self.gui_local.rearrange_layers_modal,
-                            &mut self.gui_local.edit_profile_modal,
-                            &mut self.gui_local.edit_layer_modal,
-                            &mut self.gui_local.new_base_remap_modal,
                             profile_idx,
                             &mut self.gui_local.menu,
                             &mut self.gui_local.remaps_search_base,
                             self.config.show_rare_keys,
+                            UiProfileModals {
+                                copy_layers_modal: &mut self.gui_local.copy_layer_modal,
+                                rearrange_layers_modal: &mut self.gui_local.rearrange_layers_modal,
+                                edit_profile_modal: &mut self.gui_local.edit_profile_modal,
+                                new_layer_modal: &mut self.gui_local.edit_layer_modal,
+                                new_base_remap_modal: &mut self.gui_local.new_base_remap_modal,
+                            },
                         ),
                         GuiMenu::ProfileLayer {
                             profile_idx,

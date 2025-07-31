@@ -17,19 +17,22 @@ use crate::gui::reemapp::ui_tables::ui_enable_clickable_table;
 use crate::gui::reemapp::ui_tables::ui_rearrange_table;
 use crate::query_windows;
 
-// someone tame this function :(
+pub struct UiProfileModals<'a> {
+    pub copy_layers_modal: &'a mut bool,
+    pub rearrange_layers_modal: &'a mut RearrangeLayersModalOpts,
+    pub edit_profile_modal: &'a mut EditProfileModalOpts,
+    pub new_layer_modal: &'a mut EditLayerModalOpts,
+    pub new_base_remap_modal: &'a mut NewBaseRemapModalOpts,
+}
+
 pub fn ui_profile(
     ui: &mut egui::Ui,
     profile: &mut config::Profile,
-    copy_layers_modal: &mut bool,
-    rearrange_layers_modal: &mut RearrangeLayersModalOpts,
-    edit_profile_modal: &mut EditProfileModalOpts,
-    new_layer_modal: &mut EditLayerModalOpts,
-    new_base_remap_modal: &mut NewBaseRemapModalOpts,
     profile_idx: usize,
     menu: &mut GuiMenu,
     remaps_search: &mut RemapsSearchOpts,
     show_rare_keys: bool,
+    modals: UiProfileModals,
 ) {
     use super::BUTTON_HEIGHT;
     use super::BUTTON_SIZE;
@@ -52,7 +55,7 @@ pub fn ui_profile(
                                 let edit_response =
                                     ui.add_sized(BUTTON_SIZE, egui::Button::new("Edit"));
                                 if edit_response.clicked() {
-                                    *edit_profile_modal = EditProfileModalOpts {
+                                    *modals.edit_profile_modal = EditProfileModalOpts {
                                         modal_open: true,
                                         name: profile.name.clone(),
                                         condition: match &profile.condition {
@@ -143,7 +146,7 @@ pub fn ui_profile(
                                                 )
                                                 .clicked()
                                             {
-                                                *new_layer_modal = EditLayerModalOpts {
+                                                *modals.new_layer_modal = EditLayerModalOpts {
                                                     modal_open: true,
                                                     name: String::from("New layer"),
                                                     ..Default::default()
@@ -159,7 +162,7 @@ pub fn ui_profile(
                                                     )
                                                     .clicked()
                                                 {
-                                                    *copy_layers_modal = true;
+                                                    *modals.copy_layers_modal = true;
                                                 }
                                             });
                                         });
@@ -172,9 +175,9 @@ pub fn ui_profile(
                                                     )
                                                     .clicked()
                                                 {
-                                                    rearrange_layers_modal.new_order =
+                                                    modals.rearrange_layers_modal.new_order =
                                                         profile.layers.clone();
-                                                    rearrange_layers_modal.modal_open = true;
+                                                    modals.rearrange_layers_modal.modal_open = true;
                                                 }
                                             });
                                         });
@@ -187,7 +190,7 @@ pub fn ui_profile(
                     ui_base_layer(
                         ui,
                         &mut profile.base,
-                        new_base_remap_modal,
+                        modals.new_base_remap_modal,
                         remaps_search,
                         show_rare_keys,
                     );
@@ -197,32 +200,32 @@ pub fn ui_profile(
 
     // ----- Copy layer modal -----
 
-    if *copy_layers_modal {
-        ui_copy_modal(ui, copy_layers_modal, &mut profile.layers, "Layer");
+    if *modals.copy_layers_modal {
+        ui_copy_modal(ui, modals.copy_layers_modal, &mut profile.layers, "Layer");
     }
 
     // ----- Rearrange layers modal -----
 
-    if rearrange_layers_modal.modal_open {
-        ui_rearrange_layers_modal(ui, rearrange_layers_modal, &mut profile.layers);
+    if modals.rearrange_layers_modal.modal_open {
+        ui_rearrange_layers_modal(ui, modals.rearrange_layers_modal, &mut profile.layers);
     }
 
     // ----- Edit profile modal -----
 
-    if edit_profile_modal.modal_open {
+    if modals.edit_profile_modal.modal_open {
         let ok_cancel = ui_edit_profile_modal(
             ui,
-            edit_profile_modal,
+            modals.edit_profile_modal,
             &format!("Editing profile {}", profile.name),
         );
         match ok_cancel {
             Some(true) => {
-                profile.name = edit_profile_modal.clone().name;
-                profile.condition = edit_profile_modal.clone().extract_condition();
-                edit_profile_modal.modal_open = false;
+                profile.name = modals.edit_profile_modal.clone().name;
+                profile.condition = modals.edit_profile_modal.clone().extract_condition();
+                modals.edit_profile_modal.modal_open = false;
             }
             Some(false) => {
-                edit_profile_modal.modal_open = false;
+                modals.edit_profile_modal.modal_open = false;
             }
             None => (),
         }
@@ -230,15 +233,16 @@ pub fn ui_profile(
 
     // ----- New layer modal -----
 
-    if new_layer_modal.modal_open {
-        let ok_cancel = ui_edit_layer_modal(ui, new_layer_modal, "New layer", show_rare_keys);
+    if modals.new_layer_modal.modal_open {
+        let ok_cancel =
+            ui_edit_layer_modal(ui, modals.new_layer_modal, "New layer", show_rare_keys);
         match ok_cancel {
             Some(true) => {
-                profile.layers.push(new_layer_modal.clone().into());
-                new_layer_modal.modal_open = false;
+                profile.layers.push(modals.new_layer_modal.clone().into());
+                modals.new_layer_modal.modal_open = false;
             }
             Some(false) => {
-                new_layer_modal.modal_open = false;
+                modals.new_layer_modal.modal_open = false;
             }
             None => (),
         }
