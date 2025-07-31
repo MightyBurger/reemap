@@ -264,13 +264,14 @@ impl std::fmt::Display for Button {
     }
 }
 
-// -------------------- Input Trait --------------------
+// -------------------- ListableButton Trait --------------------
+// (the name is bad)
 
-pub trait Input: PartialEq + std::fmt::Display {
+pub trait ListableButton: PartialEq + std::fmt::Display {
     fn device(&self) -> &str;
 }
 
-impl Input for Button {
+impl ListableButton for Button {
     fn device(&self) -> &str {
         match self {
             Self::Key(_) => "Keyboard",
@@ -279,11 +280,19 @@ impl Input for Button {
     }
 }
 
-impl Input for HoldButton {
+impl ListableButton for HoldButton {
     fn device(&self) -> &str {
         match self {
             Self::Key(_) => "Keyboard",
             Self::Mouse(_) => "Mouse",
+        }
+    }
+}
+
+impl ListableButton for TapButton {
+    fn device(&self) -> &str {
+        match self {
+            Self::Wheel(_) => "Mouse",
         }
     }
 }

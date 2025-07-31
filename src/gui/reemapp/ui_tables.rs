@@ -301,7 +301,7 @@ pub fn ui_available_inputs_table<L, I, T>(ui: &mut egui::Ui, inputs: I, outputs:
 where
     L: TableList<T>,
     I: Iterator<Item = T>,
-    T: buttons::Input,
+    T: buttons::ListableButton,
 {
     use egui_extras::{Column, TableBuilder};
 
