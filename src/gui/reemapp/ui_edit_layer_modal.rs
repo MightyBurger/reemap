@@ -1,10 +1,9 @@
-use crate::buttons;
 use crate::config;
 use crate::gui::reemapp::EditLayerModalOpts;
 use crate::gui::reemapp::style;
 use crate::gui::reemapp::ui_ok_cancel_modal::ui_ok_cancel_modal;
+use crate::gui::reemapp::ui_tables::ui_available_hold_buttons_table;
 use crate::gui::reemapp::ui_tables::ui_rearrange_table;
-use strum::IntoEnumIterator;
 
 pub fn ui_edit_layer_modal(
     ui: &mut egui::Ui,
@@ -65,7 +64,7 @@ pub fn ui_edit_layer_modal(
                     .vertical(|mut strip| {
                         strip.cell(|ui| {
                             style::UI_FRAME.show(ui, |ui| {
-                                ui_available_layer_conditions_table(
+                                ui_available_hold_buttons_table(
                                     ui,
                                     &mut modal_opts.condition,
                                     &modal_opts.search,
@@ -84,82 +83,4 @@ pub fn ui_edit_layer_modal(
             });
         });
     })
-}
-
-fn ui_available_layer_conditions_table(
-    ui: &mut egui::Ui,
-    remaps: &mut Vec<buttons::HoldButton>,
-    search: &str,
-    show_rare_keys: bool,
-) {
-    use super::HEADER_HEIGHT;
-    use super::ROW_HEIGHT;
-    use buttons::HoldButton;
-    use buttons::key::KeyType;
-    use egui_extras::{Column, TableBuilder};
-
-    let mut button_select = None;
-    let mut pointing_hand = false;
-    TableBuilder::new(ui)
-        .id_salt("Available Hold Remaps Table")
-        .striped(true)
-        .auto_shrink(false)
-        .sense(egui::Sense::click_and_drag())
-        .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
-        .column(Column::exact(60.0)) // Device
-        .column(Column::remainder()) // Button Name
-        .header(HEADER_HEIGHT, |mut header| {
-            header.col(|ui| {
-                ui.strong("Device");
-            });
-            header.col(|ui| {
-                ui.strong("Button");
-            });
-        })
-        .body(|mut body| {
-            let key_iter = buttons::key::KeyButton::iter()
-                .filter(|key| match (show_rare_keys, key.key_type()) {
-                    (true, KeyType::Common | KeyType::Rare) => true,
-                    (false, KeyType::Common) => true,
-                    _ => false,
-                })
-                .map(buttons::HoldButton::from);
-            let mouse_iter = buttons::mouse::MouseButton::iter().map(buttons::HoldButton::from);
-
-            for button in mouse_iter.chain(key_iter).filter(|button| {
-                let mod_search = search.trim().to_lowercase();
-                mod_search.is_empty() || button.to_string().to_lowercase().contains(&mod_search)
-            }) {
-                let enabled = !remaps.contains(&button);
-                body.row(ROW_HEIGHT, |mut row| {
-                    row.col(|ui| {
-                        ui.style_mut().interaction.selectable_labels = false;
-                        let device = match button {
-                            HoldButton::Key(_) => "Keyboard",
-                            HoldButton::Mouse(_) => "Mouse",
-                        };
-                        ui.add_enabled(enabled, egui::Label::new(device));
-                    });
-                    row.col(|ui| {
-                        ui.style_mut().interaction.selectable_labels = false;
-                        ui.add_enabled(enabled, egui::Label::new(button.to_string()));
-                    });
-                    if enabled && row.response().hovered() {
-                        pointing_hand = true;
-                    }
-                    if enabled && row.response().clicked() {
-                        button_select = Some(button);
-                    }
-                });
-            }
-        });
-    if pointing_hand {
-        ui.ctx()
-            .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
-    }
-    if let Some(button_select) = button_select {
-        if !remaps.contains(&button_select) {
-            remaps.push(button_select);
-        }
-    }
 }

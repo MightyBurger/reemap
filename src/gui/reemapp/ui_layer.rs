@@ -4,7 +4,7 @@ use crate::gui::reemapp::RemapsSearchOpts;
 use crate::gui::reemapp::style;
 use crate::gui::reemapp::ui_edit_layer_modal::ui_edit_layer_modal;
 use crate::gui::reemapp::ui_ok_cancel_modal::ui_ok_cancel_modal;
-use crate::gui::reemapp::ui_tables::ui_available_remaps_table;
+use crate::gui::reemapp::ui_tables::ui_available_buttons_table;
 use crate::gui::reemapp::ui_tables::ui_rearrange_table;
 use crate::gui::reemapp::{EditLayerModalOpts, NewRemapModalOpts, RemapPolicyUI};
 use smallvec::SmallVec;
@@ -277,7 +277,7 @@ fn ui_new_remap_modal(
                         .vertical(|mut strip| {
                             strip.cell(|ui| {
                                 style::UI_FRAME.show(ui, |ui| {
-                                    ui_available_remaps_table(
+                                    ui_available_buttons_table(
                                         ui,
                                         &mut modal_opts.outputs,
                                         &modal_opts.search,

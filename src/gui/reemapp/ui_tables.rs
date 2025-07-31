@@ -3,6 +3,47 @@ use crate::config;
 use smallvec::SmallVec;
 use strum::IntoEnumIterator;
 
+// So I can call table functions with either a Vec or a SmallVec.
+pub trait TableList<T> {
+    fn as_mut_slice(&mut self) -> &mut [T];
+    fn as_slice(&self) -> &[T];
+    fn remove(&mut self, index: usize) -> T;
+    fn push(&mut self, value: T);
+}
+
+impl<T> TableList<T> for Vec<T> {
+    fn as_mut_slice(&mut self) -> &mut [T] {
+        self.as_mut_slice()
+    }
+    fn as_slice(&self) -> &[T] {
+        self.as_slice()
+    }
+    fn remove(&mut self, index: usize) -> T {
+        self.remove(index)
+    }
+    fn push(&mut self, value: T) {
+        self.push(value)
+    }
+}
+
+impl<A, T> TableList<T> for SmallVec<A>
+where
+    A: smallvec::Array<Item = T>,
+{
+    fn as_mut_slice(&mut self) -> &mut [T] {
+        self.as_mut_slice()
+    }
+    fn as_slice(&self) -> &[T] {
+        self.as_slice()
+    }
+    fn remove(&mut self, index: usize) -> T {
+        self.remove(index)
+    }
+    fn push(&mut self, value: T) {
+        self.push(value)
+    }
+}
+
 pub trait EnableListItem: std::fmt::Display {
     fn enable_mut(&mut self) -> &mut bool;
 }
@@ -139,47 +180,12 @@ impl RearrangeableListItem for config::Layer {}
 impl RearrangeableListItem for buttons::Button {}
 impl RearrangeableListItem for buttons::HoldButton {}
 
-// So I can call ui_rearrangeable_table with either a Vec or a SmallVec.
-// TODO: Is there a more idiomatic Rust way to do this?
-pub trait RearrangeableList<T> {
-    fn as_mut_slice(&mut self) -> &mut [T];
-    fn as_slice(&self) -> &[T];
-    fn remove(&mut self, index: usize) -> T;
-}
-
-impl<T> RearrangeableList<T> for Vec<T> {
-    fn as_mut_slice(&mut self) -> &mut [T] {
-        self.as_mut_slice()
-    }
-    fn as_slice(&self) -> &[T] {
-        self.as_slice()
-    }
-    fn remove(&mut self, index: usize) -> T {
-        self.remove(index)
-    }
-}
-
-impl<A, T> RearrangeableList<T> for SmallVec<A>
-where
-    A: smallvec::Array<Item = T>,
-{
-    fn as_mut_slice(&mut self) -> &mut [T] {
-        self.as_mut_slice()
-    }
-    fn as_slice(&self) -> &[T] {
-        self.as_slice()
-    }
-    fn remove(&mut self, index: usize) -> T {
-        self.remove(index)
-    }
-}
-
 /// Display a table that allows the user to re-arrange or delete items in the list.
 /// Important: if called multiple times within the same `Ui`, each call must have a different
 /// `name`, or runtime errors will occur.
 pub fn ui_rearrange_table<T, L>(ui: &mut egui::Ui, list: &mut L, name: &str)
 where
-    L: RearrangeableList<T>,
+    L: TableList<T>,
     T: RearrangeableListItem,
 {
     use super::HEADER_HEIGHT;
@@ -241,22 +247,75 @@ where
     }
 }
 
-pub fn ui_available_remaps_table(
+/// Wrapper around ui_available_inputs_table for buttons.
+pub fn ui_available_buttons_table<L>(
     ui: &mut egui::Ui,
-    remaps: &mut config::Output,
+    outputs: &mut L,
     search: &str,
     show_rare_keys: bool,
-) {
+) where
+    L: TableList<buttons::Button>,
+{
+    use buttons::key::KeyType;
+    let key_iter = buttons::key::KeyButton::iter()
+        .filter(|key| match (show_rare_keys, key.key_type()) {
+            (true, KeyType::Common | KeyType::Rare) => true,
+            (false, KeyType::Common) => true,
+            _ => false,
+        })
+        .map(buttons::Button::from);
+    let mouse_iter = buttons::mouse::MouseButton::iter().map(buttons::Button::from);
+    let wheel_iter = buttons::wheel::MouseWheelButton::iter().map(buttons::Button::from);
+    let button_iter = mouse_iter
+        .chain(wheel_iter)
+        .chain(key_iter)
+        .filter(|button| {
+            let mod_search = search.trim().to_lowercase();
+            mod_search.is_empty() || button.to_string().to_lowercase().contains(&mod_search)
+        });
+    ui_available_inputs_table(ui, button_iter, outputs);
+}
+
+/// Wrapper around ui_available_inputs_table for hold buttons.
+pub fn ui_available_hold_buttons_table<L>(
+    ui: &mut egui::Ui,
+    outputs: &mut L,
+    search: &str,
+    show_rare_keys: bool,
+) where
+    L: TableList<buttons::HoldButton>,
+{
+    use buttons::key::KeyType;
+    let key_iter = buttons::key::KeyButton::iter()
+        .filter(|key| match (show_rare_keys, key.key_type()) {
+            (true, KeyType::Common | KeyType::Rare) => true,
+            (false, KeyType::Common) => true,
+            _ => false,
+        })
+        .map(buttons::HoldButton::from);
+    let mouse_iter = buttons::mouse::MouseButton::iter().map(buttons::HoldButton::from);
+    let button_iter = mouse_iter.chain(key_iter).filter(|button| {
+        let mod_search = search.trim().to_lowercase();
+        mod_search.is_empty() || button.to_string().to_lowercase().contains(&mod_search)
+    });
+    ui_available_inputs_table(ui, button_iter, outputs);
+}
+
+/// A table that lists inputs you can add to a list of outputs.
+pub fn ui_available_inputs_table<L, I, T>(ui: &mut egui::Ui, inputs: I, outputs: &mut L)
+where
+    L: TableList<T>,
+    I: Iterator<Item = T>,
+    T: buttons::Input,
+{
     use super::HEADER_HEIGHT;
     use super::ROW_HEIGHT;
-    use buttons::Button;
-    use buttons::key::KeyType;
     use egui_extras::{Column, TableBuilder};
 
     let mut button_select = None;
     let mut pointing_hand = false;
     TableBuilder::new(ui)
-        .id_salt("Available Remaps Table")
+        .id_salt("Available Inputs Table")
         .striped(true)
         .auto_shrink(false)
         .sense(egui::Sense::click_and_drag())
@@ -272,43 +331,23 @@ pub fn ui_available_remaps_table(
             });
         })
         .body(|mut body| {
-            let key_iter = buttons::key::KeyButton::iter()
-                .filter(|key| match (show_rare_keys, key.key_type()) {
-                    (true, KeyType::Common | KeyType::Rare) => true,
-                    (false, KeyType::Common) => true,
-                    _ => false,
-                })
-                .map(buttons::Button::from);
-            let mouse_iter = buttons::mouse::MouseButton::iter().map(buttons::Button::from);
-            let wheel_iter = buttons::wheel::MouseWheelButton::iter().map(buttons::Button::from);
-
-            for button in mouse_iter
-                .chain(wheel_iter)
-                .chain(key_iter)
-                .filter(|button| {
-                    let mod_search = search.trim().to_lowercase();
-                    mod_search.is_empty() || button.to_string().to_lowercase().contains(&mod_search)
-                })
-            {
-                let enabled = !remaps.contains(&button);
+            for input in inputs {
+                let enabled = !outputs.as_slice().contains(&input);
                 body.row(ROW_HEIGHT, |mut row| {
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
-                        let device = match button {
-                            Button::Key(_) => "Keyboard",
-                            Button::Mouse(_) | Button::Wheel(_) => "Mouse",
-                        };
+                        let device = input.device();
                         ui.add_enabled(enabled, egui::Label::new(device));
                     });
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
-                        ui.add_enabled(enabled, egui::Label::new(button.to_string()));
+                        ui.add_enabled(enabled, egui::Label::new(input.to_string()));
                     });
                     if enabled && row.response().hovered() {
                         pointing_hand = true;
                     }
                     if enabled && row.response().clicked() {
-                        button_select = Some(button);
+                        button_select = Some(input);
                     }
                 });
             }
@@ -318,8 +357,8 @@ pub fn ui_available_remaps_table(
             .output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
     }
     if let Some(button_select) = button_select {
-        if !remaps.contains(&button_select) {
-            remaps.push(button_select);
+        if !outputs.as_slice().contains(&button_select) {
+            outputs.push(button_select);
         }
     }
 }

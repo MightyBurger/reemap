@@ -263,3 +263,27 @@ impl std::fmt::Display for Button {
         }
     }
 }
+
+// -------------------- Input Trait --------------------
+
+pub trait Input: PartialEq + std::fmt::Display {
+    fn device(&self) -> &str;
+}
+
+impl Input for Button {
+    fn device(&self) -> &str {
+        match self {
+            Self::Key(_) => "Keyboard",
+            Self::Mouse(_) | Self::Wheel(_) => "Mouse",
+        }
+    }
+}
+
+impl Input for HoldButton {
+    fn device(&self) -> &str {
+        match self {
+            Self::Key(_) => "Keyboard",
+            Self::Mouse(_) => "Mouse",
+        }
+    }
+}
