@@ -191,16 +191,16 @@ fn ui_remaps_table(
                             Button::Key(_) => "Keyboard",
                             Button::Mouse(_) | Button::Wheel(_) => "Mouse",
                         };
-                        ui.label(device);
+                        ui.add(egui::Label::new(device.to_string()).truncate());
                     });
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
-                        ui.label(button.to_string());
+                        ui.add(egui::Label::new(button.to_string()).truncate());
                     });
                     row.col(|ui| {
                         let policy = layer.policy[button].clone();
                         ui.style_mut().interaction.selectable_labels = false;
-                        ui.label(policy.to_string());
+                        ui.add(egui::Label::new(policy.to_string()).truncate());
                     });
                     if row.response().hovered() {
                         pointing_hand = true;
