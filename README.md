@@ -68,11 +68,11 @@ This section will be removed on the first release of Reemap.
 - [x] search/filter buttons
 - [x] allow copying profiles, layers
 - [x] clip mouse
+- [x] some UI code is repetative; other UI code is in weird spots; just do a clean-up pass (not perfect but good enough for now)
 - [ ] only re-render GUI when necessary (note; currently fine when minimized to tray)
 - [ ] write tutorial
 - [ ] better support different keyboard layouts - possibly switch to scancodes instead of virtual
 key codes?
-- [ ] some UI code is repetative; other UI code is in weird spots; just do a clean-up pass
 - [ ] could possibly do with an abstraction for hooks to clean up the hook thread's code; it's a
 little ugly right now
 - [ ] API for variants
