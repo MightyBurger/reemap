@@ -1,5 +1,6 @@
 use crate::buttons;
 use crate::config;
+use crate::gui::reemapp::style;
 use smallvec::SmallVec;
 use strum::IntoEnumIterator;
 
@@ -68,8 +69,6 @@ pub fn ui_enable_clickable_table<T>(ui: &mut egui::Ui, list: &mut [T], name: &st
 where
     T: EnableListItem,
 {
-    use super::HEADER_HEIGHT;
-    use super::ROW_HEIGHT;
     use egui_extras::{Column, TableBuilder};
 
     let mut pointing_hand = false;
@@ -82,7 +81,7 @@ where
         .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
         .column(Column::exact(60.0)) // Enabled
         .column(Column::remainder()) // Profile Name
-        .header(HEADER_HEIGHT, |mut header| {
+        .header(style::HEADER_HEIGHT, |mut header| {
             header.col(|ui| {
                 ui.strong("Enabled");
             });
@@ -92,7 +91,7 @@ where
         })
         .body(|mut body| {
             for (i, item) in list.iter_mut().enumerate() {
-                body.row(ROW_HEIGHT, |mut row| {
+                body.row(style::ROW_HEIGHT, |mut row| {
                     row.col(|ui| {
                         ui.with_layout(
                             egui::Layout::centered_and_justified(egui::Direction::LeftToRight),
@@ -133,8 +132,6 @@ pub fn ui_clickable_table<T>(ui: &mut egui::Ui, list: &[T], name: &str) -> Optio
 where
     T: ClickListItem,
 {
-    use super::HEADER_HEIGHT;
-    use super::ROW_HEIGHT;
     use egui_extras::{Column, TableBuilder};
 
     let mut pointing_hand = false;
@@ -146,14 +143,14 @@ where
         .sense(egui::Sense::click_and_drag())
         .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
         .column(Column::remainder()) // Item Name
-        .header(HEADER_HEIGHT, |mut header| {
+        .header(style::HEADER_HEIGHT, |mut header| {
             header.col(|ui| {
                 ui.strong(name);
             });
         })
         .body(|mut body| {
             for (i, item) in list.iter().enumerate() {
-                body.row(ROW_HEIGHT, |mut row| {
+                body.row(style::ROW_HEIGHT, |mut row| {
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
                         ui.add(egui::Label::new(item.to_string()).truncate());
@@ -188,8 +185,6 @@ where
     L: TableList<T>,
     T: RearrangeableListItem,
 {
-    use super::HEADER_HEIGHT;
-    use super::ROW_HEIGHT;
     use egui_extras::{Column, TableBuilder};
 
     let btn_size = [20.0, 20.0];
@@ -203,7 +198,7 @@ where
         .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
         .column(Column::remainder()) // Profile Name
         .column(Column::exact(70.0))
-        .header(HEADER_HEIGHT, |mut header| {
+        .header(style::HEADER_HEIGHT, |mut header| {
             header.col(|ui| {
                 ui.strong(name);
             });
@@ -215,7 +210,7 @@ where
             for (i, item) in list.as_mut_slice().iter_mut().enumerate() {
                 let first = i == 0;
                 let last = i == list_len - 1;
-                body.row(ROW_HEIGHT, |mut row| {
+                body.row(style::ROW_HEIGHT, |mut row| {
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
                         ui.add(egui::Label::new(item.to_string()).truncate());
@@ -308,8 +303,6 @@ where
     I: Iterator<Item = T>,
     T: buttons::Input,
 {
-    use super::HEADER_HEIGHT;
-    use super::ROW_HEIGHT;
     use egui_extras::{Column, TableBuilder};
 
     let mut button_select = None;
@@ -322,7 +315,7 @@ where
         .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
         .column(Column::exact(60.0)) // Device
         .column(Column::remainder()) // Button Name
-        .header(HEADER_HEIGHT, |mut header| {
+        .header(style::HEADER_HEIGHT, |mut header| {
             header.col(|ui| {
                 ui.strong("Device");
             });
@@ -333,7 +326,7 @@ where
         .body(|mut body| {
             for input in inputs {
                 let enabled = !outputs.as_slice().contains(&input);
-                body.row(ROW_HEIGHT, |mut row| {
+                body.row(style::ROW_HEIGHT, |mut row| {
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
                         let device = input.device();

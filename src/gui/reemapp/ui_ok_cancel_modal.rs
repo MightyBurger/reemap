@@ -1,3 +1,5 @@
+use crate::gui::reemapp::style;
+
 // Returns:
 //  None if no action taken
 //  Some(false) if cancelled
@@ -8,11 +10,6 @@ pub fn ui_ok_cancel_modal(
     enable_ok: bool,
     add_contents: impl FnOnce(&mut egui::Ui),
 ) -> Option<bool> {
-    use super::BUTTON_HEIGHT;
-    use super::BUTTON_SIZE;
-    use super::BUTTON_WIDTH;
-    use super::SPACING;
-    use crate::gui::reemapp::style;
     use egui_extras::{Size, StripBuilder};
 
     let mut ok = false;
@@ -28,15 +25,15 @@ pub fn ui_ok_cancel_modal(
             ui.set_max_height(550.0);
             StripBuilder::new(ui)
                 .size(Size::exact(400.0))
-                .size(Size::exact(SPACING))
-                .size(Size::initial(BUTTON_HEIGHT).at_most(BUTTON_HEIGHT + 5.0))
+                .size(Size::exact(style::SPACING))
+                .size(Size::initial(style::BUTTON_HEIGHT).at_most(style::BUTTON_HEIGHT + 5.0))
                 .vertical(|mut strip| {
                     strip.cell(add_contents);
                     strip.empty();
                     strip.strip(|builder| {
                         builder
                             .size(Size::remainder())
-                            .size(Size::initial(BUTTON_WIDTH * 2.0)) // 2 for two buttons
+                            .size(Size::initial(style::BUTTON_WIDTH * 2.0)) // 2 for two buttons
                             .horizontal(|mut strip| {
                                 strip.cell(|ui| {
                                     ui.with_layout(
@@ -51,14 +48,20 @@ pub fn ui_ok_cancel_modal(
                                         egui::Layout::right_to_left(egui::Align::Center),
                                         |ui| {
                                             if ui
-                                                .add_sized(BUTTON_SIZE, egui::Button::new("Cancel"))
+                                                .add_sized(
+                                                    style::BUTTON_SIZE,
+                                                    egui::Button::new("Cancel"),
+                                                )
                                                 .clicked()
                                             {
                                                 cancel = true;
                                             }
                                             ui.add_enabled_ui(enable_ok, |ui| {
                                                 if ui
-                                                    .add_sized(BUTTON_SIZE, egui::Button::new("OK"))
+                                                    .add_sized(
+                                                        style::BUTTON_SIZE,
+                                                        egui::Button::new("OK"),
+                                                    )
                                                     .clicked()
                                                 {
                                                     ok = true;

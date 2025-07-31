@@ -18,15 +18,13 @@ pub fn ui_layer(
     remaps_search: &mut RemapsSearchOpts,
     show_rare_keys: bool,
 ) {
-    use super::BUTTON_HEIGHT;
-    use super::BUTTON_SIZE;
     use crate::gui::reemapp::style::REEMAP_SHADOW;
     use egui_extras::{Size, StripBuilder};
 
     egui::Frame::new().shadow(REEMAP_SHADOW).show(ui, |ui| {
         ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
             ui.label(layer.condition_helper_text());
-            let edit_response = ui.add_sized(BUTTON_SIZE, egui::Button::new("Edit"));
+            let edit_response = ui.add_sized(style::BUTTON_SIZE, egui::Button::new("Edit"));
             if edit_response.clicked() {
                 *edit_layer_modal = EditLayerModalOpts {
                     modal_open: true,
@@ -36,10 +34,10 @@ pub fn ui_layer(
                     search: String::new(),
                 };
             }
-            ui.add_space(super::SPACING);
+            ui.add_space(style::SPACING);
             StripBuilder::new(ui)
                 .size(Size::remainder())
-                .size(Size::initial(BUTTON_HEIGHT))
+                .size(Size::initial(style::BUTTON_HEIGHT))
                 .vertical(|mut strip| {
                     strip.cell(|ui| {
                         style::UI_FRAME.show(ui, |ui| {
@@ -115,8 +113,6 @@ fn ui_remaps_table(
     remaps_search: &RemapsSearchOpts,
     show_rare_keys: bool,
 ) {
-    use super::HEADER_HEIGHT;
-    use super::ROW_HEIGHT;
     use buttons::Button;
     use buttons::key::KeyType;
     use egui_extras::{Column, TableBuilder};
@@ -132,7 +128,7 @@ fn ui_remaps_table(
         .column(Column::exact(60.0)) // Device
         .column(Column::exact(120.0)) // Button
         .column(Column::remainder()) // Policy
-        .header(HEADER_HEIGHT, |mut header| {
+        .header(style::HEADER_HEIGHT, |mut header| {
             header.col(|ui| {
                 ui.strong("Device");
             });
@@ -188,7 +184,7 @@ fn ui_remaps_table(
                         || !matches!(layer.policy[*button], config::RemapPolicy::Defer)
                 })
             {
-                body.row(ROW_HEIGHT, |mut row| {
+                body.row(style::ROW_HEIGHT, |mut row| {
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
                         let device = match button {
@@ -243,14 +239,13 @@ fn ui_new_remap_modal(
     policy: &mut config::RemapPolicy,
     show_rare_keys: bool,
 ) {
-    use crate::gui::reemapp::BUTTON_HEIGHT;
     use egui_extras::{Size, StripBuilder};
 
     let helper_text = get_new_remap_helper_text(&button, &modal_opts.outputs, &modal_opts.policy);
     let ok_cancel = ui_ok_cancel_modal(ui, &helper_text, true, |ui| {
         ui.heading(format!("Remaps for {button}"));
         ui.separator();
-        ui.add_space(super::SPACING);
+        ui.add_space(style::SPACING);
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
             ui.label("Policy");
             egui::ComboBox::from_id_salt("policy")
@@ -260,7 +255,7 @@ fn ui_new_remap_modal(
                     ui.selectable_value(&mut modal_opts.policy, RemapPolicyUI::NoRemap, "No Remap");
                     ui.selectable_value(&mut modal_opts.policy, RemapPolicyUI::Remap, "Remap");
                 });
-            ui.add_space(super::SPACING);
+            ui.add_space(style::SPACING);
 
             let enable_tables = match modal_opts.policy {
                 RemapPolicyUI::Defer | RemapPolicyUI::NoRemap => false,
@@ -273,7 +268,7 @@ fn ui_new_remap_modal(
                     });
                     StripBuilder::new(col_2)
                         .size(Size::remainder())
-                        .size(Size::initial(BUTTON_HEIGHT))
+                        .size(Size::initial(style::BUTTON_HEIGHT))
                         .vertical(|mut strip| {
                             strip.cell(|ui| {
                                 style::UI_FRAME.show(ui, |ui| {
@@ -287,7 +282,7 @@ fn ui_new_remap_modal(
                             });
                             strip.cell(|ui| {
                                 ui.add_sized(
-                                    [ui.available_width(), BUTTON_HEIGHT],
+                                    [ui.available_width(), style::BUTTON_HEIGHT],
                                     egui::TextEdit::singleline(&mut modal_opts.search)
                                         .hint_text("Search"),
                                 );

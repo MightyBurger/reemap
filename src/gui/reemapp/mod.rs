@@ -28,13 +28,6 @@ use crate::query_windows;
 
 use windows::Win32::UI::Input::KeyboardAndMouse;
 
-const SPACING: f32 = 8.0;
-const HEADER_HEIGHT: f32 = 12.0;
-const ROW_HEIGHT: f32 = 20.0;
-const BUTTON_WIDTH: f32 = 80.0;
-const BUTTON_HEIGHT: f32 = 20.0;
-const BUTTON_SIZE: [f32; 2] = [BUTTON_WIDTH, BUTTON_HEIGHT];
-
 // Thought the name was clever. Don't get too mad, please.
 #[derive(Debug)]
 pub struct ReemApp {
@@ -336,7 +329,7 @@ impl crate::gui::TrayApp for ReemApp {
 
                     breadcrumb(ctx, ui, self);
                     ui.separator();
-                    ui.add_space(SPACING);
+                    ui.add_space(style::SPACING);
 
                     let menu = self.gui_local.menu.clone();
                     match menu {
@@ -389,6 +382,7 @@ fn settings_modal(
     config: &mut config::Config,
 ) {
     use ui_ok_cancel_modal::ui_ok_cancel_modal;
+
     let ok_cancel = ui_ok_cancel_modal(
         ui,
         "Settings will apply immediately but will only be saved once you click \"Apply\".",
@@ -396,9 +390,9 @@ fn settings_modal(
         |ui| {
             ui.heading("Reemap Settings");
             ui.separator();
-            ui.add_space(SPACING);
+            ui.add_space(style::SPACING);
             ui.checkbox(&mut modal_opts.show_rare_keys, "Show unusual keys");
-            ui.add_space(SPACING);
+            ui.add_space(style::SPACING);
             ui.label(
             "Unusual keyboard keys include keys that are uncommon in modern hardware and keys you \
 probably do not want to remap. Examples include \"mouse-button-as-key\" keys and \
@@ -425,6 +419,7 @@ Lock key, which Reemap uses as an escape-hatch to disable all remaps.",
 
 fn about_modal(ui: &mut egui::Ui, modal_opts: &mut bool) {
     use egui::special_emojis::GITHUB;
+
     let modal = egui::Modal::new(egui::Id::new("about modal"))
         .backdrop_color(style::MODAL_BACKDROP_COLOR)
         .frame(style::MODAL_FRAME)
@@ -433,13 +428,13 @@ fn about_modal(ui: &mut egui::Ui, modal_opts: &mut bool) {
             let version = env!("CARGO_PKG_VERSION");
             ui.heading("Reemap");
             ui.label(version);
-            ui.add_space(SPACING);
+            ui.add_space(style::SPACING);
             ui.label("Reemap is an input remapping tool.");
-            ui.add_space(SPACING);
+            ui.add_space(style::SPACING);
             ui.label("Reemap is free to use. The source code is available under a permissive license. See the repository for more information.");
-            ui.add_space(SPACING);
+            ui.add_space(style::SPACING);
             ui.hyperlink_to(format!("{GITHUB} Reemap on Github"), "https://github.com/MightyBurger/reemap");
-            ui.add_space(SPACING);
+            ui.add_space(style::SPACING);
             ui.label("Copyright © 2025 Jordan Johnson");
         });
     if modal.should_close() {

@@ -45,3 +45,10 @@ pub const UI_FRAME: egui::Frame = egui::Frame {
     corner_radius: egui::CornerRadius::same(4),
     shadow: egui::Shadow::NONE,
 };
+
+pub const SPACING: f32 = 8.0;
+pub const HEADER_HEIGHT: f32 = 12.0;
+pub const ROW_HEIGHT: f32 = 20.0;
+pub const BUTTON_WIDTH: f32 = 80.0;
+pub const BUTTON_HEIGHT: f32 = 20.0;
+pub const BUTTON_SIZE: [f32; 2] = [BUTTON_WIDTH, BUTTON_HEIGHT];

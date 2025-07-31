@@ -16,12 +16,11 @@ pub fn ui_base_layer(
     remaps_search: &mut RemapsSearchOpts,
     show_rare_keys: bool,
 ) {
-    use super::BUTTON_HEIGHT;
     use egui_extras::{Size, StripBuilder};
 
     StripBuilder::new(ui)
         .size(Size::remainder())
-        .size(Size::initial(BUTTON_HEIGHT))
+        .size(Size::initial(style::BUTTON_HEIGHT))
         .vertical(|mut strip| {
             strip.cell(|ui| {
                 style::UI_FRAME.show(ui, |ui| {
@@ -70,8 +69,6 @@ pub fn ui_base_remaps_table(
     remaps_search: &RemapsSearchOpts,
     show_rare_keys: bool,
 ) {
-    use super::HEADER_HEIGHT;
-    use super::ROW_HEIGHT;
     use buttons::Button;
     use buttons::key::KeyType;
     use egui_extras::{Column, TableBuilder};
@@ -87,7 +84,7 @@ pub fn ui_base_remaps_table(
         .column(Column::exact(60.0)) // Device
         .column(Column::exact(120.0)) // Button
         .column(Column::remainder()) // Policy
-        .header(HEADER_HEIGHT, |mut header| {
+        .header(style::HEADER_HEIGHT, |mut header| {
             header.col(|ui| {
                 ui.strong("Device");
             });
@@ -142,7 +139,7 @@ pub fn ui_base_remaps_table(
                         || !matches!(layer.policy[*button], config::BaseRemapPolicy::NoRemap)
                 })
             {
-                body.row(ROW_HEIGHT, |mut row| {
+                body.row(style::ROW_HEIGHT, |mut row| {
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
                         let device = match button {
@@ -196,7 +193,6 @@ fn ui_new_base_remap_modal(
     policy: &mut config::BaseRemapPolicy,
     show_rare_keys: bool,
 ) {
-    use crate::gui::reemapp::BUTTON_HEIGHT;
     use egui_extras::{Size, StripBuilder};
 
     let helper_text =
@@ -204,7 +200,7 @@ fn ui_new_base_remap_modal(
     let ok_cancel = ui_ok_cancel_modal(ui, &helper_text, true, |ui| {
         ui.heading(format!("Remaps for {button}"));
         ui.separator();
-        ui.add_space(super::SPACING);
+        ui.add_space(style::SPACING);
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
             ui.label("Policy");
             egui::ComboBox::from_id_salt("policy")
@@ -217,7 +213,7 @@ fn ui_new_base_remap_modal(
                     );
                     ui.selectable_value(&mut modal_opts.policy, BaseRemapPolicyUI::Remap, "Remap");
                 });
-            ui.add_space(super::SPACING);
+            ui.add_space(style::SPACING);
 
             let enable_tables = match modal_opts.policy {
                 BaseRemapPolicyUI::NoRemap => false,
@@ -230,7 +226,7 @@ fn ui_new_base_remap_modal(
                     });
                     StripBuilder::new(col_2)
                         .size(Size::remainder())
-                        .size(Size::initial(BUTTON_HEIGHT))
+                        .size(Size::initial(style::BUTTON_HEIGHT))
                         .vertical(|mut strip| {
                             strip.cell(|ui| {
                                 style::UI_FRAME.show(ui, |ui| {
@@ -244,7 +240,7 @@ fn ui_new_base_remap_modal(
                             });
                             strip.cell(|ui| {
                                 ui.add_sized(
-                                    [ui.available_width(), BUTTON_HEIGHT],
+                                    [ui.available_width(), style::BUTTON_HEIGHT],
                                     egui::TextEdit::singleline(&mut modal_opts.search)
                                         .hint_text("Search"),
                                 );

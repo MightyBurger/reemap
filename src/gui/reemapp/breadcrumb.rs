@@ -1,14 +1,13 @@
 use super::GuiMenu;
 use super::ReemApp;
 use crate::config;
+use crate::gui::reemapp::style;
 use tracing::error;
 
 pub fn breadcrumb(ctx: &egui::Context, ui: &mut egui::Ui, args: &mut ReemApp) {
-    use super::BUTTON_SIZE;
-
     ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
         if ui
-            .add_sized(BUTTON_SIZE, egui::Button::new("Apply"))
+            .add_sized(style::BUTTON_SIZE, egui::Button::new("Apply"))
             .clicked()
         {
             // Two things happen on Apply.

@@ -33,7 +33,7 @@ pub fn ui_copy_modal<T>(
     let modal_response = ui_cancel_modal(ui, |ui| {
         ui.heading(format!("Copy {list_name}"));
         ui.separator();
-        ui.add_space(super::SPACING);
+        ui.add_space(style::SPACING);
         style::UI_FRAME.show(ui, |ui| {
             let item_select = ui_clickable_table(ui, list, list_name);
             if let Some(item_select) = item_select {
@@ -49,10 +49,6 @@ pub fn ui_copy_modal<T>(
 }
 
 fn ui_cancel_modal(ui: &mut egui::Ui, add_contents: impl FnOnce(&mut egui::Ui)) -> bool {
-    use super::BUTTON_HEIGHT;
-    use super::BUTTON_SIZE;
-    use super::SPACING;
-    use crate::gui::reemapp::style;
     use egui_extras::{Size, StripBuilder};
 
     let mut close = false;
@@ -67,15 +63,15 @@ fn ui_cancel_modal(ui: &mut egui::Ui, add_contents: impl FnOnce(&mut egui::Ui)) 
             ui.set_max_height(550.0);
             StripBuilder::new(ui)
                 .size(Size::exact(400.0))
-                .size(Size::exact(SPACING))
-                .size(Size::initial(BUTTON_HEIGHT).at_most(BUTTON_HEIGHT + 5.0))
+                .size(Size::exact(style::SPACING))
+                .size(Size::initial(style::BUTTON_HEIGHT).at_most(style::BUTTON_HEIGHT + 5.0))
                 .vertical(|mut strip| {
                     strip.cell(add_contents);
                     strip.empty();
                     strip.cell(|ui| {
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                             if ui
-                                .add_sized(BUTTON_SIZE, egui::Button::new("Cancel"))
+                                .add_sized(style::BUTTON_SIZE, egui::Button::new("Cancel"))
                                 .clicked()
                             {
                                 close = true;

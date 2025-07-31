@@ -8,7 +8,6 @@ pub fn ui_edit_profile_modal(
     modal_opts: &mut EditProfileModalOpts,
     heading: &str,
 ) -> Option<bool> {
-    use super::BUTTON_SIZE;
     use egui_extras::{Size, StripBuilder};
 
     let valid = match modal_opts.condition {
@@ -51,13 +50,13 @@ pub fn ui_edit_profile_modal(
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
             ui.label("Profile name");
             ui.text_edit_singleline(&mut modal_opts.name);
-            ui.add_space(super::SPACING);
+            ui.add_space(style::SPACING);
             ui.label(
                 "Reemap decides which profile to use based off what window is in focus. \
                 Only one profile is active at a time. \
                 Choose a window below.",
             );
-            ui.add_space(super::SPACING);
+            ui.add_space(style::SPACING);
 
             ui.label("Condition");
             egui::ComboBox::from_id_salt("condition")
@@ -101,7 +100,7 @@ pub fn ui_edit_profile_modal(
                     );
                 });
 
-            ui.add_space(super::SPACING);
+            ui.add_space(style::SPACING);
 
             StripBuilder::new(ui)
                 .size(Size::exact(300.0))
@@ -120,7 +119,7 @@ pub fn ui_edit_profile_modal(
                             });
                         });
 
-                        ui.add_space(super::SPACING);
+                        ui.add_space(style::SPACING);
 
                         ui.add_enabled_ui(enable_table, |ui| {
                             style::UI_FRAME.show(ui, |ui| {
@@ -140,7 +139,7 @@ pub fn ui_edit_profile_modal(
                         ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                             ui.add_enabled_ui(enable_table, |ui| {
                                 if ui
-                                    .add_sized(BUTTON_SIZE, egui::Button::new("Refresh"))
+                                    .add_sized(style::BUTTON_SIZE, egui::Button::new("Refresh"))
                                     .clicked()
                                 {
                                     modal_opts.open_windows =
@@ -158,8 +157,6 @@ fn ui_open_windows_table(
     ui: &mut egui::Ui,
     windows: &[query_windows::WindowInfo],
 ) -> Option<query_windows::WindowInfo> {
-    use super::HEADER_HEIGHT;
-    use super::ROW_HEIGHT;
     use egui_extras::{Column, TableBuilder};
 
     let mut pointing_hand = false;
@@ -172,7 +169,7 @@ fn ui_open_windows_table(
         .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
         .column(Column::exact(200.0)) // Process
         .column(Column::remainder().at_most(420.0)) // Window Title
-        .header(HEADER_HEIGHT, |mut header| {
+        .header(style::HEADER_HEIGHT, |mut header| {
             header.col(|ui| {
                 ui.strong("Process");
             });
@@ -182,7 +179,7 @@ fn ui_open_windows_table(
         })
         .body(|mut body| {
             for window in windows {
-                body.row(ROW_HEIGHT, |mut row| {
+                body.row(style::ROW_HEIGHT, |mut row| {
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
                         ui.add(egui::Label::new(&window.process).truncate());

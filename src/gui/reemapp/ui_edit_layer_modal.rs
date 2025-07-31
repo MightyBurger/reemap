@@ -11,7 +11,6 @@ pub fn ui_edit_layer_modal(
     heading: &str,
     show_rare_keys: bool,
 ) -> Option<bool> {
-    use crate::gui::reemapp::BUTTON_HEIGHT;
     use egui_extras::{Size, StripBuilder};
 
     let valid = !modal_opts.condition.is_empty();
@@ -24,18 +23,18 @@ pub fn ui_edit_layer_modal(
     ui_ok_cancel_modal(ui, &helper_text, valid, |ui| {
         ui.heading(heading);
         ui.separator();
-        ui.add_space(super::SPACING);
+        ui.add_space(style::SPACING);
 
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
             ui.label("Layer name");
             ui.text_edit_singleline(&mut modal_opts.name);
-            ui.add_space(super::SPACING);
+            ui.add_space(style::SPACING);
             ui.label(
                 "Layers let you override a profile's remaps when you hold down or toggle a key. \
                 Multiple layers can be active at the same time. \
                 Choose when this layer should be active below.",
             );
-            ui.add_space(super::SPACING);
+            ui.add_space(style::SPACING);
 
             ui.label("Layer type");
             egui::ComboBox::from_id_salt("layer type")
@@ -52,7 +51,7 @@ pub fn ui_edit_layer_modal(
                         "Toggle",
                     );
                 });
-            ui.add_space(super::SPACING);
+            ui.add_space(style::SPACING);
 
             ui.columns_const(|[col_1, col_2]| {
                 style::UI_FRAME.show(col_1, |ui| {
@@ -60,7 +59,7 @@ pub fn ui_edit_layer_modal(
                 });
                 StripBuilder::new(col_2)
                     .size(Size::remainder())
-                    .size(Size::initial(BUTTON_HEIGHT))
+                    .size(Size::initial(style::BUTTON_HEIGHT))
                     .vertical(|mut strip| {
                         strip.cell(|ui| {
                             style::UI_FRAME.show(ui, |ui| {
@@ -74,7 +73,7 @@ pub fn ui_edit_layer_modal(
                         });
                         strip.cell(|ui| {
                             ui.add_sized(
-                                [ui.available_width(), BUTTON_HEIGHT],
+                                [ui.available_width(), style::BUTTON_HEIGHT],
                                 egui::TextEdit::singleline(&mut modal_opts.search)
                                     .hint_text("Search"),
                             );

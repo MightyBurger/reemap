@@ -1,5 +1,4 @@
 use crate::gui::reemapp::EditProfileModalOpts;
-use crate::gui::reemapp::SPACING;
 use crate::gui::reemapp::style;
 use crate::gui::reemapp::ui_copy_modal::ui_copy_modal;
 use crate::gui::reemapp::ui_edit_profile_modal::ui_edit_profile_modal;
@@ -12,9 +11,6 @@ use super::GuiMenu;
 use super::ReemApp;
 
 pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
-    use super::BUTTON_HEIGHT;
-    use super::BUTTON_SIZE;
-    use super::BUTTON_WIDTH;
     use crate::gui::reemapp::style::REEMAP_SHADOW;
     use egui_extras::{Size, StripBuilder};
 
@@ -28,14 +24,14 @@ pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
                 StripBuilder::new(ui)
                     .size(Size::remainder())
                     .size(Size::relative(0.8))
-                    .size(Size::initial(BUTTON_HEIGHT))
+                    .size(Size::initial(style::BUTTON_HEIGHT))
                     .size(Size::remainder())
                     .vertical(|mut strip| {
                         strip.empty();
                         strip.cell(|ui| {
                             egui::Frame::new().shadow(REEMAP_SHADOW).show(ui, |ui| {
                                 ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-                                    ui.add_space(super::SPACING);
+                                    ui.add_space(style::SPACING);
                                     style::UI_FRAME.show(ui, |ui| {
                                         if args.config.profiles.is_empty() {
                                             ui.centered_and_justified(|ui| {
@@ -61,14 +57,14 @@ pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
                         strip.strip(|builder| {
                             builder
                                 .size(Size::remainder())
-                                .sizes(Size::initial(BUTTON_WIDTH), 3) // 3 buttons
+                                .sizes(Size::initial(style::BUTTON_WIDTH), 3) // 3 buttons
                                 .size(Size::remainder())
                                 .horizontal(|mut strip| {
                                     strip.empty();
                                     strip.cell(|ui| {
                                         if ui
                                             .add_sized(
-                                                BUTTON_SIZE,
+                                                style::BUTTON_SIZE,
                                                 egui::Button::new("Add Profile"),
                                             )
                                             .clicked()
@@ -87,7 +83,7 @@ pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
                                         ui.add_enabled_ui(!args.config.profiles.is_empty(), |ui| {
                                             if ui
                                                 .add_sized(
-                                                    BUTTON_SIZE,
+                                                    style::BUTTON_SIZE,
                                                     egui::Button::new("Copy Profile"),
                                                 )
                                                 .clicked()
@@ -100,7 +96,7 @@ pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
                                         ui.add_enabled_ui(!args.config.profiles.is_empty(), |ui| {
                                             if ui
                                                 .add_sized(
-                                                    BUTTON_SIZE,
+                                                    style::BUTTON_SIZE,
                                                     egui::Button::new("Rearrange"),
                                                 )
                                                 .clicked()
@@ -163,7 +159,7 @@ pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
         let ok_cancel = ui_ok_cancel_modal(ui, "", true, |ui| {
             ui.heading("Rearrange and Delete Profiles");
             ui.separator();
-            ui.add_space(SPACING);
+            ui.add_space(style::SPACING);
 
             style::UI_FRAME.show(ui, |ui| {
                 ui_rearrange_table(ui, &mut modal_opts.new_order, "Profile");

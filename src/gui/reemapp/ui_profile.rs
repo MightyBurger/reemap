@@ -6,7 +6,6 @@ use crate::gui::reemapp::NewBaseRemapModalOpts;
 use crate::gui::reemapp::ProfileConditionUI;
 use crate::gui::reemapp::RearrangeLayersModalOpts;
 use crate::gui::reemapp::RemapsSearchOpts;
-use crate::gui::reemapp::SPACING;
 use crate::gui::reemapp::style;
 use crate::gui::reemapp::ui_base_layer;
 use crate::gui::reemapp::ui_copy_modal::ui_copy_modal;
@@ -34,9 +33,6 @@ pub fn ui_profile(
     show_rare_keys: bool,
     modals: UiProfileModals,
 ) {
-    use super::BUTTON_HEIGHT;
-    use super::BUTTON_SIZE;
-    use super::BUTTON_WIDTH;
     use crate::gui::reemapp::style::REEMAP_SHADOW;
     use egui_extras::{Size, StripBuilder};
 
@@ -48,12 +44,12 @@ pub fn ui_profile(
                 strip.strip(|builder| {
                     builder
                         .size(Size::remainder())
-                        .size(Size::initial(BUTTON_HEIGHT))
+                        .size(Size::initial(style::BUTTON_HEIGHT))
                         .vertical(|mut strip| {
                             strip.cell(|ui| {
                                 ui.label(profile.condition.helper_text());
                                 let edit_response =
-                                    ui.add_sized(BUTTON_SIZE, egui::Button::new("Edit"));
+                                    ui.add_sized(style::BUTTON_SIZE, egui::Button::new("Edit"));
                                 if edit_response.clicked() {
                                     *modals.edit_profile_modal = EditProfileModalOpts {
                                         modal_open: true,
@@ -106,9 +102,9 @@ pub fn ui_profile(
                                         open_windows: query_windows::enumerate_open_windows(),
                                     };
                                 }
-                                ui.add_space(super::SPACING);
+                                ui.add_space(style::SPACING);
                                 ui.checkbox(&mut profile.clip_cursor, "Confine cursor to window");
-                                ui.add_space(super::SPACING);
+                                ui.add_space(style::SPACING);
 
                                 style::UI_FRAME.show(ui, |ui| {
                                     if profile.layers.is_empty() {
@@ -134,14 +130,14 @@ pub fn ui_profile(
                             strip.strip(|builder| {
                                 builder
                                     .size(Size::remainder())
-                                    .sizes(Size::initial(BUTTON_WIDTH), 3) // 3 buttons
+                                    .sizes(Size::initial(style::BUTTON_WIDTH), 3) // 3 buttons
                                     .size(Size::remainder())
                                     .horizontal(|mut strip| {
                                         strip.empty();
                                         strip.cell(|ui| {
                                             if ui
                                                 .add_sized(
-                                                    BUTTON_SIZE,
+                                                    style::BUTTON_SIZE,
                                                     egui::Button::new("Add Layer"),
                                                 )
                                                 .clicked()
@@ -157,7 +153,7 @@ pub fn ui_profile(
                                             ui.add_enabled_ui(!profile.layers.is_empty(), |ui| {
                                                 if ui
                                                     .add_sized(
-                                                        BUTTON_SIZE,
+                                                        style::BUTTON_SIZE,
                                                         egui::Button::new("Copy Layer"),
                                                     )
                                                     .clicked()
@@ -170,7 +166,7 @@ pub fn ui_profile(
                                             ui.add_enabled_ui(!profile.layers.is_empty(), |ui| {
                                                 if ui
                                                     .add_sized(
-                                                        BUTTON_SIZE,
+                                                        style::BUTTON_SIZE,
                                                         egui::Button::new("Rearrange"),
                                                     )
                                                     .clicked()
@@ -257,7 +253,7 @@ fn ui_rearrange_layers_modal(
     let ok_cancel = ui_ok_cancel_modal(ui, "", true, |ui| {
         ui.heading("Rearrange and Delete Layers");
         ui.separator();
-        ui.add_space(SPACING);
+        ui.add_space(style::SPACING);
 
         style::UI_FRAME.show(ui, |ui| {
             ui_rearrange_table(ui, &mut modal_opts.new_order, "Layer");
