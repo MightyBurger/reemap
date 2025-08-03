@@ -5,6 +5,7 @@ mod glutin_ctx;
 pub mod reemapp;
 
 use glutin_ctx::GlutinWindowContext;
+use tracing::trace;
 
 const TITLE: &str = "Reemap";
 const SIZE: winit::dpi::LogicalSize<f64> = winit::dpi::LogicalSize {
@@ -148,6 +149,7 @@ impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for Glow
         }
 
         if matches!(event, WindowEvent::RedrawRequested) {
+            trace!("redraw requested");
             self.egui_glow
                 .as_mut()
                 .unwrap()
@@ -157,6 +159,7 @@ impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for Glow
 
             event_loop.set_control_flow(if self.repaint_delay.is_zero() {
                 self.gl_window.as_mut().unwrap().window().request_redraw();
+                self.repaint_delay = std::time::Duration::MAX;
                 winit::event_loop::ControlFlow::Poll
             } else if let Some(repaint_after_instant) =
                 std::time::Instant::now().checked_add(self.repaint_delay)
@@ -196,7 +199,10 @@ impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for Glow
         event: ReemapGuiEvent,
     ) {
         match event {
-            ReemapGuiEvent::Redraw(delay) => self.repaint_delay = delay,
+            ReemapGuiEvent::Redraw(delay) => {
+                trace!(?delay, "Redraw called");
+                self.repaint_delay = delay
+            }
             ReemapGuiEvent::SetWindowVisibility(visible) => {
                 self.set_visible(visible, event_loop);
             }

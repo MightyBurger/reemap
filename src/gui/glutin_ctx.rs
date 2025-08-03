@@ -36,7 +36,7 @@ impl GlutinWindowContext {
             .with_fullscreen(None)
             .with_maximized(false)
             // .with_window_level(winit::window::WindowLevel::AlwaysOnTop)
-            // .with_theme(Some(winit::window::Theme::Dark))
+            .with_theme(Some(winit::window::Theme::Dark))
             .with_window_icon(Some(
                 winit::window::Icon::from_rgba(
                     ICON32_RAW_RGBA.to_vec(),

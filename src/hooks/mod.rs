@@ -55,10 +55,8 @@ pub fn run(
     std::mem::drop(running);
 
     // Initialize the persistent thread data.
-    trace!("locking HOOKLOCAL");
     let mut hooklocal = HOOKLOCAL.lock().unwrap();
     *hooklocal = Some(hooklocal::HookLocalData::init_settings(config, ui_proxy));
-    trace!("unlocking HOOKLOCAL");
     std::mem::drop(hooklocal);
 
     // Force Windows to create a message queue for this thread. We want to have one before we
@@ -117,13 +115,11 @@ pub fn run(
                     let config_boxed = Box::from_raw(raw);
                     let config = *config_boxed;
 
-                    trace!("locking HOOKLOCAL");
                     let mut hook_local_guard = HOOKLOCAL.lock().expect("mutex poisoned");
                     let hook_local = hook_local_guard
                         .as_mut()
                         .expect("local data should have been initialized");
                     hook_local.update_config(config);
-                    trace!("unlocking HOOKLOCAL");
                     drop(hook_local_guard);
                     trace!("done handling Update message");
                 }
@@ -131,13 +127,11 @@ pub fn run(
                     trace!("handling TimerExpire or CheckForeground message");
                     match get_foreground_window() {
                         Ok(info) => {
-                            trace!("locking HOOKLOCAL");
                             let mut hook_local_guard = HOOKLOCAL.lock().expect("mutex poisoned");
                             let hook_local = hook_local_guard
                                 .as_mut()
                                 .expect("local data should have been initialized");
                             hook_local.update_from_foreground(info);
-                            trace!("unlocking HOOKLOCAL");
                             drop(hook_local_guard);
                         }
                         Err(e) => {

@@ -375,7 +375,6 @@ On tap:
 fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
     trace!("got button down");
 
-    trace!("locking HOOKLOCAL");
     let mut hook_local_guard = HOOKLOCAL.lock().expect("mutex poisoned");
     let hook_local = hook_local_guard
         .as_mut()
@@ -491,7 +490,6 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
         }
     };
 
-    trace!("unlocking HOOKLOCAL");
     drop(hook_local_guard);
 
     intercepted
@@ -509,7 +507,6 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
 fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
     trace!("got button up");
 
-    trace!("locking HOOKLOCAL");
     let mut hook_local_guard = HOOKLOCAL.lock().expect("mutex poisoned");
     let hook_local = hook_local_guard
         .as_mut()
@@ -562,7 +559,6 @@ fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
     // Step 3
     hook_local.button_state[hold_button] = HoldButtonState::NotHeld;
 
-    trace!("unlocking HOOKLOCAL");
     drop(hook_local_guard);
 
     intercepted
@@ -584,7 +580,6 @@ fn intercept_tap_input(tap_button: TapButton) -> bool {
     // meaningless to "hold" a scroll wheel button.
     // This makes the job much easier.
 
-    trace!("locking HOOKLOCAL");
     let mut hook_local_guard = HOOKLOCAL.lock().expect("mutex poisoned");
     let hook_local = hook_local_guard
         .as_mut()
@@ -647,7 +642,6 @@ fn intercept_tap_input(tap_button: TapButton) -> bool {
         BaseRemapPolicy::NoRemap => false,
     };
 
-    trace!("unlocking HOOKLOCAL");
     drop(hook_local_guard);
 
     intercepted
