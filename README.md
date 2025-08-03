@@ -17,7 +17,7 @@ and remaps keyboard and mouse inputs.
 
 Reemap was originally developed for [Ori] speedrunners who use input remaps.
 
-Reemap is named after Reem. In [Ori and the Blind Forest][Ori], Reem is the spirit whose ancestral
+Reemap is named after Reem, the spirit in [Ori and the Blind Forest][Ori] whose ancestral
 tree grants Bash.
 
 This repository contains the source code for Reemap.
