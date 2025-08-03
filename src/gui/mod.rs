@@ -159,7 +159,7 @@ impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for Glow
 
             event_loop.set_control_flow(if self.repaint_delay.is_zero() {
                 self.gl_window.as_mut().unwrap().window().request_redraw();
-                self.repaint_delay = std::time::Duration::MAX;
+                // self.repaint_delay = std::time::Duration::MAX;
                 winit::event_loop::ControlFlow::Poll
             } else if let Some(repaint_after_instant) =
                 std::time::Instant::now().checked_add(self.repaint_delay)
@@ -168,6 +168,18 @@ impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for Glow
             } else {
                 winit::event_loop::ControlFlow::Wait
             });
+
+            unsafe {
+                use glow::HasContext as _;
+                const CLEAR_COLOR: [f32; 4] = [0.1, 0.1, 0.1, 1.0];
+                self.gl.as_mut().unwrap().clear_color(
+                    CLEAR_COLOR[0],
+                    CLEAR_COLOR[1],
+                    CLEAR_COLOR[2],
+                    CLEAR_COLOR[3],
+                );
+                self.gl.as_mut().unwrap().clear(glow::COLOR_BUFFER_BIT);
+            }
 
             self.egui_glow
                 .as_mut()
