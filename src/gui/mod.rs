@@ -1,11 +1,12 @@
-// The following code is from here:
+// The following code is loosely based on this example:
 // https://github.com/emilk/egui/blob/main/crates/egui_glow/examples/pure_glow.rs
+// Other code uses some concepts from eframe.
 
 mod glutin_ctx;
 pub mod reemapp;
 
 use glutin_ctx::GlutinWindowContext;
-use tracing::trace;
+use tracing::{trace, warn};
 
 const TITLE: &str = "Reemap";
 const SIZE: winit::dpi::LogicalSize<f64> = winit::dpi::LogicalSize {
@@ -26,12 +27,17 @@ const ICON256_WIDTH: u32 = 256;
 const ICON256_HEIGHT: u32 = 256;
 
 use std::sync::Arc;
+use std::time::Duration;
+use std::time::Instant;
 use tray_icon::TrayIcon;
 
 #[derive(Debug)]
 #[allow(dead_code)] // I'd like to keep SetWindowVisibility here in case the GUI ever needs it.
 pub enum ReemapGuiEvent {
-    Redraw(std::time::Duration),
+    RequestRepaint {
+        when: Instant,
+        cumulative_pass_nr: u64,
+    },
     SetWindowVisibility(bool),
     TrayIconEvent(tray_icon::TrayIconEvent),
     TrayMenuEvent(tray_icon::menu::MenuEvent),
@@ -47,7 +53,7 @@ struct GlowApp<T: TrayApp> {
     gl_window: Option<GlutinWindowContext>,
     gl: Option<Arc<glow::Context>>,
     egui_glow: Option<egui_glow::EguiGlow>,
-    repaint_delay: std::time::Duration,
+    next_repaint_time: Option<Instant>,
     tray_icon: Option<TrayIcon>,
     app_data: T,
 }
@@ -59,7 +65,7 @@ impl<T: TrayApp> GlowApp<T> {
             gl_window: None,
             gl: None,
             egui_glow: None,
-            repaint_delay: std::time::Duration::MAX,
+            next_repaint_time: Some(Instant::now()),
             tray_icon: None,
             app_data,
         }
@@ -76,6 +82,35 @@ impl<T: TrayApp> GlowApp<T> {
             event_loop.set_control_flow(winit::event_loop::ControlFlow::Wait);
         }
     }
+
+    fn check_repaint_time(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
+        let now = Instant::now();
+
+        match self.next_repaint_time {
+            Some(time) if now > time => {
+                trace!(?time, "GUI repainting now!");
+                // GUI needs to repaint now!
+                // This change to Poll will be undone shortly, before the message loop is empty.
+                // I believe this just prevents new_events from triggering, preventing an endless loop
+                // of calling request_redraw.
+                event_loop.set_control_flow(winit::event_loop::ControlFlow::Poll);
+                if let Some(gl_window) = self.gl_window.as_mut() {
+                    gl_window.window().request_redraw();
+                    self.next_repaint_time = None;
+                } else {
+                    warn!("Window wasn't open yet. Repainting again soon.");
+                }
+            }
+            Some(time) => {
+                // GUI will need to repaint, but not yet. Just wait a minute.
+                event_loop.set_control_flow(winit::event_loop::ControlFlow::WaitUntil(time));
+            }
+            None => {
+                // GUI doesn't have a need to re-paint.
+                event_loop.set_control_flow(winit::event_loop::ControlFlow::Wait);
+            }
+        };
+    }
 }
 
 impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for GlowApp<T> {
@@ -90,9 +125,15 @@ impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for Glow
         egui_glow
             .egui_ctx
             .set_request_repaint_callback(move |info| {
+                trace!(?info, "request repaint callback");
+                let when = Instant::now() + info.delay;
+                let cumulative_pass_nr = info.current_cumulative_pass_nr;
                 event_loop_proxy
                     .lock()
-                    .send_event(ReemapGuiEvent::Redraw(info.delay))
+                    .send_event(ReemapGuiEvent::RequestRepaint {
+                        when,
+                        cumulative_pass_nr,
+                    })
                     .expect("Cannot send event")
             });
         self.gl_window = Some(gl_window);
@@ -157,18 +198,6 @@ impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for Glow
                     self.app_data.update(cc)
                 });
 
-            event_loop.set_control_flow(if self.repaint_delay.is_zero() {
-                self.gl_window.as_mut().unwrap().window().request_redraw();
-                // self.repaint_delay = std::time::Duration::MAX;
-                winit::event_loop::ControlFlow::Poll
-            } else if let Some(repaint_after_instant) =
-                std::time::Instant::now().checked_add(self.repaint_delay)
-            {
-                winit::event_loop::ControlFlow::WaitUntil(repaint_after_instant)
-            } else {
-                winit::event_loop::ControlFlow::Wait
-            });
-
             unsafe {
                 use glow::HasContext as _;
                 const CLEAR_COLOR: [f32; 4] = [0.1, 0.1, 0.1, 1.0];
@@ -187,6 +216,7 @@ impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for Glow
                 .paint(self.gl_window.as_mut().unwrap().window());
 
             self.gl_window.as_mut().unwrap().swap_buffers().unwrap();
+            self.check_repaint_time(event_loop);
             return;
         }
 
@@ -211,9 +241,28 @@ impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for Glow
         event: ReemapGuiEvent,
     ) {
         match event {
-            ReemapGuiEvent::Redraw(delay) => {
-                trace!(?delay, "Redraw called");
-                self.repaint_delay = delay
+            ReemapGuiEvent::RequestRepaint {
+                when,
+                cumulative_pass_nr,
+            } => {
+                let current_pass_nr = self
+                    .egui_glow
+                    .as_ref()
+                    .unwrap()
+                    .egui_ctx
+                    .cumulative_pass_nr();
+                trace!(
+                    ?when,
+                    ?cumulative_pass_nr,
+                    ?current_pass_nr,
+                    "request repaint user event"
+                );
+
+                if current_pass_nr == cumulative_pass_nr
+                    || current_pass_nr == cumulative_pass_nr + 1
+                {
+                    self.next_repaint_time = Some(when);
+                }
             }
             ReemapGuiEvent::SetWindowVisibility(visible) => {
                 self.set_visible(visible, event_loop);
@@ -255,16 +304,22 @@ impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for Glow
             }
             _ => (),
         }
+        self.check_repaint_time(event_loop);
     }
 
     fn new_events(
         &mut self,
-        _event_loop: &winit::event_loop::ActiveEventLoop,
+        event_loop: &winit::event_loop::ActiveEventLoop,
         cause: winit::event::StartCause,
     ) {
-        if let winit::event::StartCause::ResumeTimeReached { .. } = &cause {
-            self.gl_window.as_mut().unwrap().window().request_redraw();
+        if let winit::event::StartCause::ResumeTimeReached {
+            start,
+            requested_resume,
+        } = &cause
+        {
+            trace!(?start, ?requested_resume, "woke up, checking repaint time");
         }
+        self.check_repaint_time(event_loop);
     }
 
     fn exiting(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
