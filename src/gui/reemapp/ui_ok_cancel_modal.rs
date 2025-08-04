@@ -33,6 +33,7 @@ pub fn ui_ok_cancel_modal(
                     strip.strip(|builder| {
                         builder
                             .size(Size::remainder())
+                            .size(Size::exact(style::SPACING))
                             .size(Size::initial(style::BUTTON_WIDTH * 2.0)) // 2 for two buttons
                             .horizontal(|mut strip| {
                                 strip.cell(|ui| {
@@ -43,6 +44,7 @@ pub fn ui_ok_cancel_modal(
                                         },
                                     );
                                 });
+                                strip.empty();
                                 strip.cell(|ui| {
                                     ui.with_layout(
                                         egui::Layout::right_to_left(egui::Align::Center),
