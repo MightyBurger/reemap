@@ -181,6 +181,8 @@ fn ui_open_windows_table(
 ) -> Option<query_windows::WindowInfo> {
     use egui_extras::{Column, TableBuilder};
 
+    let process_exclude_list = ["reemap.exe"];
+
     let mut pointing_hand = false;
     let mut window_select = None;
     TableBuilder::new(ui)
@@ -200,7 +202,11 @@ fn ui_open_windows_table(
             });
         })
         .body(|mut body| {
-            for window in windows {
+            for window in windows.into_iter().filter(|window| {
+                !process_exclude_list
+                    .iter()
+                    .any(|process| *process == window.process)
+            }) {
                 body.row(style::ROW_HEIGHT, |mut row| {
                     row.col(|ui| {
                         ui.style_mut().interaction.selectable_labels = false;
