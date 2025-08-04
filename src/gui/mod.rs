@@ -27,7 +27,6 @@ const ICON256_WIDTH: u32 = 256;
 const ICON256_HEIGHT: u32 = 256;
 
 use std::sync::Arc;
-use std::time::Duration;
 use std::time::Instant;
 use tray_icon::TrayIcon;
 
