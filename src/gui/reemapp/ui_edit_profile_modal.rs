@@ -47,109 +47,143 @@ pub fn ui_edit_profile_modal(
         ui.heading(heading);
         ui.separator();
 
-        ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
-            ui.label("Profile name");
-            ui.text_edit_singleline(&mut modal_opts.name);
-            ui.add_space(style::SPACING);
-            ui.label(
-                "Reemap decides which profile to use based off what window is in focus. \
-                Only one profile is active at a time. \
-                Choose a window below.",
-            );
-            ui.add_space(style::SPACING);
+        let min_width = 80.0;
 
-            ui.label("Condition");
-            egui::ComboBox::from_id_salt("condition")
-                .selected_text(modal_opts.condition.to_string())
-                .show_ui(ui, |ui| {
-                    ui.selectable_value(
-                        &mut modal_opts.condition,
-                        ProfileConditionUI::Always,
-                        "Always active",
-                    );
-                    ui.selectable_value(
-                        &mut modal_opts.condition,
-                        ProfileConditionUI::TitleAndProcess,
-                        "Window title and process",
-                    );
-                    ui.selectable_value(
-                        &mut modal_opts.condition,
-                        ProfileConditionUI::Title,
-                        "Window title",
-                    );
-                    ui.selectable_value(
-                        &mut modal_opts.condition,
-                        ProfileConditionUI::Process,
-                        "Process",
-                    );
+        ui.add_space(style::SPACING);
+        egui::Grid::new("edit_profile1")
+            .min_col_width(min_width)
+            .num_columns(2)
+            .spacing([style::SPACING, style::SPACING])
+            .show(ui, |ui| {
+                ui.label("Profile name");
+                ui.text_edit_singleline(&mut modal_opts.name);
+                ui.end_row();
+
+                ui.label("Condition");
+                egui::ComboBox::from_id_salt("condition")
+                    .selected_text(modal_opts.condition.to_string())
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(
+                            &mut modal_opts.condition,
+                            ProfileConditionUI::Always,
+                            "Always active",
+                        );
+                        ui.selectable_value(
+                            &mut modal_opts.condition,
+                            ProfileConditionUI::TitleAndProcess,
+                            "Window title and process",
+                        );
+                        ui.selectable_value(
+                            &mut modal_opts.condition,
+                            ProfileConditionUI::Title,
+                            "Window title",
+                        );
+                        ui.selectable_value(
+                            &mut modal_opts.condition,
+                            ProfileConditionUI::Process,
+                            "Process",
+                        );
+
+                        ui.separator();
+
+                        ui.scope(|ui| {
+                            ui.style_mut().interaction.selectable_labels = false;
+                            ui.add(egui::Label::new(egui::RichText::new("Presets").italics()));
+                        });
+
+                        ui.selectable_value(
+                            &mut modal_opts.condition,
+                            ProfileConditionUI::OriBF,
+                            "Ori and the Blind Forest",
+                        );
+                        ui.selectable_value(
+                            &mut modal_opts.condition,
+                            ProfileConditionUI::OriBFDE,
+                            "Ori and the Blind Forest: Definitive Edition",
+                        );
+                        ui.selectable_value(
+                            &mut modal_opts.condition,
+                            ProfileConditionUI::OriWotW,
+                            "Ori and the Will of the Wisps",
+                        );
+                    });
+                ui.end_row();
+            });
+        ui.add_space(style::SPACING * 2.0);
+
+        // ui.add_space(style::SPACING);
+        // ui.label(
+        //     "Reemap decides which profile to use based off what window is in focus. \
+        //         Only one profile is active at a time.",
+        // );
+        // ui.add_space(style::SPACING);
+
+        // ui.add_space(style::SPACING);
+
+        ui.add_enabled(
+            enable_table,
+            egui::Label::new("Select from a list of running applications:"),
+        );
+
+        StripBuilder::new(ui)
+            .size(Size::exact(200.0))
+            .size(Size::initial(style::BUTTON_HEIGHT))
+            .size(Size::exact(style::SPACING * 2.0))
+            .size(Size::initial(style::BUTTON_HEIGHT * 2.0))
+            .size(Size::exact(style::SPACING))
+            .size(Size::initial(1.0))
+            .vertical(|mut strip| {
+                strip.cell(|ui| {
+                    ui.add_enabled_ui(enable_table, |ui| {
+                        style::UI_FRAME.show(ui, |ui| {
+                            if let Some(query_windows::WindowInfo {
+                                title,
+                                process,
+                                rect: _,
+                            }) = ui_open_windows_table(ui, &modal_opts.open_windows)
+                            {
+                                modal_opts.title = title;
+                                modal_opts.process = process;
+                            }
+                        });
+                    });
+                });
+                strip.cell(|ui| {
+                    ui.add_enabled_ui(enable_table, |ui| {
+                        if ui
+                            .add_sized(style::BUTTON_SIZE, egui::Button::new("Refresh"))
+                            .clicked()
+                        {
+                            modal_opts.open_windows = query_windows::enumerate_open_windows();
+                        }
+                    });
+                });
+                strip.empty();
+                strip.cell(|ui| {
+                    egui::Grid::new("edit_profile2")
+                        .min_col_width(min_width)
+                        .num_columns(2)
+                        .spacing([style::SPACING, style::SPACING])
+                        .show(ui, |ui| {
+                            ui.add_enabled(enable_title, egui::Label::new("Window Title"));
+                            ui.add_enabled(
+                                enable_title,
+                                egui::TextEdit::singleline(&mut modal_opts.title),
+                            );
+                            ui.end_row();
+                            ui.add_enabled(enable_process, egui::Label::new("Process"));
+                            ui.add_enabled(
+                                enable_process,
+                                egui::TextEdit::singleline(&mut modal_opts.process),
+                            );
+                            ui.end_row();
+                        });
+                });
+                strip.empty();
+                strip.cell(|ui| {
                     ui.separator();
-                    ui.selectable_value(
-                        &mut modal_opts.condition,
-                        ProfileConditionUI::OriBF,
-                        "Ori and the Blind Forest",
-                    );
-                    ui.selectable_value(
-                        &mut modal_opts.condition,
-                        ProfileConditionUI::OriBFDE,
-                        "Ori and the Blind Forest: Definitive Edition",
-                    );
-                    ui.selectable_value(
-                        &mut modal_opts.condition,
-                        ProfileConditionUI::OriWotW,
-                        "Ori and the Will of the Wisps",
-                    );
                 });
-
-            ui.add_space(style::SPACING);
-
-            StripBuilder::new(ui)
-                .size(Size::exact(300.0))
-                .size(Size::exact(20.0))
-                .vertical(|mut strip| {
-                    strip.cell(|ui| {
-                        ui.columns_const(|[col_1, col_2]| {
-                            col_1.add_enabled_ui(enable_title, |ui| {
-                                ui.label("Window Title");
-                                ui.text_edit_singleline(&mut modal_opts.title);
-                            });
-
-                            col_2.add_enabled_ui(enable_process, |ui| {
-                                ui.label("Process");
-                                ui.text_edit_singleline(&mut modal_opts.process);
-                            });
-                        });
-
-                        ui.add_space(style::SPACING);
-
-                        ui.add_enabled_ui(enable_table, |ui| {
-                            style::UI_FRAME.show(ui, |ui| {
-                                if let Some(query_windows::WindowInfo {
-                                    title,
-                                    process,
-                                    rect: _,
-                                }) = ui_open_windows_table(ui, &modal_opts.open_windows)
-                                {
-                                    modal_opts.title = title;
-                                    modal_opts.process = process;
-                                }
-                            });
-                        });
-                    });
-                    strip.cell(|ui| {
-                        ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
-                            ui.add_enabled_ui(enable_table, |ui| {
-                                if ui
-                                    .add_sized(style::BUTTON_SIZE, egui::Button::new("Refresh"))
-                                    .clicked()
-                                {
-                                    modal_opts.open_windows =
-                                        query_windows::enumerate_open_windows();
-                                }
-                            });
-                        });
-                    });
-                });
-        });
+            });
     })
 }
 
