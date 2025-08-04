@@ -201,8 +201,10 @@ fn ui_new_base_remap_modal(
         ui.heading(format!("Remaps for {button}"));
         ui.separator();
         ui.add_space(style::SPACING);
-        ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
+
+        ui.horizontal(|ui| {
             ui.label("Policy");
+            ui.add_space(style::SPACING);
             egui::ComboBox::from_id_salt("policy")
                 .selected_text(format!("{}", &modal_opts.policy))
                 .show_ui(ui, |ui| {
@@ -213,40 +215,40 @@ fn ui_new_base_remap_modal(
                     );
                     ui.selectable_value(&mut modal_opts.policy, BaseRemapPolicyUI::Remap, "Remap");
                 });
-            ui.add_space(style::SPACING);
+        });
+        ui.add_space(style::SPACING);
 
-            let enable_tables = match modal_opts.policy {
-                BaseRemapPolicyUI::NoRemap => false,
-                BaseRemapPolicyUI::Remap => true,
-            };
-            ui.add_enabled_ui(enable_tables, |ui| {
-                ui.columns_const(|[col_1, col_2]| {
-                    style::UI_FRAME.show(col_1, |ui| {
-                        ui_rearrange_table(ui, &mut modal_opts.outputs, "Output");
-                    });
-                    StripBuilder::new(col_2)
-                        .size(Size::remainder())
-                        .size(Size::initial(style::BUTTON_HEIGHT))
-                        .vertical(|mut strip| {
-                            strip.cell(|ui| {
-                                style::UI_FRAME.show(ui, |ui| {
-                                    ui_available_buttons_table(
-                                        ui,
-                                        &mut modal_opts.outputs,
-                                        &modal_opts.search,
-                                        show_rare_keys,
-                                    );
-                                });
-                            });
-                            strip.cell(|ui| {
-                                ui.add_sized(
-                                    [ui.available_width(), style::BUTTON_HEIGHT],
-                                    egui::TextEdit::singleline(&mut modal_opts.search)
-                                        .hint_text("Search"),
+        let enable_tables = match modal_opts.policy {
+            BaseRemapPolicyUI::NoRemap => false,
+            BaseRemapPolicyUI::Remap => true,
+        };
+        ui.add_enabled_ui(enable_tables, |ui| {
+            ui.columns_const(|[col_1, col_2]| {
+                style::UI_FRAME.show(col_1, |ui| {
+                    ui_rearrange_table(ui, &mut modal_opts.outputs, "Output");
+                });
+                StripBuilder::new(col_2)
+                    .size(Size::remainder())
+                    .size(Size::initial(style::BUTTON_HEIGHT))
+                    .vertical(|mut strip| {
+                        strip.cell(|ui| {
+                            style::UI_FRAME.show(ui, |ui| {
+                                ui_available_buttons_table(
+                                    ui,
+                                    &mut modal_opts.outputs,
+                                    &modal_opts.search,
+                                    show_rare_keys,
                                 );
                             });
                         });
-                });
+                        strip.cell(|ui| {
+                            ui.add_sized(
+                                [ui.available_width(), style::BUTTON_HEIGHT],
+                                egui::TextEdit::singleline(&mut modal_opts.search)
+                                    .hint_text("Search"),
+                            );
+                        });
+                    });
             });
         });
     });
