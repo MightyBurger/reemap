@@ -134,7 +134,6 @@ pub fn ui_profile(
                                             {
                                                 *modals.new_layer_modal = EditLayerModalOpts {
                                                     modal_open: true,
-                                                    name: String::from("New layer"),
                                                     ..Default::default()
                                                 };
                                             }
