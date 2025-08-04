@@ -34,6 +34,7 @@ pub fn ui_copy_modal<T>(
         ui.heading(format!("Copy {list_name}"));
         ui.separator();
         ui.add_space(style::SPACING);
+        ui.label("Choose an item to copy:");
         style::UI_FRAME.show(ui, |ui| {
             let item_select = ui_clickable_table(ui, list, list_name);
             if let Some(item_select) = item_select {

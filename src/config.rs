@@ -160,7 +160,7 @@ pub struct Layer {
 impl Default for Layer {
     fn default() -> Self {
         Self {
-            name: String::from("New Layer"),
+            name: String::default(),
             enabled: true,
             layer_type: LayerType::default(),
             condition: Vec::new(),
