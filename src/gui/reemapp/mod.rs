@@ -52,7 +52,7 @@ enum ProfileConditionUI {
 
 impl Default for ProfileConditionUI {
     fn default() -> Self {
-        Self::OriBFDE
+        Self::TitleAndProcess
     }
 }
 
@@ -188,6 +188,20 @@ impl EditProfileModalOpts {
                 process: "oriwotw.exe".to_string(),
             },
         }
+    }
+    fn valid(&self) -> bool {
+        !self.name.is_empty()
+            && match self.condition {
+                ProfileConditionUI::TitleAndProcess => {
+                    !self.title.is_empty() && !self.process.is_empty()
+                }
+                ProfileConditionUI::Title => !self.title.is_empty(),
+                ProfileConditionUI::Process => !self.process.is_empty(),
+                ProfileConditionUI::Always
+                | ProfileConditionUI::OriBF
+                | ProfileConditionUI::OriBFDE
+                | ProfileConditionUI::OriWotW => true,
+            }
     }
 }
 

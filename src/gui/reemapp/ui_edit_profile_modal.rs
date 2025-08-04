@@ -10,19 +10,11 @@ pub fn ui_edit_profile_modal(
 ) -> Option<bool> {
     use egui_extras::{Size, StripBuilder};
 
-    let valid = match modal_opts.condition {
-        ProfileConditionUI::TitleAndProcess => {
-            !modal_opts.title.is_empty() && !modal_opts.process.is_empty()
-        }
-        ProfileConditionUI::Title => !modal_opts.title.is_empty(),
-        ProfileConditionUI::Process => !modal_opts.process.is_empty(),
-        ProfileConditionUI::Always
-        | ProfileConditionUI::OriBF
-        | ProfileConditionUI::OriBFDE
-        | ProfileConditionUI::OriWotW => true,
-    };
+    let valid = modal_opts.valid();
     let helper_text = if valid {
         modal_opts.clone().extract_condition().helper_text()
+    } else if modal_opts.name.is_empty() {
+        String::from("Choose a profile name")
     } else {
         String::from("Choose a window title or process")
     };
@@ -56,7 +48,10 @@ pub fn ui_edit_profile_modal(
             .spacing([style::SPACING, style::SPACING])
             .show(ui, |ui| {
                 ui.label("Profile name");
-                ui.text_edit_singleline(&mut modal_opts.name);
+                ui.add(
+                    egui::TextEdit::singleline(&mut modal_opts.name)
+                        .hint_text("Insert profile name"),
+                );
                 ui.end_row();
 
                 ui.label("Condition");
@@ -111,15 +106,6 @@ pub fn ui_edit_profile_modal(
             });
         ui.add_space(style::SPACING * 2.0);
 
-        // ui.add_space(style::SPACING);
-        // ui.label(
-        //     "Reemap decides which profile to use based off what window is in focus. \
-        //         Only one profile is active at a time.",
-        // );
-        // ui.add_space(style::SPACING);
-
-        // ui.add_space(style::SPACING);
-
         ui.add_enabled(
             enable_table,
             egui::Label::new("Select from a list of running applications:"),
@@ -168,13 +154,15 @@ pub fn ui_edit_profile_modal(
                             ui.add_enabled(enable_title, egui::Label::new("Window Title"));
                             ui.add_enabled(
                                 enable_title,
-                                egui::TextEdit::singleline(&mut modal_opts.title),
+                                egui::TextEdit::singleline(&mut modal_opts.title)
+                                    .hint_text("Insert title"),
                             );
                             ui.end_row();
                             ui.add_enabled(enable_process, egui::Label::new("Process"));
                             ui.add_enabled(
                                 enable_process,
-                                egui::TextEdit::singleline(&mut modal_opts.process),
+                                egui::TextEdit::singleline(&mut modal_opts.process)
+                                    .hint_text("Insert process"),
                             );
                             ui.end_row();
                         });

@@ -72,7 +72,6 @@ pub fn ui_main(ui: &mut egui::Ui, args: &mut ReemApp) {
                                             args.gui_local.new_profile_modal =
                                                 EditProfileModalOpts {
                                                     modal_open: true,
-                                                    name: String::from("New Profile"),
                                                     open_windows:
                                                         query_windows::enumerate_open_windows(),
                                                     ..Default::default()
