@@ -466,6 +466,7 @@ fn see_buttons_modal(
     hookthread_proxy: &crate::hooks::HookthreadProxy,
     last_pressed_button: Option<crate::buttons::Button>,
 ) {
+    use buttons::key::KeyType;
     let modal = egui::Modal::new(egui::Id::new("about modal"))
         .backdrop_color(style::MODAL_BACKDROP_COLOR)
         .frame(style::MODAL_FRAME)
@@ -475,12 +476,21 @@ fn see_buttons_modal(
             ui.heading("Button Viewer");
 
             ui.label("Use this tool to see what Reemap thinks a button is called.");
+            ui.label("First, click away from Reemap so it is not in focus.");
+            ui.add_space(style::SPACING);
             ui.label("The last pressed button is: ");
             ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+                ui.add_space(style::SPACING);
                 ui.strong(match last_pressed_button {
                     None => "(none)".to_string(),
                     Some(button) => button.to_string(),
                 });
+                if let Some(buttons::Button::Key(key)) = last_pressed_button
+                    && key.key_type() == KeyType::Rare
+                {
+                    ui.add_space(style::SPACING);
+                    ui.label("To remap this key, you must enable unusual keys in Reemap settings.");
+                }
             });
         });
     if modal.should_close() {

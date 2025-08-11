@@ -142,6 +142,7 @@ pub fn run(
                 }
                 Some(HookMessage::RegisterUIObserveInputs) => {
                     trace!("handling RegisterUIObserveInputs message");
+                    debug!("registered to send inputs to UI");
                     let mut hook_local_guard = HOOKLOCAL.lock().expect("mutex poisoned");
                     let hook_local = hook_local_guard
                         .as_mut()
@@ -152,6 +153,7 @@ pub fn run(
                 }
                 Some(HookMessage::UnregisterUIObserveInputs) => {
                     trace!("handling UnregisterUIObserveInputs message");
+                    debug!("unregistered to send inputs to UI");
                     let mut hook_local_guard = HOOKLOCAL.lock().expect("mutex poisoned");
                     let hook_local = hook_local_guard
                         .as_mut()
