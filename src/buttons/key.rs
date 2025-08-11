@@ -203,6 +203,19 @@ pub enum KeyButton {
     PA1 = 0xFD,
     OEM_CLEAR = 0xFE,
 }
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum KeyType {
+    // Keys you will frequently want to remap.
+    Common,
+    // Keys that are either rare on modern hardware, or keys you probably don't want to remap.
+    // Reemap will hide them behind a setting, but still allow remaps to/from it.
+    // Examples include the "mouse-button-as-key" keys and the IME keys.
+    Rare,
+    // Keys Reemap will refuse to remap.
+    // An important example is Scroll Lock, as Reemap uses it as an "escape hatch". When scroll lock
+    // is enabled, Reemap will not remap anything.
+    Unmappable,
+}
 
 impl KeyButton {
     pub fn from_vk(vk: u8) -> Option<Self> {
@@ -422,20 +435,6 @@ impl KeyButton {
             Self::OEM_CLEAR => KeyType::Rare,
         }
     }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum KeyType {
-    // Keys you will frequently want to remap.
-    Common,
-    // Keys that are either rare on modern hardware, or keys you probably don't want to remap.
-    // Reemap will hide them behind a setting, but still allow remaps to/from it.
-    // Examples include the "mouse-button-as-key" keys and the IME keys.
-    Rare,
-    // Keys Reemap will refuse to remap.
-    // An important example is Scroll Lock, as Reemap uses it as an "escape hatch". When scroll lock
-    // is enabled, Reemap will not remap anything.
-    Unmappable,
 }
 
 impl std::fmt::Display for KeyButton {
