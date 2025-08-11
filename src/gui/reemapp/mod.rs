@@ -22,6 +22,7 @@ use ui_profile::ui_profile;
 use crate::buttons;
 use crate::config;
 use crate::config::Output;
+use crate::gui::TrayAppCtx;
 use crate::gui::reemapp::ui_profile::UiProfileModals;
 use crate::hooks;
 use crate::query_windows;
@@ -131,6 +132,7 @@ pub struct GuiLocal {
     rearrange_layers_modal: RearrangeLayersModalOpts,
     new_remap_modal: NewRemapModalOpts,
     new_base_remap_modal: NewBaseRemapModalOpts,
+    see_buttons_modal: bool,
     about_modal: bool,
     settings_modal: SettingsModalOpts,
 }
@@ -280,7 +282,11 @@ impl Default for GuiMenu {
 
 impl crate::gui::TrayApp for ReemApp {
     #[instrument(skip_all, name = "ui")]
-    fn update(&mut self, ctx: &egui::Context) {
+    fn update(&mut self, ctx: &egui::Context, app_ctx: &TrayAppCtx) {
+        let TrayAppCtx {
+            last_pressed_button,
+        } = app_ctx;
+
         egui_extras::install_image_loaders(ctx);
 
         egui::TopBottomPanel::top("menu bar panel")
@@ -312,6 +318,12 @@ impl crate::gui::TrayApp for ReemApp {
                             self.gui_local.settings_modal.show_rare_keys =
                                 self.config.show_rare_keys;
                             self.gui_local.settings_modal.modal_open = true;
+                        }
+                    });
+                    ui.menu_button("Tools", |ui| {
+                        if ui.button("Button Viewer").clicked() {
+                            self.gui_local.see_buttons_modal = true;
+                            self.hookthread_proxy.register_observe_inputs();
                         }
                     });
                     ui.menu_button("Help", |ui| {
@@ -392,6 +404,14 @@ impl crate::gui::TrayApp for ReemApp {
                 if self.gui_local.settings_modal.modal_open {
                     settings_modal(ui, &mut self.gui_local.settings_modal, &mut self.config);
                 }
+                if self.gui_local.see_buttons_modal {
+                    see_buttons_modal(
+                        ui,
+                        &mut self.gui_local.see_buttons_modal,
+                        &self.hookthread_proxy,
+                        *last_pressed_button,
+                    );
+                }
                 if self.gui_local.about_modal {
                     about_modal(ui, &mut self.gui_local.about_modal);
                 }
@@ -437,6 +457,35 @@ Lock key, which Reemap uses as an escape-hatch to disable all remaps.",
             modal_opts.modal_open = false;
         }
         None => (),
+    }
+}
+
+fn see_buttons_modal(
+    ui: &mut egui::Ui,
+    modal_opts: &mut bool,
+    hookthread_proxy: &crate::hooks::HookthreadProxy,
+    last_pressed_button: Option<crate::buttons::Button>,
+) {
+    let modal = egui::Modal::new(egui::Id::new("about modal"))
+        .backdrop_color(style::MODAL_BACKDROP_COLOR)
+        .frame(style::MODAL_FRAME)
+        .show(ui.ctx(), |ui| {
+            style::set_reemap_style(ui);
+
+            ui.heading("Button Viewer");
+
+            ui.label("Use this tool to see what Reemap thinks a button is called.");
+            ui.label("The last pressed button is: ");
+            ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+                ui.strong(match last_pressed_button {
+                    None => "(none)".to_string(),
+                    Some(button) => button.to_string(),
+                });
+            });
+        });
+    if modal.should_close() {
+        *modal_opts = false;
+        hookthread_proxy.unregister_observe_inputs();
     }
 }
 

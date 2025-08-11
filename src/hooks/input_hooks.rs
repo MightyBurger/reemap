@@ -373,12 +373,21 @@ On tap:
 // Refer to the above pseudocode.
 #[instrument(name = "btn_down")]
 fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
+    use crate::gui::ReemapGuiEvent::ButtonPressed;
+
     trace!("got button down");
 
     let mut hook_local_guard = HOOKLOCAL.lock().expect("mutex poisoned");
     let hook_local = hook_local_guard
         .as_mut()
         .expect("local data should have been initialized");
+
+    // Inform the UI of this button press if it wants to know.
+    if hook_local.ui_observing_inputs {
+        let _ = hook_local
+            .ui_proxy
+            .send_event(ButtonPressed(hold_button.into()));
+    }
 
     // Step 1
     // An early return to handle key repeat - the case when you get multiple keydowns before a keyup
@@ -574,6 +583,8 @@ fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
 // Refer to the above pseudocode.
 #[instrument(name = "tap")]
 fn intercept_tap_input(tap_button: TapButton) -> bool {
+    use crate::gui::ReemapGuiEvent::ButtonPressed;
+
     trace!("got tap input");
     // Layers are not allowed to depend on tap inputs.
     // Additionally, we do not try to remember which tap inputs are "held", because it is
@@ -584,6 +595,13 @@ fn intercept_tap_input(tap_button: TapButton) -> bool {
     let hook_local = hook_local_guard
         .as_mut()
         .expect("local data should have been initialized");
+
+    // Inform the UI of this button press if it wants to know.
+    if hook_local.ui_observing_inputs {
+        let _ = hook_local
+            .ui_proxy
+            .send_event(ButtonPressed(tap_button.into()));
+    }
 
     // Check that a profile is actually active. Otherwise, do not intercept.
     let Some(profile_idx) = hook_local.active_profile else {
