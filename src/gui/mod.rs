@@ -316,6 +316,7 @@ impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for Glow
             }
             ReemapGuiEvent::ButtonPressed(button) => {
                 self.app_ctx.last_pressed_button = Some(button);
+                self.next_repaint_time = Some(std::time::Instant::now());
             }
         }
         self.check_repaint_time(event_loop);
