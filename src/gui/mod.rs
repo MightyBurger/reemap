@@ -5,6 +5,8 @@
 mod glutin_ctx;
 pub mod reemapp;
 
+use crate::buttons;
+
 use glutin_ctx::GlutinWindowContext;
 use tracing::{trace, warn};
 
@@ -41,10 +43,18 @@ pub enum ReemapGuiEvent {
     TrayIconEvent(tray_icon::TrayIconEvent),
     TrayMenuEvent(tray_icon::menu::MenuEvent),
     ChangedProfile(Option<String>),
+    ButtonPressed(buttons::Button),
+}
+
+// Just something to pass along a little more info to the app.
+// Only used in Reemap to pass along information of what button was pressed last.
+#[derive(Debug, Default, Clone)]
+pub struct TrayAppCtx {
+    last_pressed_button: Option<buttons::Button>,
 }
 
 pub trait TrayApp {
-    fn update(&mut self, ctx: &egui::Context);
+    fn update(&mut self, egui_ctx: &egui::Context, app_ctx: &TrayAppCtx);
 }
 
 struct GlowApp<T: TrayApp> {
@@ -54,6 +64,7 @@ struct GlowApp<T: TrayApp> {
     egui_glow: Option<egui_glow::EguiGlow>,
     next_repaint_time: Option<Instant>,
     tray_icon: Option<TrayIcon>,
+    app_ctx: TrayAppCtx,
     app_data: T,
 }
 
@@ -66,6 +77,7 @@ impl<T: TrayApp> GlowApp<T> {
             egui_glow: None,
             next_repaint_time: Some(Instant::now()),
             tray_icon: None,
+            app_ctx: TrayAppCtx::default(),
             app_data,
         }
     }
@@ -194,7 +206,7 @@ impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for Glow
                 .as_mut()
                 .unwrap()
                 .run(self.gl_window.as_mut().unwrap().window(), |cc| {
-                    self.app_data.update(cc)
+                    self.app_data.update(cc, &self.app_ctx)
                 });
 
             unsafe {
@@ -276,6 +288,7 @@ impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for Glow
                     gl_window.window().set_minimized(false);
                 }
             }
+            ReemapGuiEvent::TrayIconEvent(_) => {}
             ReemapGuiEvent::TrayMenuEvent(tray_icon::menu::MenuEvent {
                 id: tray_icon::menu::MenuId(id),
             }) => match id.as_str() {
@@ -301,7 +314,10 @@ impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for Glow
                     gl_window.window().set_title(&title);
                 }
             }
-            _ => (),
+            ReemapGuiEvent::ButtonPressed(button) => {
+                self.app_ctx.last_pressed_button = Some(button);
+                self.next_repaint_time = Some(std::time::Instant::now());
+            }
         }
         self.check_repaint_time(event_loop);
     }

@@ -31,6 +31,7 @@ pub static HOOKLOCAL: Mutex<Option<HookLocalData>> = Mutex::new(None);
 #[derive(Debug, Clone)]
 pub struct HookLocalData {
     pub ui_proxy: winit::event_loop::EventLoopProxy<gui::ReemapGuiEvent>,
+    pub ui_observing_inputs: bool,
     pub config: config::Config,
     pub button_state: EnumMap<buttons::HoldButton, HoldButtonState>,
     pub active_profile: Option<usize>,
@@ -46,6 +47,7 @@ impl HookLocalData {
     ) -> Self {
         let mut result = Self {
             ui_proxy,
+            ui_observing_inputs: false,
             config: Default::default(),
             button_state: Default::default(),
             active_profile: Default::default(),

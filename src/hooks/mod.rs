@@ -140,6 +140,28 @@ pub fn run(
                     }
                     trace!("done handling TimerExpire or CheckForeground message");
                 }
+                Some(HookMessage::RegisterUIObserveInputs) => {
+                    trace!("handling RegisterUIObserveInputs message");
+                    debug!("registered to send inputs to UI");
+                    let mut hook_local_guard = HOOKLOCAL.lock().expect("mutex poisoned");
+                    let hook_local = hook_local_guard
+                        .as_mut()
+                        .expect("local data should have been initialized");
+                    hook_local.ui_observing_inputs = true;
+                    drop(hook_local_guard);
+                    trace!("done handling RegisterUIObserveInputs message");
+                }
+                Some(HookMessage::UnregisterUIObserveInputs) => {
+                    trace!("handling UnregisterUIObserveInputs message");
+                    debug!("unregistered to send inputs to UI");
+                    let mut hook_local_guard = HOOKLOCAL.lock().expect("mutex poisoned");
+                    let hook_local = hook_local_guard
+                        .as_mut()
+                        .expect("local data should have been initialized");
+                    hook_local.ui_observing_inputs = false;
+                    drop(hook_local_guard);
+                    trace!("done handling UnregisterUIObserveInputs message");
+                }
                 None => {
                     trace!("got unknown message; treat as normal");
                     let _ = WM::TranslateMessage(&lpmsg);
@@ -179,6 +201,8 @@ enum HookMessage {
     Quit = WindowsAndMessaging::WM_APP,
     Update = WindowsAndMessaging::WM_APP + 1,
     CheckForeground = WindowsAndMessaging::WM_APP + 2,
+    RegisterUIObserveInputs = WindowsAndMessaging::WM_APP + 3,
+    UnregisterUIObserveInputs = WindowsAndMessaging::WM_APP + 4,
 }
 
 #[derive(Debug, Clone)]
@@ -227,6 +251,36 @@ impl HookthreadProxy {
             WindowsAndMessaging::PostThreadMessageW(
                 self.thread_id,
                 HookMessage::CheckForeground
+                    .to_u32()
+                    .expect("msg should always be representable as u32"),
+                Foundation::WPARAM(0),
+                Foundation::LPARAM(0),
+            )
+            .expect("could not send to hookthread");
+        }
+    }
+    // The UI thread calls this when it wants to be notified of inputs.
+    pub fn register_observe_inputs(&self) {
+        use num_traits::ToPrimitive;
+        unsafe {
+            WindowsAndMessaging::PostThreadMessageW(
+                self.thread_id,
+                HookMessage::RegisterUIObserveInputs
+                    .to_u32()
+                    .expect("msg should always be representable as u32"),
+                Foundation::WPARAM(0),
+                Foundation::LPARAM(0),
+            )
+            .expect("could not send to hookthread");
+        }
+    }
+    // The UI thread calls this when it is done being notified of inputs.
+    pub fn unregister_observe_inputs(&self) {
+        use num_traits::ToPrimitive;
+        unsafe {
+            WindowsAndMessaging::PostThreadMessageW(
+                self.thread_id,
+                HookMessage::UnregisterUIObserveInputs
                     .to_u32()
                     .expect("msg should always be representable as u32"),
                 Foundation::WPARAM(0),
