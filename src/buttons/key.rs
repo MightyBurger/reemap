@@ -203,6 +203,7 @@ pub enum KeyButton {
     PA1 = 0xFD,
     OEM_CLEAR = 0xFE,
 }
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum KeyType {
     // Keys you will frequently want to remap.
@@ -217,16 +218,24 @@ pub enum KeyType {
     Unmappable,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct KeyDisplayOpts {
+    // give more specific names to OEM keys if it's the US layout
+    assume_us_layout: bool,
+}
+
 impl KeyButton {
     pub fn from_vk(vk: u8) -> Option<Self> {
         use num_traits::FromPrimitive;
         Self::from_u8(vk)
     }
+
     pub fn to_vk(self) -> u8 {
         use num_traits::ToPrimitive;
         self.to_u8()
             .expect("button should always be convertable to virtual key code")
     }
+
     pub fn to_keydown_input(self) -> KeyboardAndMouse::INPUT {
         use KeyboardAndMouse as KBM;
         let vk = self.to_vk();
@@ -243,6 +252,7 @@ impl KeyButton {
             },
         }
     }
+
     pub fn to_keyup_input(self) -> KeyboardAndMouse::INPUT {
         use KeyboardAndMouse as KBM;
         let vk = self.to_vk();
@@ -259,6 +269,7 @@ impl KeyButton {
             },
         }
     }
+
     pub fn key_type(self) -> KeyType {
         match self {
             Self::LBUTTON => KeyType::Rare,
@@ -435,11 +446,10 @@ impl KeyButton {
             Self::OEM_CLEAR => KeyType::Rare,
         }
     }
-}
+    fn display(&self, display_opts: KeyDisplayOpts) -> &'static str {
+        let KeyDisplayOpts { assume_us_layout } = display_opts;
 
-impl std::fmt::Display for KeyButton {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let name = match self {
+        match self {
             Self::LBUTTON => "Left Click as key",
             Self::RBUTTON => "Right Click as key",
             Self::CANCEL => "Control break processing",
@@ -588,19 +598,60 @@ impl std::fmt::Display for KeyButton {
             Self::LAUNCH_MEDIA_SELECT => "Select Media",
             Self::LAUNCH_APP1 => "Start Application 1",
             Self::LAUNCH_APP2 => "Start Application 2",
-            // TODO: These OEM keys will need to have special names depending on layout.
-            Self::OEM_1 => "Semicolon",
+            Self::OEM_1 => {
+                if assume_us_layout {
+                    "Semicolon"
+                } else {
+                    "OEM 1"
+                }
+            }
             Self::OEM_PLUS => "Plus",
             Self::OEM_COMMA => "Comma",
             Self::OEM_MINUS => "Minus",
             Self::OEM_PERIOD => "Period",
-            Self::OEM_2 => "Forward Slash",
-            Self::OEM_3 => "Backtick",
-            Self::OEM_4 => "Left Brace",
-            Self::OEM_5 => "Backslash",
-            Self::OEM_6 => "Right Brace",
-            Self::OEM_7 => "Apostrophe",
-            Self::OEM_8 => "Right Ctrl (CSA)",
+            Self::OEM_2 => {
+                if assume_us_layout {
+                    "Forward Slash"
+                } else {
+                    "OEM 2"
+                }
+            }
+            Self::OEM_3 => {
+                if assume_us_layout {
+                    "Backtick"
+                } else {
+                    "OEM 3"
+                }
+            }
+            Self::OEM_4 => {
+                if assume_us_layout {
+                    "Left Brace"
+                } else {
+                    "OEM 4"
+                }
+            }
+            Self::OEM_5 => {
+                if assume_us_layout {
+                    "Backslash"
+                } else {
+                    "OEM 5"
+                }
+            }
+            Self::OEM_6 => {
+                if assume_us_layout {
+                    "Right Brace"
+                } else {
+                    "OEM 6"
+                }
+            }
+            Self::OEM_7 => {
+                if assume_us_layout {
+                    "Apostrophe"
+                } else {
+                    "OEM 7"
+                }
+            }
+            Self::OEM_8 => "OEM 8",
             Self::OEM_102 => "Backslash (ISO)",
             Self::PROCESSKEY => "IME Process",
             Self::PACKET => "Unicode Packet",
@@ -613,7 +664,6 @@ impl std::fmt::Display for KeyButton {
             Self::NONAME => "Reserved",
             Self::PA1 => "PA1",
             Self::OEM_CLEAR => "Clear",
-        };
-        write!(f, "{name}")
+        }
     }
 }
