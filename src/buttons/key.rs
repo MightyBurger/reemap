@@ -31,7 +31,7 @@ pub enum KeyButton {
     TAB = 0x09,
     // Reserved = 0x0A,
     // Reserved = 0x0B,
-    CLEAR = 0x0C, // What is this??
+    CLEAR = 0x0C,
     RETURN = 0x0D,
     // Reserved = 0x0E,
     // Reserved = 0x0F,
@@ -269,12 +269,12 @@ impl KeyButton {
             Self::XBUTTON2 => KeyType::Rare,
             Self::BACK => KeyType::Common,
             Self::TAB => KeyType::Common,
-            Self::CLEAR => KeyType::Rare,
+            Self::CLEAR => KeyType::Common,
             Self::RETURN => KeyType::Common,
             Self::SHIFT => KeyType::Rare,
             Self::CONTROL => KeyType::Rare,
             Self::MENU => KeyType::Rare,
-            Self::PAUSE => KeyType::Rare,
+            Self::PAUSE => KeyType::Common,
             Self::CAPITAL => KeyType::Common,
             Self::KANA_HANGUL => KeyType::Rare,
             Self::IME_ON => KeyType::Rare,
@@ -612,7 +612,7 @@ impl std::fmt::Display for KeyButton {
             Self::ZOOM => "Zoom",
             Self::NONAME => "Reserved",
             Self::PA1 => "PA1",
-            Self::OEM_CLEAR => "Clear",
+            Self::OEM_CLEAR => "OEM Clear",
         };
         write!(f, "{name}")
     }
