@@ -475,8 +475,8 @@ fn see_buttons_modal(
 
             ui.heading("Button Viewer");
 
-            ui.label("Use this tool to see what Reemap thinks a button is called.");
-            ui.label("First, click away from Reemap so it is not in focus.");
+            ui.add_space(style::SPACING);
+            ui.label("Click away from Reemap so it is not in focus.");
             ui.add_space(style::SPACING);
             ui.label("The last pressed button is: ");
             ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
