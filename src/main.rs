@@ -72,7 +72,7 @@ fn main() {
     }
 
     // Step 2
-    let config_path = reemap_dir.join("remaps.ron");
+    let config_path = reemap_dir.join("config.ron");
     let config_file_exists = match config_path.try_exists() {
         Ok(exists) => exists,
         Err(e) => {
