@@ -491,6 +491,12 @@ fn see_buttons_modal(
                     ui.add_space(style::SPACING);
                     ui.label("To remap this key, you must enable unusual keys in Reemap settings.");
                 }
+                if let Some(buttons::Button::Key(key)) = last_pressed_button
+                    && key.key_type() == KeyType::Unmappable
+                {
+                    ui.add_space(style::SPACING);
+                    ui.label("This key cannot be remapped.");
+                }
             });
         });
     if modal.should_close() {
