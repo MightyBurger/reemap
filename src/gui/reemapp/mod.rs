@@ -178,7 +178,7 @@ impl EditProfileModalOpts {
                 process: self.process,
             },
             ProfileConditionUI::OriBF => config::ProfileCondition::TitleAndProcess {
-                title: "Ori and the Blind Forest".to_string(),
+                title: "Ori And The Blind Forest".to_string(),
                 process: "ori.exe".to_string(),
             },
             ProfileConditionUI::OriBFDE => config::ProfileCondition::TitleAndProcess {
@@ -327,6 +327,10 @@ impl crate::gui::TrayApp for ReemApp {
                         }
                     });
                     ui.menu_button("Help", |ui| {
+                        ui.hyperlink_to(
+                            "Reemap User's Guide",
+                            "https://github.com/MightyBurger/reemap",
+                        );
                         if ui.button("About").clicked() {
                             self.gui_local.about_modal = true;
                         }
