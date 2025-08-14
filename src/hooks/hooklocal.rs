@@ -136,6 +136,9 @@ impl HookLocalData {
                     }
                 }
             }
+            if new_profile.is_some() {
+                break;
+            }
         }
         if self.active_profile != new_profile {
             // Inform the UI thread the profile changed.
