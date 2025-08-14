@@ -107,36 +107,24 @@ impl HookLocalData {
             .filter(|(_, profile)| profile.enabled)
             .map(|(i, profile)| (i, &profile.condition))
         {
-            match profile_condition {
-                config::ProfileCondition::Always => {
-                    new_profile = Some(i);
-                }
+            let profile_matches = match profile_condition {
+                config::ProfileCondition::Always => true,
                 config::ProfileCondition::TitleAndProcess {
                     title: condition_title,
                     process: condition_process,
-                } => {
-                    if title == *condition_title && process == *condition_process {
-                        new_profile = Some(i);
-                    }
-                }
+                } if title == *condition_title && process == *condition_process => true,
 
                 config::ProfileCondition::Title {
                     title: condition_title,
-                } => {
-                    if title == *condition_title {
-                        new_profile = Some(i);
-                    }
-                }
+                } if title == *condition_title => true,
 
                 config::ProfileCondition::Process {
                     process: condition_process,
-                } => {
-                    if process == *condition_process {
-                        new_profile = Some(i);
-                    }
-                }
-            }
-            if new_profile.is_some() {
+                } if process == *condition_process => true,
+                _ => false,
+            };
+            if profile_matches {
+                new_profile = Some(i);
                 break;
             }
         }
