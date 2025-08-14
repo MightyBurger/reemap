@@ -35,6 +35,7 @@ pub struct ReemApp {
     hookthread_proxy: hooks::HookthreadProxy,
     config: config::Config,
     current_config: config::Config,
+    schedule_discard: bool,
     config_path: PathBuf,
     gui_local: GuiLocal,
 }
@@ -49,6 +50,7 @@ impl ReemApp {
             hookthread_proxy,
             current_config: config.clone(),
             config,
+            schedule_discard: false,
             config_path,
             gui_local: GuiLocal::default(),
         }
@@ -83,7 +85,7 @@ impl ReemApp {
         self.current_config = self.config.clone();
     }
     fn discard_changes(&mut self) {
-        self.config = self.current_config.clone();
+        self.schedule_discard = true;
     }
 }
 
@@ -480,6 +482,11 @@ impl crate::gui::TrayApp for ReemApp {
                     about_modal(ui, &mut self.gui_local.about_modal);
                 }
             });
+        if self.schedule_discard {
+            self.schedule_discard = false;
+            self.config = self.current_config.clone();
+            self.gui_local.menu = GuiMenu::Main;
+        }
     }
 }
 
