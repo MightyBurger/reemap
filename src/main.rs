@@ -144,12 +144,7 @@ fn main() {
         let hookthread_proxy = hooks::spawn_scoped(s, config.clone(), ui_proxy);
 
         // Run the GUI. It will be ran on this thread, the main thread.
-        let app = gui::reemapp::ReemApp {
-            hookthread_proxy: hookthread_proxy.clone(),
-            config,
-            gui_local: gui::reemapp::GuiLocal::default(),
-            config_path,
-        };
+        let app = gui::reemapp::ReemApp::new(hookthread_proxy.clone(), config, config_path);
         gui::run(app, event_loop);
 
         // At this point, the GUI closed and is done running.

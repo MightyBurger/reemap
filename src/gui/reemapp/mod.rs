@@ -32,10 +32,27 @@ use windows::Win32::UI::Input::KeyboardAndMouse;
 // Thought the name was clever. Don't get too mad, please.
 #[derive(Debug)]
 pub struct ReemApp {
-    pub hookthread_proxy: hooks::HookthreadProxy,
-    pub config: config::Config,
-    pub gui_local: GuiLocal,
-    pub config_path: PathBuf,
+    hookthread_proxy: hooks::HookthreadProxy,
+    config: config::Config,
+    current_config: config::Config,
+    config_path: PathBuf,
+    gui_local: GuiLocal,
+}
+
+impl ReemApp {
+    pub fn new(
+        hookthread_proxy: hooks::HookthreadProxy,
+        config: config::Config,
+        config_path: PathBuf,
+    ) -> Self {
+        Self {
+            hookthread_proxy,
+            current_config: config.clone(),
+            config,
+            config_path,
+            gui_local: GuiLocal::default(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -287,6 +304,10 @@ impl crate::gui::TrayApp for ReemApp {
             last_pressed_button,
         } = app_ctx;
 
+        // This is a lot less falliable than having a "dirty" flag set every time a setting
+        // changes. Yet, it is probably a lot less performant. This could be optimized.
+        let unsaved_changes = self.current_config != self.config;
+
         egui_extras::install_image_loaders(ctx);
 
         egui::TopBottomPanel::top("menu bar panel")
@@ -315,9 +336,19 @@ impl crate::gui::TrayApp for ReemApp {
                         });
                         ui.separator();
                         if ui.button("Settings").clicked() {
-                            self.gui_local.settings_modal.show_rare_keys =
-                                self.config.show_rare_keys;
-                            self.gui_local.settings_modal.modal_open = true;
+                            if unsaved_changes {
+                                native_dialog::DialogBuilder::message()
+                                    .set_level(native_dialog::MessageLevel::Info)
+                                    .set_title("Unsaved changes")
+                                    .set_text("You have unsaved changes. Apply or discard changes before accessing settings.")
+                                    .alert()
+                                    .show()
+                                    .unwrap();
+                            } else {
+                                self.gui_local.settings_modal.show_rare_keys =
+                                    self.config.show_rare_keys;
+                                self.gui_local.settings_modal.modal_open = true;
+                            }
                         }
                     });
                     ui.menu_button("Tools", |ui| {
@@ -327,10 +358,7 @@ impl crate::gui::TrayApp for ReemApp {
                         }
                     });
                     ui.menu_button("Help", |ui| {
-                        ui.hyperlink_to(
-                            "Reemap User's Guide",
-                            "https://github.com/MightyBurger/reemap",
-                        );
+                        ui.hyperlink_to("User's Guide", "https://github.com/MightyBurger/reemap");
                         if ui.button("About").clicked() {
                             self.gui_local.about_modal = true;
                         }
@@ -366,7 +394,7 @@ impl crate::gui::TrayApp for ReemApp {
                 egui::Frame::new().inner_margin(12.0).show(ui, |ui| {
                     style::set_reemap_style(ui);
 
-                    breadcrumb(ctx, ui, self);
+                    breadcrumb(ctx, ui, self, unsaved_changes);
                     ui.separator();
                     ui.add_space(style::SPACING);
 
