@@ -455,7 +455,6 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
         .iter()
         .zip(current_layer_actives.iter())
         .filter(|(layer, active)| layer.enabled && **active)
-        .rev()
     {
         match &layer.policy[Button::from(hold_button)] {
             RemapPolicy::Defer => {}
@@ -615,7 +614,6 @@ fn intercept_tap_input(tap_button: TapButton) -> bool {
         .iter()
         .zip(current_layer_actives.iter())
         .filter(|(layer, active)| layer.enabled && **active)
-        .rev()
     {
         match &layer.policy[Button::from(tap_button)] {
             RemapPolicy::Defer => {}
