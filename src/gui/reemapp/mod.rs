@@ -13,7 +13,7 @@ mod ui_tables;
 use breadcrumb::breadcrumb;
 use std::path::PathBuf;
 use tracing::warn;
-use tracing::{info, instrument};
+use tracing::{error, info, instrument};
 use ui_base_layer::ui_base_layer;
 use ui_layer::ui_layer;
 use ui_main::ui_main;
@@ -52,6 +52,38 @@ impl ReemApp {
             config_path,
             gui_local: GuiLocal::default(),
         }
+    }
+    fn apply_changes(&mut self) {
+        // Three things happen when setting the configuration.
+        // 1. UI therad saves configuration to %APPDATA%
+        // 2. UI thread sends config over to hookthread to update the remaps
+        // 3. UI thread updates its own current_config value
+
+        let config_str = ron::ser::to_string_pretty(
+            &config::VersionedConfig::from(self.config.clone()),
+            ron::ser::PrettyConfig::new(),
+        )
+        .unwrap();
+        match std::fs::write(&self.config_path, config_str) {
+            Ok(()) => (),
+            Err(e) => {
+                error!("could not write to config file: {e}");
+                native_dialog::DialogBuilder::message()
+                    .set_level(native_dialog::MessageLevel::Error)
+                    .set_title("Error writing file")
+                    .set_text("Reemap could not write to the configuration file.")
+                    .alert()
+                    .show()
+                    .unwrap();
+            }
+        }
+
+        self.hookthread_proxy.update(self.config.clone());
+
+        self.current_config = self.config.clone();
+    }
+    fn discard_changes(&mut self) {
+        self.config = self.current_config.clone();
     }
 }
 
@@ -434,7 +466,7 @@ impl crate::gui::TrayApp for ReemApp {
                 });
 
                 if self.gui_local.settings_modal.modal_open {
-                    settings_modal(ui, &mut self.gui_local.settings_modal, &mut self.config);
+                    settings_modal(ui, self);
                 }
                 if self.gui_local.see_buttons_modal {
                     see_buttons_modal(
@@ -451,24 +483,18 @@ impl crate::gui::TrayApp for ReemApp {
     }
 }
 
-fn settings_modal(
-    ui: &mut egui::Ui,
-    modal_opts: &mut SettingsModalOpts,
-    config: &mut config::Config,
-) {
+fn settings_modal(ui: &mut egui::Ui, args: &mut ReemApp) {
     use ui_ok_cancel_modal::ui_ok_cancel_modal;
 
-    let ok_cancel = ui_ok_cancel_modal(
-        ui,
-        "Settings will apply immediately but will only be saved once you click \"Apply\".",
-        true,
-        |ui| {
-            ui.heading("Reemap Settings");
-            ui.separator();
-            ui.add_space(style::SPACING);
-            ui.checkbox(&mut modal_opts.show_rare_keys, "Show unusual keys");
-            ui.add_space(style::SPACING);
-            ui.label(
+    let modal_opts = &mut args.gui_local.settings_modal;
+
+    let ok_cancel = ui_ok_cancel_modal(ui, "", true, |ui| {
+        ui.heading("Reemap Settings");
+        ui.separator();
+        ui.add_space(style::SPACING);
+        ui.checkbox(&mut modal_opts.show_rare_keys, "Show unusual keys");
+        ui.add_space(style::SPACING);
+        ui.label(
             "Unusual keyboard keys include keys that are uncommon in modern hardware and keys you \
 probably do not want to remap. Examples include \"mouse-button-as-key\" keys and \
 Input Method Editor (IME) keys. Remaps may behave strangely depending on the key. Check this box \
@@ -478,12 +504,12 @@ Note: even with this setting enabled, some keys are unavailable. This includes e
 Windows defines as reserved, undefined, or unassigned. This also includes the Scroll \
 Lock key, which Reemap uses as an escape-hatch to disable all remaps.",
         );
-        },
-    );
+    });
     match ok_cancel {
         Some(true) => {
-            config.show_rare_keys = modal_opts.show_rare_keys;
+            args.config.show_rare_keys = modal_opts.show_rare_keys;
             modal_opts.modal_open = false;
+            args.apply_changes();
         }
         Some(false) => {
             modal_opts.modal_open = false;

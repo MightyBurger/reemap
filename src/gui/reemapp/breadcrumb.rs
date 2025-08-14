@@ -16,16 +16,17 @@ pub fn breadcrumb(
                 .add_sized(style::BUTTON_SIZE, egui::Button::new("Cancel"))
                 .clicked()
             {
-                args.config = args.current_config.clone();
+                args.discard_changes();
             }
             if ui
                 .add_sized(style::BUTTON_SIZE, egui::Button::new("Apply"))
                 .clicked()
             {
+                args.apply_changes();
                 // Three things happen on Apply.
                 // 1. UI therad saves configuration to %APPDATA%
                 // 2. UI thread sends config over to hookthread to update the remaps
-                // 3. UI thread updates its own current_config value.
+                // 3. UI thread updates its own current_config value
 
                 let config_str = ron::ser::to_string_pretty(
                     &config::VersionedConfig::from(args.config.clone()),
