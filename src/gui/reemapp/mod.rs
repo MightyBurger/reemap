@@ -1,3 +1,6 @@
+// Copyright 2025 Jordan Johnson
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
 mod breadcrumb;
 mod style;
 mod ui_base_layer;

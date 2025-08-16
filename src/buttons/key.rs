@@ -1,3 +1,6 @@
+// Copyright 2025 Jordan Johnson
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
 use serde::{Deserialize, Serialize};
 use windows::Win32::UI::Input::KeyboardAndMouse;
 

@@ -1,3 +1,6 @@
+// Copyright 2025 Jordan Johnson
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
 use super::GuiMenu;
 use super::ReemApp;
 use crate::config;

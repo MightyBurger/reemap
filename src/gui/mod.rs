@@ -1,3 +1,6 @@
+// Copyright 2025 Jordan Johnson
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
 // The following code is loosely based on this example:
 // https://github.com/emilk/egui/blob/main/crates/egui_glow/examples/pure_glow.rs
 // Other code uses some concepts from eframe.

@@ -1,4 +1,6 @@
-// use crate::settings::{BaseRemapPolicy, LayerType, ProfileCondition, RemapPolicy};
+// Copyright 2025 Jordan Johnson
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
 use crate::config::{BaseLayer, BaseRemapPolicy, Layer, LayerType, RemapPolicy};
 
 use crate::buttons::key::KeyButton;

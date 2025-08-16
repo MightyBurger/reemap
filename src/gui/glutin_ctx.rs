@@ -1,3 +1,6 @@
+// Copyright 2025 Jordan Johnson
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
 use glutin::prelude::NotCurrentGlContext;
 use std::num::NonZeroU32;
 use tracing::debug;

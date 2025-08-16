@@ -1,3 +1,6 @@
+// Copyright 2025 Jordan Johnson
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
 use crate::gui::reemapp::EditProfileModalOpts;
 use crate::gui::reemapp::style;
 use crate::gui::reemapp::ui_copy_modal::ui_copy_modal;

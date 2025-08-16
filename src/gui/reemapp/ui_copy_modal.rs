@@ -1,3 +1,6 @@
+// Copyright 2025 Jordan Johnson
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
 use crate::config;
 use crate::gui::reemapp::style;
 use crate::gui::reemapp::ui_tables::{ClickListItem, ui_clickable_table};

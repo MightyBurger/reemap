@@ -1,3 +1,6 @@
+// Copyright 2025 Jordan Johnson
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
 pub fn set_reemap_style(ui: &mut egui::Ui) {
     ui.style_mut().visuals.widgets.inactive.weak_bg_fill = egui::Color32::TRANSPARENT;
     ui.style_mut().visuals.widgets.inactive.bg_stroke = egui::Stroke {
