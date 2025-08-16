@@ -5,8 +5,17 @@ version = "1.0.0"
 edition = "2024"
 description = "Simple, efficient input remaps"
 repository = "https://github.com/MightyBurger/reemap"
-license = "Apache-2.0 OR MIT"
+# This should be Apache-2.0 OR MIT.
+# But cargo-wix doesn't understand that format...
+license = "Apache-2.0"
 publish = false
+
+[package.metadata.wix]
+banner = "resource\\banner.png"
+dialog = "resource\\dialog.png"
+product-icon = "resource\\lurk.ico"
+path-guid = "AA0148F4-682D-4781-8A8E-B287A846DD02"
+upgrade-guid = "D3FD6F06-8182-44FC-B8C4-98E1A636025D"
 
 [dependencies]
 enum-map = "2.7.3"
