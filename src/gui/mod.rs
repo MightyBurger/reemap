@@ -15,7 +15,7 @@ const SIZE: winit::dpi::LogicalSize<f64> = winit::dpi::LogicalSize {
     width: 800.0,
     height: 600.0,
 };
-const START_VISIBLE: bool = true;
+const START_VISIBLE: bool = false;
 
 // To understand where this constant comes from, look at build.rs.
 // The build script extracts images from the .ico file and saves those images to a temporary
