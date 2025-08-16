@@ -6,9 +6,6 @@ Simple, efficient input remaps
 
 ![reemap screenshot](resource/example.png)
 
-**NOTE: Reemap is currently in development.** It still has important issues that must be resolved before
-a release. ️⚠️
-
 </div>
 
 
@@ -38,7 +35,7 @@ games on multi-monitor setups)
 
 The input remaps are implemented thoughtfully and from the perspective of using Reemap for video games.
 For example, the software will not cause keys to get stuck as you switch layers. This is an issue
-with some existing remap software, including X-Mouse.
+with some existing remap software.
 
 Reemap does not support macros or any form of timed inputs.
 
