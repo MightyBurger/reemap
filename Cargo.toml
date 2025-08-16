@@ -1,7 +1,12 @@
 [package]
 name = "reemap"
+authors = ["Jordan Johnson"]
 version = "1.0.0"
 edition = "2024"
+description = "Simple, efficient input remaps"
+repository = "https://github.com/MightyBurger/reemap"
+license = "Apache-2.0 OR MIT"
+publish = false
 
 [dependencies]
 enum-map = "2.7.3"
