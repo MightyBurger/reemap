@@ -5,6 +5,7 @@ mod config;
 mod gui;
 mod hooks;
 mod query_windows;
+mod unique;
 
 use etcetera::BaseStrategy;
 use tracing::{error, info, instrument, warn};
@@ -17,24 +18,24 @@ fn main() {
     /*
         Initialization sequence:
 
-        1.  See if %APPDATA%\Reemap exists. It usually should, except on first launch.
+        1.  Check this is the only running instance of Reemap.
+
+        2.  See if %APPDATA%\Reemap exists. It usually should, except on first launch.
             If it doesn't exist, create the directory.
             Now, %APPDATA%\Reemap certainly exists.
 
-        2.  See if %APPDATA%\Reemap\config.ron exists. It usually should, except on first launch.
+        3.  See if %APPDATA%\Reemap\config.ron exists. It usually should, except on first launch.
             If it doesn't exist, initialize it with a brand new (default) configuration.
             Now, %APPDATA%\Reemap\config.ron certainly exists.
 
-        3.  Read %APPDATA%\Reemap\config.ron and try to parse it into a VersionedConfig struct.
+        4.  Read %APPDATA%\Reemap\config.ron and try to parse it into a VersionedConfig struct.
             If that fails, the configuration is probably corrupted. Rather than silently resetting
             it, which may be a destructive action, offer the user the option to reset the
             configuration.
 
-        4.  Convert VersionedConfig to ConfigUI. We want two copies: one to give to the hookthread,
+        5.  Convert VersionedConfig to ConfigUI. We want two copies: one to give to the hookthread,
             and one to give to the UI thread.
     */
-
-    // Open the configuration file, or create it if it doesn't already exist.
 
     fn display_error(text: &str, ctx: impl std::fmt::Display) {
         let body_text = format!("{text}\n\n{ctx}");
@@ -48,7 +49,27 @@ fn main() {
         error!("error opening Reemap: {}", &body_text);
     }
 
-    // Step 1
+    fn display_error_no_ctx(text: &str) {
+        native_dialog::DialogBuilder::message()
+            .set_level(native_dialog::MessageLevel::Error)
+            .set_title("Error opening Reemap")
+            .set_text(text)
+            .alert()
+            .show()
+            .unwrap();
+        error!("error opening Reemap: {}", text);
+    }
+
+    // Ensure this is the only running instance
+    let unique_guard = match unique::UniqueGuard::try_lock() {
+        Ok(guard) => guard,
+        Err(_e) => {
+            display_error_no_ctx("Reemap is already running.\n\nIs it hiding in the tray?");
+            return;
+        }
+    };
+
+    // Check %APPDATA%\Reemap
     let mut reemap_dir = etcetera::choose_base_strategy().unwrap().config_dir();
     reemap_dir.push("Reemap");
     let reemap_dir_exists = match reemap_dir.try_exists() {
@@ -71,7 +92,7 @@ fn main() {
         }
     }
 
-    // Step 2
+    // Check %APPDATA%\Reemap\config.ron
     let config_path = reemap_dir.join("config.ron");
     let config_file_exists = match config_path.try_exists() {
         Ok(exists) => exists,
@@ -93,7 +114,7 @@ fn main() {
         }
     }
 
-    // Step 3
+    // Read %APPDATA%\Reemap\config.ron
     let config_str = match std::fs::read_to_string(&config_path) {
         Ok(s) => s,
         Err(e) => {
@@ -129,6 +150,7 @@ fn main() {
         }
     };
 
+    // Update to latest version
     let config = config::Config::from(versioned_config);
 
     // Reminder: all threads are joined at the end of a std::thread::scope
@@ -151,4 +173,6 @@ fn main() {
         // We should close Reemap, so let's stop the hookthread.
         hookthread_proxy.quit();
     });
+
+    drop(unique_guard);
 }

@@ -2814,6 +2814,7 @@ dependencies = [
  "tracing-subscriber",
  "tray-icon",
  "windows",
+ "windows-strings",
  "winit",
  "winres",
 ]
