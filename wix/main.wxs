@@ -74,7 +74,7 @@
             InstallerVersion='450'
             Languages='1033'
             Compressed='yes'
-            InstallScope='perMachine'
+            InstallScope='perUser'
             SummaryCodepage='1252'
             />
 
@@ -166,6 +166,9 @@
         <Property Id='ARPHELPLINK' Value='https://github.com/MightyBurger/reemap'/>
 
         <Property Id="WIXUI_INSTALLDIR" Value="APPLICATIONFOLDER" />
+
+        <Property Id="ALLUSERS" Secure="yes" Value="2" />
+        <Property Id="MSIINSTALLPERUSER" Secure="yes" Value="1" />
         
         <UI>
             <UIRef Id='WixUI_InstallDir'/>
