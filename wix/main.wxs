@@ -124,7 +124,31 @@
                     </Directory>
                 </Directory>
             </Directory>
+            <Directory Id="ProgramMenuFolder">
+                <Directory Id="ApplicationProgramsFolder" Name="Reemap"/>
+            </Directory>
         </Directory>
+
+        <DirectoryRef Id="ApplicationProgramsFolder">
+            <Component Id="ApplicationShortcut" Guid="31BFD7A7-DC2C-427C-BB44-CC5DBF7252C3">
+                <Shortcut
+                    Id="ApplicationStartMenuShortcut"
+                    Name="Reemap"
+                    Target="[#exe0]"
+                    WorkingDirectory="APPLICATIONROOTDIRECTORY"/>
+                <RemoveFolder
+                    Id="CleanUpShortCut"
+                    Directory="ApplicationProgramsFolder"
+                    On="uninstall"/>
+                <RegistryValue
+                    Root="HKCU"
+                    Key="Software\MightyBurger\Reemap"
+                    Name="installed"
+                    Type="integer"
+                    Value="1"
+                    KeyPath="yes"/>
+            </Component>
+        </DirectoryRef>
 
         <Feature
             Id='Binaries'
@@ -142,6 +166,8 @@
             <ComponentRef Id='License'/>
             
             <ComponentRef Id='binary0'/>
+
+            <ComponentRef Id="ApplicationShortcut"/>
 
             <Feature
                 Id='Environment'
