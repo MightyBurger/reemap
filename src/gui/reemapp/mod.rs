@@ -341,6 +341,8 @@ impl crate::gui::TrayApp for ReemApp {
             last_pressed_button,
         } = app_ctx;
 
+        ctx.set_visuals(egui::Visuals::dark());
+
         // This is a lot less falliable than having a "dirty" flag set every time a setting
         // changes. Yet, it is probably a lot less performant. This could be optimized.
         let unsaved_changes = self.current_config != self.config;
