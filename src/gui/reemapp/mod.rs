@@ -310,6 +310,9 @@ pub struct NewBaseRemapModalOpts {
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SettingsModalOpts {
     modal_open: bool,
+    // None means there was an error trying to access the registry.
+    run_on_login: Option<bool>,
+    current_run_on_login: Option<bool>,
     show_rare_keys: bool,
 }
 
@@ -386,6 +389,23 @@ impl crate::gui::TrayApp for ReemApp {
                             } else {
                                 self.gui_local.settings_modal.show_rare_keys =
                                     self.config.show_rare_keys;
+
+                                self.gui_local.settings_modal.run_on_login = match crate::registry::is_registered_run_on_login()
+                                 {
+                                    Ok(val) => Some(val),
+                                    Err(e) => {
+                                            native_dialog::DialogBuilder::message()
+                                                .set_level(native_dialog::MessageLevel::Warning)
+                                                .set_title("Error accessing registry")
+                                                .set_text(format!("Reemap could not access the registry. The run-on-login setting will be unavailable.\n\n{e}"))
+                                                .alert()
+                                                .show()
+                                                .unwrap();
+                                            warn!("error accessing registry: {e}");
+                                        None
+                                    }
+                                };
+                                self.gui_local.settings_modal.current_run_on_login = self.gui_local.settings_modal.run_on_login;
                                 self.gui_local.settings_modal.modal_open = true;
                             }
                         }
@@ -504,6 +524,19 @@ fn settings_modal(ui: &mut egui::Ui, args: &mut ReemApp) {
         ui.heading("Reemap Settings");
         ui.separator();
         ui.add_space(style::SPACING);
+
+        // run on login
+        if let Some(run_on_login) = modal_opts.run_on_login.as_mut() {
+            ui.checkbox(run_on_login, "Run Reemap on login");
+        } else {
+            let mut dummy = false;
+            ui.add_enabled_ui(false, |ui| {
+                ui.checkbox(&mut dummy, "Run Reemap on login");
+            });
+        }
+        ui.add_space(style::SPACING);
+
+        // show unusual keys
         ui.checkbox(&mut modal_opts.show_rare_keys, "Show unusual keys");
         ui.add_space(style::SPACING);
         ui.label(
@@ -519,6 +552,22 @@ Lock key, which Reemap uses as an escape-hatch to disable all remaps.",
     });
     match ok_cancel {
         Some(true) => {
+            if modal_opts.current_run_on_login != modal_opts.run_on_login
+                && let Some(run) = modal_opts.run_on_login
+            {
+                let result = crate::registry::run_on_login(run);
+                if let Err(e) = result {
+                    native_dialog::DialogBuilder::message()
+                        .set_level(native_dialog::MessageLevel::Warning)
+                        .set_title("Error accessing registry")
+                        .set_text(format!("Reemap could not access the registry. The run-on-login setting was not applied.\n\n{e}"))
+                        .alert()
+                        .show()
+                        .unwrap();
+                    warn!("error accessing registry: {e}");
+                }
+            }
+
             args.config.show_rare_keys = modal_opts.show_rare_keys;
             modal_opts.modal_open = false;
             args.apply_changes();

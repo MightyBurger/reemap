@@ -8,6 +8,7 @@ mod config;
 mod gui;
 mod hooks;
 mod query_windows;
+mod registry;
 mod unique;
 
 use etcetera::BaseStrategy;
