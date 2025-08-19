@@ -22,6 +22,10 @@
 //! Be careful here. Accessing the Windows registry is to be done responsibly.
 
 use thiserror::Error;
+
+// IMPORTANT: If you change these, you must also:
+//  - update the above documentation
+//  - update the installer
 const REEMAP_RUN_VALUE_NAME: &str = "ReemapAutoLaunch_e4e2530c-65ff-4fbb-929d-1b256be9148e";
 const RUN_KEY_PATH: &str = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
 
@@ -37,7 +41,7 @@ pub fn register_run_on_login() -> Result<()> {
         let Some(reem_path) = reem_path.to_str() else {
             return Err(RegistryResult::ExePathUTF8Error);
         };
-        format!("{reem_path} --background")
+        format!("\"{reem_path}\" --background")
     };
 
     // Add the value to the registry key
