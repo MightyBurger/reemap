@@ -11,35 +11,25 @@ mod query_windows;
 mod registry;
 mod unique;
 
+use clap::Parser;
 use etcetera::BaseStrategy;
 use tracing::{error, info, instrument, warn};
 
 use crate::gui::ReemapGuiEvent;
 
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    #[clap(long, hide = true, action)]
+    uninstall: bool,
+
+    #[clap(long, short, action, help = "Start minimized to the tray")]
+    background: bool,
+}
+
 #[instrument]
 fn main() {
     tracing_subscriber::fmt::init();
-    /*
-        Initialization sequence:
-
-        1.  Check this is the only running instance of Reemap.
-
-        2.  See if %APPDATA%\Reemap exists. It usually should, except on first launch.
-            If it doesn't exist, create the directory.
-            Now, %APPDATA%\Reemap certainly exists.
-
-        3.  See if %APPDATA%\Reemap\config.ron exists. It usually should, except on first launch.
-            If it doesn't exist, initialize it with a brand new (default) configuration.
-            Now, %APPDATA%\Reemap\config.ron certainly exists.
-
-        4.  Read %APPDATA%\Reemap\config.ron and try to parse it into a VersionedConfig struct.
-            If that fails, the configuration is probably corrupted. Rather than silently resetting
-            it, which may be a destructive action, offer the user the option to reset the
-            configuration.
-
-        5.  Convert VersionedConfig to ConfigUI. We want two copies: one to give to the hookthread,
-            and one to give to the UI thread.
-    */
 
     fn display_error(text: &str, ctx: impl std::fmt::Display) {
         let body_text = format!("{text}\n\n{ctx}");
@@ -62,6 +52,47 @@ fn main() {
             .show()
             .unwrap();
         error!("error opening Reemap: {}", text);
+    }
+
+    /*
+        Initialization sequence:
+
+        1.  Parse command-line arguments.
+
+        2.  Check if called with the --uninstall flag. This is a special case where Reemap removes
+            itself from the run-on-login entries.
+
+        3.  Check this is the only running instance of Reemap.
+
+        4.  See if %APPDATA%\Reemap exists. It usually should, except on first launch.
+            If it doesn't exist, create the directory.
+            Now, %APPDATA%\Reemap certainly exists.
+
+        5.  See if %APPDATA%\Reemap\config.ron exists. It usually should, except on first launch.
+            If it doesn't exist, initialize it with a brand new (default) configuration.
+            Now, %APPDATA%\Reemap\config.ron certainly exists.
+
+        6.  Read %APPDATA%\Reemap\config.ron and try to parse it into a VersionedConfig struct.
+            If that fails, the configuration is probably corrupted. Rather than silently resetting
+            it, which may be a destructive action, offer the user the option to reset the
+            configuration.
+
+        7.  Convert VersionedConfig to ConfigUI. We want two copies: one to give to the hookthread,
+            and one to give to the UI thread.
+    */
+
+    let args = Args::parse();
+
+    if args.uninstall {
+        info!(
+            "called with uninstall flag. NOTE: this feature is intended only to be used by the uninstaller."
+        );
+        info!("removing entry to start Reemap on login, if such an entry exists");
+        let result = registry::unregister_run_on_login();
+        if let Err(e) = result {
+            error!("could not access registry: {e}");
+        }
+        return;
     }
 
     // Ensure this is the only running instance
@@ -157,6 +188,8 @@ fn main() {
     // Update to latest version
     let config = config::Config::from(versioned_config);
 
+    let start_visible = !args.background;
+
     // Reminder: all threads are joined at the end of a std::thread::scope
     std::thread::scope(|s| {
         // Build the event loop so we can grab a proxy to the UI thread.
@@ -171,7 +204,7 @@ fn main() {
 
         // Run the GUI. It will be ran on this thread, the main thread.
         let app = gui::reemapp::ReemApp::new(hookthread_proxy.clone(), config, config_path);
-        gui::run(app, event_loop);
+        gui::run(app, event_loop, start_visible);
 
         // At this point, the GUI closed and is done running.
         // We should close Reemap, so let's stop the hookthread.

@@ -18,7 +18,6 @@ const SIZE: winit::dpi::LogicalSize<f64> = winit::dpi::LogicalSize {
     width: 800.0,
     height: 600.0,
 };
-const START_VISIBLE: bool = true;
 
 // To understand where this constant comes from, look at build.rs.
 // The build script extracts images from the .ico file and saves those images to a temporary
@@ -68,11 +67,16 @@ struct GlowApp<T: TrayApp> {
     next_repaint_time: Option<Instant>,
     tray_icon: Option<TrayIcon>,
     app_ctx: TrayAppCtx,
+    start_visible: bool,
     app_data: T,
 }
 
 impl<T: TrayApp> GlowApp<T> {
-    fn new(proxy: winit::event_loop::EventLoopProxy<ReemapGuiEvent>, app_data: T) -> Self {
+    fn new(
+        proxy: winit::event_loop::EventLoopProxy<ReemapGuiEvent>,
+        app_data: T,
+        start_visible: bool,
+    ) -> Self {
         Self {
             proxy,
             gl_window: None,
@@ -81,6 +85,7 @@ impl<T: TrayApp> GlowApp<T> {
             next_repaint_time: Some(Instant::now()),
             tray_icon: None,
             app_ctx: TrayAppCtx::default(),
+            start_visible,
             app_data,
         }
     }
@@ -131,7 +136,7 @@ impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for Glow
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
         let (gl_window, gl) = create_display(event_loop);
         let gl = std::sync::Arc::new(gl);
-        gl_window.window().set_visible(START_VISIBLE);
+        gl_window.window().set_visible(self.start_visible);
 
         let egui_glow = egui_glow::EguiGlow::new(event_loop, gl.clone(), None, None, true);
 
@@ -362,7 +367,7 @@ fn create_display(
 }
 
 // Pass in the event_loop so the caller has the opportunity to create a proxy first.
-pub fn run<T>(app: T, event_loop: winit::event_loop::EventLoop<ReemapGuiEvent>)
+pub fn run<T>(app: T, event_loop: winit::event_loop::EventLoop<ReemapGuiEvent>, start_visible: bool)
 where
     T: TrayApp,
 {
@@ -382,7 +387,7 @@ where
 
     let event_loop_proxy = event_loop.create_proxy();
 
-    let mut glow_app = GlowApp::new(event_loop_proxy, app);
+    let mut glow_app = GlowApp::new(event_loop_proxy, app, start_visible);
 
     event_loop
         .run_app(&mut glow_app)
