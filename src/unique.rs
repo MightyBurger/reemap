@@ -14,7 +14,7 @@ pub struct UniqueGuard(FN::HANDLE);
 impl UniqueGuard {
     pub fn try_lock() -> Result<Self> {
         debug!("locking unique mutex");
-        let id = windows_strings::w!("ReemapUniqueGuardMutexName");
+        let id = windows_strings::w!("ReemapMutex_b5356cd5-980e-4789-b07d-4be8e16acc4a");
         let handle = unsafe { TH::CreateMutexW(None, true, id)? };
         // For some bizarre reason, even if the above fails, it does not produce an Err() variant.
         // So we still need to check...
