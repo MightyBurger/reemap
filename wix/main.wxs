@@ -127,15 +127,6 @@
             <Directory Id="ProgramMenuFolder">
                 <Directory Id="ApplicationProgramsFolder" Name="Reemap"/>
             </Directory>
-            <Component Id="RunOnLoginEntry" Guid="*">
-                <RegistryValue
-                    Root="HKCU"
-                    Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
-                    Name="ReemapAutoLaunch_e4e2530c-65ff-4fbb-929d-1b256be9148e"
-                    Type="string"
-                    Value="&quot;[APPLICATIONFOLDER]reemap.exe&quot; --background"
-                    KeyPath="yes"/>
-            </Component>
         </Directory>
 
         <DirectoryRef Id="ApplicationProgramsFolder">
@@ -177,15 +168,6 @@
             <ComponentRef Id='binary0'/>
 
             <ComponentRef Id="ApplicationShortcut"/>
-
-            <Feature
-                Id="RunOnLoginFeature"
-                Title="Run On Login"
-                Description="Run Reemap on login. This can be changed in the software."
-                Level="1"
-                Absent="allow">
-                <ComponentRef Id="RunOnLoginEntry"/>
-            </Feature>
 
             <Feature
                 Id='Environment'
@@ -239,6 +221,17 @@
           The dialog BMP dimensions are 493 x 312 pixels.
         -->
         <WixVariable Id='WixUIDialogBmp' Value='resource\dialog.png'/>
+
+        <CustomAction
+            Id="ReemapUninstall"
+            FileKey="exe0"
+            ExeCommand="--uninstall"
+            Execute="immediate"
+            Return="ignore" />
+
+        <InstallExecuteSequence>
+            <Custom Action="ReemapUninstall" Before="RemoveFiles">REMOVE="ALL" AND NOT UPGRADINGPRODUCTCODE</Custom>
+        </InstallExecuteSequence>
         
     </Product>
 
