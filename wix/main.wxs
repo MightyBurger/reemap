@@ -227,7 +227,7 @@
             FileKey="exe0"
             ExeCommand="--uninstall"
             Execute="immediate"
-            Return="check" />
+            Return="ignore" />
 
         <InstallExecuteSequence>
             <Custom Action="ReemapUninstall" Before="RemoveFiles">REMOVE="ALL" AND NOT UPGRADINGPRODUCTCODE</Custom>
