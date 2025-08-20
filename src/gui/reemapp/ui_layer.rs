@@ -324,16 +324,20 @@ fn get_new_remap_helper_text(
             format!("When active, this layer will prevent {button} from being remapped.")
         }
         RemapPolicyUI::Remap => {
-            let buttons_str: String = if outputs.is_empty() {
-                String::from("(no inputs)")
+            if outputs.is_empty() {
+                format!("When active, this layer will suppress {button}.")
             } else {
-                itertools::Itertools::intersperse(
-                    outputs.iter().map(|btn| btn.to_string()),
-                    String::from(", "),
+                let buttons_str: String = {
+                    itertools::Itertools::intersperse(
+                        outputs.iter().map(|btn| btn.to_string()),
+                        String::from(", "),
+                    )
+                    .collect()
+                };
+                format!(
+                    "When active, this layer will remap {button} to the following: {buttons_str}."
                 )
-                .collect()
-            };
-            format!("When active, this layer will remap {button} to the following: {buttons_str}.")
+            }
         }
     }
 }

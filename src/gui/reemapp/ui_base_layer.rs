@@ -283,16 +283,18 @@ fn get_new_remap_helper_text_base(
             format!("{button} will not be remapped.")
         }
         BaseRemapPolicyUI::Remap => {
-            let buttons_str: String = if outputs.is_empty() {
-                String::from("(no inputs)")
+            if outputs.is_empty() {
+                format!("{button} will be suppressed.")
             } else {
-                itertools::Itertools::intersperse(
-                    outputs.iter().map(|btn| btn.to_string()),
-                    String::from(", "),
-                )
-                .collect()
-            };
-            format!("{button} will be remapped to the following: {buttons_str}.")
+                let buttons_str: String = {
+                    itertools::Itertools::intersperse(
+                        outputs.iter().map(|btn| btn.to_string()),
+                        String::from(", "),
+                    )
+                    .collect()
+                };
+                format!("{button} will be remapped to the following: {buttons_str}.")
+            }
         }
     }
 }
