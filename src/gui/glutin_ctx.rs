@@ -3,6 +3,7 @@
 
 use glutin::prelude::NotCurrentGlContext;
 use std::num::NonZeroU32;
+use thiserror::Error;
 use tracing::debug;
 use winit::{
     platform::windows::WindowAttributesExtWindows, raw_window_handle::HasWindowHandle as _,
@@ -16,7 +17,7 @@ pub struct GlutinWindowContext {
 }
 
 impl GlutinWindowContext {
-    pub unsafe fn new(event_loop: &winit::event_loop::ActiveEventLoop) -> Self {
+    pub unsafe fn new(event_loop: &winit::event_loop::ActiveEventLoop) -> Result<Self> {
         use super::ICON32_HEIGHT;
         use super::ICON32_RAW_RGBA;
         use super::ICON32_WIDTH;
@@ -66,7 +67,7 @@ impl GlutinWindowContext {
 
         debug!("trying to get gl_config");
 
-        let (mut window, gl_config) = glutin_winit::DisplayBuilder::new()
+        let Ok((mut window, gl_config)) = glutin_winit::DisplayBuilder::new()
             .with_preference(glutin_winit::ApiPreference::FallbackEgl)
             .with_window_attributes(Some(winit_window_builder.clone()))
             .build(
@@ -78,7 +79,9 @@ impl GlutinWindowContext {
                     )
                 },
             )
-            .expect("failed to create gl_config");
+        else {
+            return Err(Error::GlConfigError);
+        };
 
         let gl_display = gl_config.display();
         debug!("found gl_config: {:?}", &gl_config);
@@ -99,20 +102,38 @@ impl GlutinWindowContext {
             .build(raw_window_handle);
 
         let not_current_gl_context = unsafe {
-            gl_display
-                .create_context(&gl_config, &context_attributes)
-                .unwrap_or_else(|_| {
-                    debug!("failed to create gl_context with attributes: {:?}. retrying with fallback context attributes: {:?}",
-                    &context_attributes, &fallback_context_attributes);
-                    gl_config.display().create_context(&gl_config, &fallback_context_attributes).expect("failed to create context even with fallback attributes")
-                })
+            match gl_display.create_context(&gl_config, &context_attributes) {
+                Ok(val) => val,
+                Err(_) => {
+                    debug!(
+                        "failed to create gl_context with attributes: {:?}. retrying with fallback context attributes: {:?}",
+                        &context_attributes, &fallback_context_attributes
+                    );
+                    match gl_config
+                        .display()
+                        .create_context(&gl_config, &fallback_context_attributes)
+                    {
+                        Ok(val) => val,
+                        Err(_) => return Err(Error::GlContextError),
+                    }
+                }
+            }
         };
 
-        let window = window.take().unwrap_or_else(|| {
-            debug!("window doesn't exist yet. creating one now with finalize_window");
-            glutin_winit::finalize_window(event_loop, winit_window_builder.clone(), &gl_config)
-                .expect("failed to finalize glutin window")
-        });
+        let window = match window.take() {
+            Some(val) => val,
+            None => {
+                debug!("window doesn't exist yet. creating one now with finalize_window");
+                match glutin_winit::finalize_window(
+                    event_loop,
+                    winit_window_builder.clone(),
+                    &gl_config,
+                ) {
+                    Ok(val) => val,
+                    Err(_) => return Err(Error::WindowError),
+                }
+            }
+        };
 
         let (width, height): (u32, u32) = window.inner_size().into();
         let width = NonZeroU32::new(width).unwrap_or(NonZeroU32::MIN);
@@ -128,26 +149,33 @@ impl GlutinWindowContext {
                     height,
                 );
 
-        let gl_surface = unsafe {
-            gl_display
-                .create_window_surface(&gl_config, &surface_attributes)
-                .unwrap()
+        let Ok(gl_surface) =
+            (unsafe { gl_display.create_window_surface(&gl_config, &surface_attributes) })
+        else {
+            return Err(Error::WindowSurfaceError);
         };
-        debug!("surface created successfully: {gl_surface:?}. making context current");
-        let gl_context = not_current_gl_context.make_current(&gl_surface).unwrap();
 
-        gl_surface
+        debug!("surface created successfully: {gl_surface:?}. making context current");
+        let Ok(gl_context) = not_current_gl_context.make_current(&gl_surface) else {
+            return Err(Error::GlContextCurrentError);
+        };
+
+        if gl_surface
             .set_swap_interval(
                 &gl_context,
                 glutin::surface::SwapInterval::Wait(NonZeroU32::MIN),
             )
-            .unwrap();
-        Self {
+            .is_err()
+        {
+            return Err(Error::GlSwapIntervalError);
+        }
+
+        Ok(Self {
             window,
             gl_context,
             gl_display,
             gl_surface,
-        }
+        })
     }
 
     pub fn window(&self) -> &winit::window::Window {
@@ -174,3 +202,21 @@ impl GlutinWindowContext {
         self.gl_display.get_proc_address(addr)
     }
 }
+
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error("failed to create gl_config")]
+    GlConfigError,
+    #[error("failed to create opengl context")]
+    GlContextError,
+    #[error("failed to finalize glutin window")]
+    WindowError,
+    #[error("failed to create window surface")]
+    WindowSurfaceError,
+    #[error("failed to make gl context current")]
+    GlContextCurrentError,
+    #[error("failed to set gl swap interval")]
+    GlSwapIntervalError,
+}
+
+pub type Result<T> = core::result::Result<T, Error>;

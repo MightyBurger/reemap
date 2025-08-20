@@ -134,7 +134,22 @@ impl<T: TrayApp> GlowApp<T> {
 
 impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for GlowApp<T> {
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
-        let (gl_window, gl) = create_display(event_loop);
+        let (gl_window, gl) = match create_display(event_loop) {
+            Ok(val) => val,
+            Err(e) => {
+                native_dialog::DialogBuilder::message()
+                    .set_level(native_dialog::MessageLevel::Error)
+                    .set_title("Error opening Reemap")
+                    .set_text(format!(
+                        "Reemap could not create the display. This may happen if you run this \
+                        software without a supported version of OpenGL.\n\n {e}"
+                    ))
+                    .alert()
+                    .show()
+                    .unwrap();
+                panic!("failed to create display");
+            }
+        };
         let gl = std::sync::Arc::new(gl);
         gl_window.window().set_visible(self.start_visible);
 
@@ -352,8 +367,8 @@ impl<T: TrayApp> winit::application::ApplicationHandler<ReemapGuiEvent> for Glow
 
 fn create_display(
     event_loop: &winit::event_loop::ActiveEventLoop,
-) -> (GlutinWindowContext, glow::Context) {
-    let glutin_window_context = unsafe { GlutinWindowContext::new(event_loop) };
+) -> glutin_ctx::Result<(GlutinWindowContext, glow::Context)> {
+    let glutin_window_context = unsafe { GlutinWindowContext::new(event_loop)? };
     let gl = unsafe {
         glow::Context::from_loader_function(|s| {
             let s = std::ffi::CString::new(s)
@@ -363,7 +378,7 @@ fn create_display(
         })
     };
 
-    (glutin_window_context, gl)
+    Ok((glutin_window_context, gl))
 }
 
 // Pass in the event_loop so the caller has the opportunity to create a proxy first.
