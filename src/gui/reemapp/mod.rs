@@ -524,22 +524,31 @@ fn settings_modal(ui: &mut egui::Ui, args: &mut ReemApp) {
         ui.heading("Reemap Settings");
         ui.separator();
         ui.add_space(style::SPACING);
+        egui::ScrollArea::vertical().show(ui, |ui| {
+            // run on login
+            if let Some(run_on_login) = modal_opts.run_on_login.as_mut() {
+                ui.checkbox(run_on_login, "Run on login");
+            } else {
+                let mut dummy = false;
+                ui.add_enabled_ui(false, |ui| {
+                    ui.checkbox(&mut dummy, "Run on login");
+                });
+            }
+            ui.add_space(style::SPACING);
+            ui.label(
+                "When checked, Reemap will start when you log in. This setting only affects \
+you; it will not affect other users on this computer.
 
-        // run on login
-        if let Some(run_on_login) = modal_opts.run_on_login.as_mut() {
-            ui.checkbox(run_on_login, "Run Reemap on login");
-        } else {
-            let mut dummy = false;
-            ui.add_enabled_ui(false, |ui| {
-                ui.checkbox(&mut dummy, "Run Reemap on login");
-            });
-        }
-        ui.add_space(style::SPACING);
+This means remaps will apply as soon as you log in. Be careful if you have a profile \
+that runs unconditionally. If you get yourself stuck, remember: you can enable scroll lock to \
+disable remaps!",
+            );
+            ui.add_space(style::SPACING);
 
-        // show unusual keys
-        ui.checkbox(&mut modal_opts.show_rare_keys, "Show unusual keys");
-        ui.add_space(style::SPACING);
-        ui.label(
+            // show unusual keys
+            ui.checkbox(&mut modal_opts.show_rare_keys, "Show unusual keys");
+            ui.add_space(style::SPACING);
+            ui.label(
             "Unusual keyboard keys include keys that are uncommon in modern hardware and keys you \
 probably do not want to remap. Examples include \"mouse-button-as-key\" keys and \
 Input Method Editor (IME) keys. Remaps may behave strangely depending on the key. Check this box \
@@ -549,6 +558,7 @@ Note: even with this setting enabled, some keys are unavailable. This includes e
 Windows defines as reserved, undefined, or unassigned. This also includes the Scroll \
 Lock key, which Reemap uses as an escape-hatch to disable all remaps.",
         );
+        });
     });
     match ok_cancel {
         Some(true) => {
