@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080">
+    <defs>
+        <radialGradient id="s-0" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="100" y2="100">
+            <stop offset="0" stop-color="hsla(186,47%,7%,1)"></stop>
+            <stop offset="1" stop-color="hsla(186,47%,7%,0)" stop-opacity="0"></stop>
+        </radialGradient>
+        <radialGradient id="s-1" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="100" y2="100">
+            <stop offset="0" stop-color="hsla(307,45%,12%,1)"></stop>
+            <stop offset="1" stop-color="hsla(307,45%,12%,0)" stop-opacity="0"></stop>
+        </radialGradient>
+        <radialGradient id="s-2" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="100" y2="100">
+            <stop offset="0" stop-color="hsla(188,50%,14%,1)"></stop>
+            <stop offset="1" stop-color="hsla(188,50%,14%,0)" stop-opacity="0"></stop>
+        </radialGradient>
+        <radialGradient id="s-3" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="100" y2="100">
+            <stop offset="0" stop-color="hsla(251,46%,12%,1)"></stop>
+            <stop offset="1" stop-color="hsla(251,46%,12%,0)" stop-opacity="0"></stop>
+        </radialGradient>
+        <radialGradient id="s-4" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="100" y2="100">
+            <stop offset="0" stop-color="hsla(183,44%,10%,1)"></stop>
+            <stop offset="1" stop-color="hsla(183,44%,10%,0)" stop-opacity="0"></stop>
+        </radialGradient>
+    </defs>
+    <rect fill="rgb(15,20,25)" width="100%" height="100%"></rect>
+    <ellipse cx="65%" cy="39%" ry="60%" rx="65%" fill="url(#s-4)"></ellipse>
+    <ellipse cx="86%" cy="18%" ry="60%" rx="65%" fill="url(#s-3)"></ellipse>
+    <ellipse cx="37%" cy="21%" ry="60%" rx="65%" fill="url(#s-2)"></ellipse>
+    <ellipse cx="34%" cy="98%" ry="60%" rx="65%" fill="url(#s-1)"></ellipse>
+    <ellipse cx="1%" cy="60%" ry="60%" rx="65%" fill="url(#s-0)"></ellipse>
+</svg>

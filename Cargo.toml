@@ -40,7 +40,7 @@ tray-icon = "0.20.1"
 image = { version = "0.25.6", features = ["png"] }
 thiserror = "2.0.12"
 oneshot = { version = "0.1.11", default-features = false, features = ["std"] }
-egui_extras = { version = "0.31.1", features = ["file", "image"] }
+egui_extras = { version = "0.31.1", features = ["file", "image", "svg"] }
 itertools = "0.14.0"
 etcetera = "0.10.0"
 serde = { version = "1.0.219", features = ["derive"] }

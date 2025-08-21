@@ -43,8 +43,31 @@ impl From<VersionedConfig> for Config {
 // -------------------- Config --------------------
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct Config {
+    pub background: Background,
     pub show_rare_keys: bool,
     pub profiles: Vec<Profile>,
+}
+
+// -------------------- Background --------------------
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+pub enum Background {
+    Ginso,
+    Gradient,
+}
+
+impl Default for Background {
+    fn default() -> Self {
+        Self::Ginso
+    }
+}
+
+impl std::fmt::Display for Background {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Ginso => write!(f, "Ginso Tree"),
+            Self::Gradient => write!(f, "Gradient"),
+        }
+    }
 }
 
 // -------------------- VersionedProfile --------------------

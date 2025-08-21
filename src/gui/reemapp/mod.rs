@@ -316,6 +316,7 @@ pub struct SettingsModalOpts {
     modal_open: bool,
     // None means there was an error trying to access the registry.
     run_on_login: Option<bool>,
+    background: config::Background,
     current_run_on_login: Option<bool>,
     show_rare_keys: bool,
 }
@@ -391,10 +392,7 @@ impl crate::gui::TrayApp for ReemApp {
                                     .show()
                                     .unwrap();
                             } else {
-                                self.gui_local.settings_modal.show_rare_keys =
-                                    self.config.show_rare_keys;
-
-                                self.gui_local.settings_modal.run_on_login = match crate::registry::is_registered_run_on_login()
+                                let run_on_login = match crate::registry::is_registered_run_on_login()
                                  {
                                     Ok(val) => Some(val),
                                     Err(e) => {
@@ -409,8 +407,13 @@ impl crate::gui::TrayApp for ReemApp {
                                         None
                                     }
                                 };
-                                self.gui_local.settings_modal.current_run_on_login = self.gui_local.settings_modal.run_on_login;
-                                self.gui_local.settings_modal.modal_open = true;
+                                self.gui_local.settings_modal = SettingsModalOpts {
+                                    modal_open: true,
+                                    run_on_login,
+                                    background: self.config.background,
+                                    current_run_on_login: run_on_login,
+                                    show_rare_keys: self.config.show_rare_keys
+                                };
                             }
                         }
                     });
@@ -451,9 +454,18 @@ impl crate::gui::TrayApp for ReemApp {
                     .fill(egui::Color32::BLACK),
             )
             .show(ctx, |ui| {
-                egui::Image::new(egui::include_image!("../../../resource/background.png"))
-                    .tint(egui::Color32::from_gray(64))
-                    .paint_at(ui, [[0.0, 0.0].into(), [800.0, 600.0].into()].into());
+                // Show a background image
+                match self.config.background {
+                    config::Background::Ginso => {
+                        egui::Image::new(egui::include_image!("../../../resource/background.png"))
+                            .tint(egui::Color32::from_gray(64))
+                            .paint_at(ui, [[0.0, 0.0].into(), [800.0, 600.0].into()].into());
+                    }
+                    config::Background::Gradient => {
+                        egui::Image::new(egui::include_image!("../../../resource/gradient.svg"))
+                            .paint_at(ui, [[0.0, 0.0].into(), [800.0, 600.0].into()].into());
+                    }
+                }
                 egui::Frame::new().inner_margin(12.0).show(ui, |ui| {
                     style::set_reemap_style(ui);
 
@@ -529,6 +541,30 @@ fn settings_modal(ui: &mut egui::Ui, args: &mut ReemApp) {
         ui.separator();
         ui.add_space(style::SPACING);
         egui::ScrollArea::vertical().show(ui, |ui| {
+            // Background
+            ui.horizontal(|ui| {
+                egui::ComboBox::from_id_salt("settings_background_combo")
+                    .selected_text(format!("{}", &modal_opts.background))
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(
+                            &mut modal_opts.background,
+                            config::Background::Ginso,
+                            "Ginso Tree",
+                        );
+                        ui.selectable_value(
+                            &mut modal_opts.background,
+                            config::Background::Gradient,
+                            "Gradient",
+                        );
+                    });
+                ui.strong("Background");
+            });
+            ui.add_space(style::SPACING);
+            ui.label("Choose which image to display in the background of Reemap.");
+            ui.add_space(style::SPACING);
+            ui.separator();
+            ui.add_space(style::SPACING);
+
             // run on login
             if let Some(run_on_login) = modal_opts.run_on_login.as_mut() {
                 ui.checkbox(run_on_login, "Run on login");
@@ -547,6 +583,8 @@ This means remaps will apply as soon as you log in. Be careful if you have a pro
 that runs unconditionally. If you get yourself stuck, remember: you can enable scroll lock to \
 disable remaps!",
             );
+            ui.add_space(style::SPACING);
+            ui.separator();
             ui.add_space(style::SPACING);
 
             // show unusual keys
@@ -582,6 +620,7 @@ Lock key, which Reemap uses as an escape-hatch to disable all remaps.",
                 }
             }
 
+            args.config.background = modal_opts.background;
             args.config.show_rare_keys = modal_opts.show_rare_keys;
             modal_opts.modal_open = false;
             args.apply_changes();
