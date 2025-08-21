@@ -414,6 +414,10 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
             return true;
         }
 
+        // ALready held (key repeat), and the input is suppressed.
+        // Exact same as HeldWithRemap, except just don't send any input. So, intercept it.
+        HoldButtonState::HeldSuppress => return true,
+
         // Not held - this is a fresh input. Let's continue processing.
         HoldButtonState::NotHeld => {}
     }
@@ -474,13 +478,17 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
                     HoldButtonState::HeldWithRemap(output.clone());
                 return true;
             }
+            RemapPolicy::Suppress => {
+                hook_local.button_state[hold_button] = HoldButtonState::HeldSuppress;
+                return true;
+            }
             RemapPolicy::NoRemap => {
                 hook_local.button_state[hold_button] = HoldButtonState::HeldNoRemap;
                 return false;
             }
         }
     }
-    let intercepted = match &current_base.policy[Button::from(hold_button)] {
+    match &current_base.policy[Button::from(hold_button)] {
         BaseRemapPolicy::Remap(output) => {
             let target_buttons: Vec<KeyboardAndMouse::INPUT> = output
                 .iter()
@@ -494,15 +502,15 @@ fn intercept_hold_down_input(hold_button: HoldButton) -> bool {
             hook_local.button_state[hold_button] = HoldButtonState::HeldWithRemap(output.clone());
             true
         }
+        BaseRemapPolicy::Suppress => {
+            hook_local.button_state[hold_button] = HoldButtonState::HeldSuppress;
+            true
+        }
         BaseRemapPolicy::NoRemap => {
             hook_local.button_state[hold_button] = HoldButtonState::HeldNoRemap;
             false
         }
-    };
-
-    drop(hook_local_guard);
-
-    intercepted
+    }
 }
 
 /*
@@ -565,11 +573,12 @@ fn intercept_hold_up_input(hold_button: HoldButton) -> bool {
             send_input_batch(&target_buttons);
             true
         }
+
+        // This button down was intercepted and suppressed, so let's suppress the button up, too.
+        HoldButtonState::HeldSuppress => true,
     };
     // Step 3
     hook_local.button_state[hold_button] = HoldButtonState::NotHeld;
-
-    drop(hook_local_guard);
 
     intercepted
 }
@@ -635,12 +644,15 @@ fn intercept_tap_input(tap_button: TapButton) -> bool {
                 send_input_batch(&target_buttons);
                 return true;
             }
+            RemapPolicy::Suppress => {
+                return true;
+            }
             RemapPolicy::NoRemap => {
                 return false;
             }
         }
     }
-    let intercepted = match &current_base.policy[Button::from(tap_button)] {
+    match &current_base.policy[Button::from(tap_button)] {
         BaseRemapPolicy::Remap(output) => {
             let target_buttons: Vec<KeyboardAndMouse::INPUT> = output
                 .iter()
@@ -657,12 +669,9 @@ fn intercept_tap_input(tap_button: TapButton) -> bool {
             send_input_batch(&target_buttons);
             true
         }
+        BaseRemapPolicy::Suppress => true,
         BaseRemapPolicy::NoRemap => false,
-    };
-
-    drop(hook_local_guard);
-
-    intercepted
+    }
 }
 
 fn send_input_batch(input: &[KeyboardAndMouse::INPUT]) {

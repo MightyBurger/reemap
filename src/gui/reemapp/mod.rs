@@ -131,6 +131,7 @@ impl std::fmt::Display for ProfileConditionUI {
 enum BaseRemapPolicyUI {
     NoRemap,
     Remap,
+    Suppress,
 }
 
 impl Default for BaseRemapPolicyUI {
@@ -144,6 +145,7 @@ impl std::fmt::Display for BaseRemapPolicyUI {
         match self {
             Self::NoRemap => write!(f, "No Remap"),
             Self::Remap => write!(f, "Remap"),
+            Self::Suppress => write!(f, "Suppress"),
         }
     }
 }
@@ -153,6 +155,7 @@ enum RemapPolicyUI {
     Defer,
     NoRemap,
     Remap,
+    Suppress,
 }
 
 impl Default for RemapPolicyUI {
@@ -167,6 +170,7 @@ impl std::fmt::Display for RemapPolicyUI {
             Self::Defer => write!(f, "Defer"),
             Self::NoRemap => write!(f, "No Remap"),
             Self::Remap => write!(f, "Remap"),
+            Self::Suppress => write!(f, "Suppress"),
         }
     }
 }

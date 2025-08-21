@@ -227,6 +227,7 @@ impl Default for LayerType {
 pub enum BaseRemapPolicy {
     NoRemap,
     Remap(Output),
+    Suppress,
 }
 
 impl Default for BaseRemapPolicy {
@@ -241,7 +242,7 @@ impl std::fmt::Display for BaseRemapPolicy {
             Self::NoRemap => write!(f, "(do not remap)"),
             Self::Remap(maps) => {
                 if maps.is_empty() {
-                    return write!(f, "(block input)");
+                    return write!(f, "(invalid)");
                 }
                 let outstr: String = itertools::Itertools::intersperse(
                     maps.iter().map(|btn| btn.to_string()),
@@ -250,6 +251,7 @@ impl std::fmt::Display for BaseRemapPolicy {
                 .collect();
                 write!(f, "{outstr}")
             }
+            Self::Suppress => write!(f, "(suppress)"),
         }
     }
 }
@@ -260,16 +262,17 @@ pub enum RemapPolicy {
     Defer,
     NoRemap,
     Remap(Output),
+    Suppress,
 }
 
 impl std::fmt::Display for RemapPolicy {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Defer => write!(f, "(defer to next layer)"),
+            Self::Defer => write!(f, "(defer)"),
             Self::NoRemap => write!(f, "(do not remap)"),
             Self::Remap(maps) => {
                 if maps.is_empty() {
-                    return write!(f, "(block input)");
+                    return write!(f, "(invalid)");
                 }
                 let outstr: String = itertools::Itertools::intersperse(
                     maps.iter().map(|btn| btn.to_string()),
@@ -278,6 +281,7 @@ impl std::fmt::Display for RemapPolicy {
                 .collect();
                 write!(f, "{outstr}")
             }
+            Self::Suppress => write!(f, "(suppress)"),
         }
     }
 }

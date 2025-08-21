@@ -175,9 +175,12 @@ pub fn ui_base_remaps_table(
             policy: match layer.policy[button] {
                 config::BaseRemapPolicy::NoRemap => BaseRemapPolicyUI::NoRemap,
                 config::BaseRemapPolicy::Remap(_) => BaseRemapPolicyUI::Remap,
+                config::BaseRemapPolicy::Suppress => BaseRemapPolicyUI::Suppress,
             },
             outputs: match layer.policy[button] {
-                config::BaseRemapPolicy::NoRemap => SmallVec::new(),
+                config::BaseRemapPolicy::NoRemap | config::BaseRemapPolicy::Suppress => {
+                    SmallVec::new()
+                }
                 config::BaseRemapPolicy::Remap(ref output) => output.clone(),
             },
             search: String::new(),
@@ -200,7 +203,11 @@ fn ui_new_base_remap_modal(
 
     let helper_text =
         get_new_remap_helper_text_base(&button, &modal_opts.outputs, &modal_opts.policy);
-    let ok_cancel = ui_ok_cancel_modal(ui, &helper_text, true, |ui| {
+    let valid = match modal_opts.policy {
+        BaseRemapPolicyUI::Remap => !modal_opts.outputs.is_empty(),
+        BaseRemapPolicyUI::NoRemap | BaseRemapPolicyUI::Suppress => true,
+    };
+    let ok_cancel = ui_ok_cancel_modal(ui, &helper_text, valid, |ui| {
         ui.heading(format!("Remaps for {button}"));
         ui.separator();
         ui.add_space(style::SPACING);
@@ -208,7 +215,7 @@ fn ui_new_base_remap_modal(
         ui.horizontal(|ui| {
             ui.label("Policy");
             ui.add_space(style::SPACING);
-            egui::ComboBox::from_id_salt("policy")
+            egui::ComboBox::from_id_salt("base_remap_policy")
                 .selected_text(format!("{}", &modal_opts.policy))
                 .show_ui(ui, |ui| {
                     ui.selectable_value(
@@ -217,6 +224,11 @@ fn ui_new_base_remap_modal(
                         "No Remap",
                     );
                     ui.selectable_value(&mut modal_opts.policy, BaseRemapPolicyUI::Remap, "Remap");
+                    ui.selectable_value(
+                        &mut modal_opts.policy,
+                        BaseRemapPolicyUI::Suppress,
+                        "Suppress",
+                    );
                 });
         });
         ui.add_space(style::SPACING);
@@ -224,6 +236,7 @@ fn ui_new_base_remap_modal(
         let enable_tables = match modal_opts.policy {
             BaseRemapPolicyUI::NoRemap => false,
             BaseRemapPolicyUI::Remap => true,
+            BaseRemapPolicyUI::Suppress => false,
         };
         ui.add_enabled_ui(enable_tables, |ui| {
             ui.columns_const(|[col_1, col_2]| {
@@ -263,6 +276,7 @@ fn ui_new_base_remap_modal(
                 BaseRemapPolicyUI::Remap => {
                     config::BaseRemapPolicy::Remap(modal_opts.outputs.clone())
                 }
+                BaseRemapPolicyUI::Suppress => config::BaseRemapPolicy::Suppress,
             };
             modal_opts.modal_open = None;
         }
@@ -284,7 +298,7 @@ fn get_new_remap_helper_text_base(
         }
         BaseRemapPolicyUI::Remap => {
             if outputs.is_empty() {
-                format!("{button} will be suppressed.")
+                format!("Choose one or more buttons")
             } else {
                 let buttons_str: String = {
                     itertools::Itertools::intersperse(
@@ -295,6 +309,9 @@ fn get_new_remap_helper_text_base(
                 };
                 format!("{button} will be remapped to the following: {buttons_str}.")
             }
+        }
+        BaseRemapPolicyUI::Suppress => {
+            format!("{button} will be suppressed.")
         }
     }
 }

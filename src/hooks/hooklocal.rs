@@ -207,6 +207,7 @@ pub enum HoldButtonState {
     NotHeld,
     HeldNoRemap,
     HeldWithRemap(config::Output),
+    HeldSuppress,
 }
 
 impl Default for HoldButtonState {

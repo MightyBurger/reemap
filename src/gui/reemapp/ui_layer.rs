@@ -221,9 +221,12 @@ fn ui_remaps_table(
                 config::RemapPolicy::Defer => RemapPolicyUI::Defer,
                 config::RemapPolicy::NoRemap => RemapPolicyUI::NoRemap,
                 config::RemapPolicy::Remap(_) => RemapPolicyUI::Remap,
+                config::RemapPolicy::Suppress => RemapPolicyUI::Suppress,
             },
             outputs: match layer.policy[button] {
-                config::RemapPolicy::Defer | config::RemapPolicy::NoRemap => SmallVec::new(),
+                config::RemapPolicy::Defer
+                | config::RemapPolicy::NoRemap
+                | config::RemapPolicy::Suppress => SmallVec::new(),
                 config::RemapPolicy::Remap(ref output) => output.clone(),
             },
             search: String::new(),
@@ -245,7 +248,11 @@ fn ui_new_remap_modal(
     use egui_extras::{Size, StripBuilder};
 
     let helper_text = get_new_remap_helper_text(&button, &modal_opts.outputs, &modal_opts.policy);
-    let ok_cancel = ui_ok_cancel_modal(ui, &helper_text, true, |ui| {
+    let valid = match modal_opts.policy {
+        RemapPolicyUI::Remap => !modal_opts.outputs.is_empty(),
+        RemapPolicyUI::Defer | RemapPolicyUI::NoRemap | RemapPolicyUI::Suppress => true,
+    };
+    let ok_cancel = ui_ok_cancel_modal(ui, &helper_text, valid, |ui| {
         ui.heading(format!("Remaps for {button}"));
         ui.separator();
         ui.add_space(style::SPACING);
@@ -253,19 +260,26 @@ fn ui_new_remap_modal(
         ui.horizontal(|ui| {
             ui.label("Policy");
             ui.add_space(style::SPACING);
-            egui::ComboBox::from_id_salt("policy")
+            egui::ComboBox::from_id_salt("layer_remap_policy")
                 .selected_text(format!("{}", &modal_opts.policy))
                 .show_ui(ui, |ui| {
                     ui.selectable_value(&mut modal_opts.policy, RemapPolicyUI::Defer, "Defer");
                     ui.selectable_value(&mut modal_opts.policy, RemapPolicyUI::NoRemap, "No Remap");
                     ui.selectable_value(&mut modal_opts.policy, RemapPolicyUI::Remap, "Remap");
+                    ui.selectable_value(
+                        &mut modal_opts.policy,
+                        RemapPolicyUI::Suppress,
+                        "Suppress",
+                    );
                 });
         });
         ui.add_space(style::SPACING);
 
         let enable_tables = match modal_opts.policy {
-            RemapPolicyUI::Defer | RemapPolicyUI::NoRemap => false,
+            RemapPolicyUI::Defer => false,
+            RemapPolicyUI::NoRemap => false,
             RemapPolicyUI::Remap => true,
+            RemapPolicyUI::Suppress => false,
         };
         ui.add_enabled_ui(enable_tables, |ui| {
             ui.columns_const(|[col_1, col_2]| {
@@ -303,6 +317,7 @@ fn ui_new_remap_modal(
                 RemapPolicyUI::Defer => config::RemapPolicy::Defer,
                 RemapPolicyUI::NoRemap => config::RemapPolicy::NoRemap,
                 RemapPolicyUI::Remap => config::RemapPolicy::Remap(modal_opts.outputs.clone()),
+                RemapPolicyUI::Suppress => config::RemapPolicy::Suppress,
             };
             modal_opts.modal_open = None;
         }
@@ -325,7 +340,7 @@ fn get_new_remap_helper_text(
         }
         RemapPolicyUI::Remap => {
             if outputs.is_empty() {
-                format!("When active, this layer will suppress {button}.")
+                format!("Choose one or more buttons")
             } else {
                 let buttons_str: String = {
                     itertools::Itertools::intersperse(
@@ -338,6 +353,9 @@ fn get_new_remap_helper_text(
                     "When active, this layer will remap {button} to the following: {buttons_str}."
                 )
             }
+        }
+        RemapPolicyUI::Suppress => {
+            format!("When active, this layer will suppress {button}.")
         }
     }
 }
