@@ -32,6 +32,9 @@ use crate::query_windows;
 
 use windows::Win32::UI::Input::KeyboardAndMouse;
 
+const TUTORIAL_LINK: &str = "https://github.com/MightyBurger/reemap";
+const REPO_LINK: &str = "https://github.com/MightyBurger/reemap";
+
 // Thought the name was clever. Don't get too mad, please.
 #[derive(Debug)]
 pub struct ReemApp {
@@ -424,7 +427,7 @@ impl crate::gui::TrayApp for ReemApp {
                         }
                     });
                     ui.menu_button("Help", |ui| {
-                        ui.hyperlink_to("User's Guide", "https://github.com/MightyBurger/reemap");
+                        ui.hyperlink_to("Tutorial", TUTORIAL_LINK);
                         if ui.button("About").clicked() {
                             self.gui_local.about_modal = true;
                         }
@@ -693,7 +696,7 @@ fn about_modal(ui: &mut egui::Ui, modal_opts: &mut bool) {
             ui.add_space(style::SPACING);
             ui.label("Reemap is free to use. The source code is available under a permissive license. See the repository for more information.");
             ui.add_space(style::SPACING);
-            ui.hyperlink_to(format!("{GITHUB} Reemap on Github"), "https://github.com/MightyBurger/reemap");
+            ui.hyperlink_to(format!("{GITHUB} Reemap on Github"), REPO_LINK);
             ui.add_space(style::SPACING);
             ui.label("Copyright © 2025 Jordan Johnson");
         });
