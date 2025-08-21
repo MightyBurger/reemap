@@ -61,6 +61,14 @@ Licensed under either of
 
 at your option.
 
+Note: Reemap includes an Ori screenshot subject to a different license. See below.
+
+<small>
+
+Ori and the Blind Forest: Definitive Edition © Microsoft Corporation. Reemap was created under Microsoft's ["Game Content Usage Rules"](https://www.xbox.com/en-US/developers/rules) using assets from Ori and the Blind Forest: Definitive Edition, and it is not endorsed by or affiliated with Microsoft.
+
+</small>
+
 [Ori]: https://www.orithegame.com/
 [Rust]: https://www.rust-lang.org/
 [Windows SDK]: https://developer.microsoft.com/en-us/windows/downloads/windows-sdk/
