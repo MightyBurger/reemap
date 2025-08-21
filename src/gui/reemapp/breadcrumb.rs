@@ -3,9 +3,7 @@
 
 use super::GuiMenu;
 use super::ReemApp;
-use crate::config;
 use crate::gui::reemapp::style;
-use tracing::error;
 
 pub fn breadcrumb(
     ctx: &egui::Context,
@@ -26,37 +24,6 @@ pub fn breadcrumb(
                 .clicked()
             {
                 args.apply_changes();
-                // Three things happen on Apply.
-                // 1. UI therad saves configuration to %APPDATA%
-                // 2. UI thread sends config over to hookthread to update the remaps
-                // 3. UI thread updates its own current_config value
-
-                let config_str = ron::ser::to_string_pretty(
-                    &config::VersionedConfig::from(args.config.clone()),
-                    ron::ser::PrettyConfig::new(),
-                )
-                .unwrap();
-                match std::fs::write(&args.config_path, config_str) {
-                    Ok(()) => (),
-                    Err(e) => {
-                        error!("could not write to config file: {e}");
-                        native_dialog::DialogBuilder::message()
-                            .set_level(native_dialog::MessageLevel::Error)
-                            .set_title("Error writing file")
-                            .set_text(format!(
-                                "Reemap could not write to the configuration file.\n\n\
-                The applied remaps will take effect, but they will not be saved.\n\n\
-                {e}"
-                            ))
-                            .alert()
-                            .show()
-                            .unwrap();
-                    }
-                }
-
-                args.hookthread_proxy.update(args.config.clone());
-
-                args.current_config = args.config.clone();
             }
         });
         ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
