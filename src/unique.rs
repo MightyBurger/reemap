@@ -1,6 +1,8 @@
 // Copyright 2025 Jordan Johnson
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
+//! A mechanism for ensuring only one instance of this application is open at once.
+
 use thiserror::Error;
 use tracing::debug;
 use windows::Win32::Foundation::{self as FN, ERROR_ALREADY_EXISTS};
