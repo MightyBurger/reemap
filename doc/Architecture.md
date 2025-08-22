@@ -89,6 +89,8 @@ to remap the button up input. Normally, the behavior is the same, but importantl
 eliminates issues that exist in other remap software. Specifically, it prevents the situation where
 keys would get stuck if the user switches layers while holding down a button.
 
+There is currently no timing or macro functionality. Actions only take place on receipt of an input.
+
 [eframe]: https://crates.io/crates/eframe
 [egui]: https://github.com/emilk/egui
 [winit]: https://github.com/rust-windowing/winit
