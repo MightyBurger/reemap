@@ -6,6 +6,10 @@ Simple, efficient input remaps
 
 ![reemap screenshot](resource/example.png)
 
+**[Website]**
+
+**[Tutorial]**
+
 </div>
 
 
@@ -41,8 +45,9 @@ Reemap does not support macros or any form of timed inputs.
 
 ## Installation
 
-Reemap is still in development. If you want to try it out now, you can build from source; see
-[Compilation](#compilation). The completed versions will be available on a Github Releases page.
+To install Reemap, download and run an installer.
+
+You can find an installer here on the Github on the releases page, or you can go to the [website][Website].
 
 ## Compilation
 
@@ -72,3 +77,5 @@ Ori and the Blind Forest: Definitive Edition © Microsoft Corporation. Reemap wa
 [Ori]: https://www.orithegame.com/
 [Rust]: https://www.rust-lang.org/
 [Windows SDK]: https://developer.microsoft.com/en-us/windows/downloads/windows-sdk/
+[Website]: https://reemap.mightyburger.net
+[Tutorial]: https://reemap.mightyburger.net/tutorial
