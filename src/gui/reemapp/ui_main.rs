@@ -1,6 +1,8 @@
 // Copyright 2025 Jordan Johnson
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
+//! The UI for the "home page" in the UI; shows the profile list.
+
 use crate::gui::reemapp::EditProfileModalOpts;
 use crate::gui::reemapp::style;
 use crate::gui::reemapp::ui_copy_modal::ui_copy_modal;

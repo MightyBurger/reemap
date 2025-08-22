@@ -1,6 +1,8 @@
 // Copyright 2025 Jordan Johnson
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
+//! The modal for when the user wants to copy something in a list.
+
 use crate::config;
 use crate::gui::reemapp::style;
 use crate::gui::reemapp::ui_tables::{ClickListItem, ui_clickable_table};

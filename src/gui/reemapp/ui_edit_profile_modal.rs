@@ -1,6 +1,8 @@
 // Copyright 2025 Jordan Johnson
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
+//! The modal for when the user creates or edits a profile.
+
 use crate::gui::reemapp::style;
 use crate::gui::reemapp::ui_ok_cancel_modal::ui_ok_cancel_modal;
 use crate::gui::reemapp::{EditProfileModalOpts, ProfileConditionUI};

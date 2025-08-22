@@ -1,6 +1,8 @@
 // Copyright 2025 Jordan Johnson
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
+//! A grab-bag of tables used throughout the UI.
+
 use crate::buttons;
 use crate::config;
 use crate::gui::reemapp::style;

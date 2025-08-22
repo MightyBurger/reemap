@@ -1,6 +1,8 @@
 // Copyright 2025 Jordan Johnson
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
+//! UI for the buttons across the top of the window.
+
 use super::GuiMenu;
 use super::ReemApp;
 use crate::gui::reemapp::style;

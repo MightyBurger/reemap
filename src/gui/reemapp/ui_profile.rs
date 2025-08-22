@@ -1,6 +1,8 @@
 // Copyright 2025 Jordan Johnson
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
+//! The profile UI.
+
 use super::GuiMenu;
 use crate::config;
 use crate::gui::reemapp::EditLayerModalOpts;
@@ -58,7 +60,6 @@ pub fn ui_profile(
                                         modal_open: true,
                                         name: profile.name.clone(),
                                         condition: match &profile.condition {
-                                            // custom
                                             config::ProfileCondition::Always => {
                                                 ProfileConditionUI::Always
                                             }

@@ -1,6 +1,8 @@
 // Copyright 2025 Jordan Johnson
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
+//! The layer UI.
+
 use crate::buttons;
 use crate::config;
 use crate::gui::reemapp::RemapsSearchOpts;
