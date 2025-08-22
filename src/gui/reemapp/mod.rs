@@ -103,10 +103,6 @@ enum ProfileConditionUI {
     TitleAndProcess,
     Title,
     Process,
-    // presets
-    OriBF,
-    OriBFDE,
-    OriWotW,
 }
 
 impl Default for ProfileConditionUI {
@@ -123,10 +119,6 @@ impl std::fmt::Display for ProfileConditionUI {
             Self::TitleAndProcess => write!(f, "Window title and process"),
             Self::Title => write!(f, "Window title"),
             Self::Process => write!(f, "Process"),
-            // presets
-            Self::OriBF => write!(f, "Ori and the Blind Forest"),
-            Self::OriBFDE => write!(f, "Ori and the Blind Forest: Definitive Edition"),
-            Self::OriWotW => write!(f, "Ori and the Will of the Wisps"),
         }
     }
 }
@@ -239,18 +231,6 @@ impl EditProfileModalOpts {
             ProfileConditionUI::Process => config::ProfileCondition::Process {
                 process: self.process,
             },
-            ProfileConditionUI::OriBF => config::ProfileCondition::TitleAndProcess {
-                title: "Ori And The Blind Forest".to_string(),
-                process: "ori.exe".to_string(),
-            },
-            ProfileConditionUI::OriBFDE => config::ProfileCondition::TitleAndProcess {
-                title: "Ori And The Blind Forest: Definitive Edition".to_string(),
-                process: "oriDE.exe".to_string(),
-            },
-            ProfileConditionUI::OriWotW => config::ProfileCondition::TitleAndProcess {
-                title: "OriAndTheWilloftheWisps".to_string(),
-                process: "oriwotw.exe".to_string(),
-            },
         }
     }
     fn valid(&self) -> bool {
@@ -261,10 +241,7 @@ impl EditProfileModalOpts {
                 }
                 ProfileConditionUI::Title => !self.title.is_empty(),
                 ProfileConditionUI::Process => !self.process.is_empty(),
-                ProfileConditionUI::Always
-                | ProfileConditionUI::OriBF
-                | ProfileConditionUI::OriBFDE
-                | ProfileConditionUI::OriWotW => true,
+                ProfileConditionUI::Always => true,
             }
     }
 }

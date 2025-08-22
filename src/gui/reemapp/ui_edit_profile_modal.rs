@@ -34,10 +34,7 @@ pub fn ui_edit_profile_modal(
             ProfileConditionUI::TitleAndProcess
             | ProfileConditionUI::Title
             | ProfileConditionUI::Process => true,
-            ProfileConditionUI::Always
-            | ProfileConditionUI::OriBF
-            | ProfileConditionUI::OriBFDE
-            | ProfileConditionUI::OriWotW => false,
+            ProfileConditionUI::Always => false,
         };
         ui.heading(heading);
         ui.separator();
@@ -80,29 +77,6 @@ pub fn ui_edit_profile_modal(
                             &mut modal_opts.condition,
                             ProfileConditionUI::Process,
                             "Process",
-                        );
-
-                        ui.separator();
-
-                        ui.scope(|ui| {
-                            ui.style_mut().interaction.selectable_labels = false;
-                            ui.add(egui::Label::new(egui::RichText::new("Presets").italics()));
-                        });
-
-                        ui.selectable_value(
-                            &mut modal_opts.condition,
-                            ProfileConditionUI::OriBF,
-                            "Ori and the Blind Forest",
-                        );
-                        ui.selectable_value(
-                            &mut modal_opts.condition,
-                            ProfileConditionUI::OriBFDE,
-                            "Ori and the Blind Forest: Definitive Edition",
-                        );
-                        ui.selectable_value(
-                            &mut modal_opts.condition,
-                            ProfileConditionUI::OriWotW,
-                            "Ori and the Will of the Wisps",
                         );
                     });
                 ui.end_row();
