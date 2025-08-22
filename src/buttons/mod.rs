@@ -27,7 +27,7 @@
 
     -----
 
-    There is another distinction that must be made. There are two different types of inputs. I call
+    There is another distinction that must be made. There are two different types of buttons. I call
     them Hold Buttons and Tap Buttons.
 
     Almost all buttons are Hold Buttons. Hold Buttons are buttons where "holding it down" makes
@@ -56,7 +56,8 @@
 
     This has implications for how Reemap should handle remaps between these inputs.
 
-    Maps from keyboard buttons to others:
+    In summary, there are three kinds of buttons Reemap needs to be able to handle gracefully:
+    key, mouse, and scroll. Here is how each mapping should work.
 
     1.  key -> key
 
@@ -79,8 +80,6 @@
 
         Reemap should send the scroll input only on the first KEYDOWN, not on later KEYDOWNs.
 
-    Maps from mouse buttons to others:
-
     4.  mouse -> key
 
         This is the tricky one.
@@ -97,21 +96,14 @@
 
         One of Reemap's primary goals is to be unquestionably allowed per leaderboard rules. So,
         to implement this feature, we'd likely want community consensus on it's validity.
-        Unfortunately, getting any kind of consensus from the Ori speedrunning community is a
-        herculean task. Every discussion on leaderboard rules in this community ends with thousands
-        of messages, a bunch of fuming people, and no progress. So, I really, really do not feel
-        like seeking some consensus from this community, especially for a nuanced, highly technical
-        topic such as this.
+        Unfortunately, getting consensus from a speedrunning community is hard.
 
-        So, while I am a little annoyed about the situation, I have made the engineering / political
-        decision Reemap will not emulate key repeat, at least for the time being. This maintains
+        So, Reemap will not emulate key repeat, at least for the time being. This maintains
         Reemap's usefulness as an uncontroversial remap software useful for leaderboard runs.
         Unfortunately, the cost is Reemap will have the same flaw as X-Mouse: to achieve the
         specific flavor of double-bash key repeat unlocks, you will still need to use mouse vendor
         software. For me, that means manually reconfiguring my mouse every time I want to do a
-        speedrun. This kills one reason I was making this software in the first place. :(
-
-        Now, what were we doing? Oh right - software.
+        speedrun.
 
         Reemap will send a KEYDOWN on each mouse DOWN input, and a KEYUP on each mouse
         UP input.
@@ -130,8 +122,6 @@
         it.
 
         Reemap should send scroll inputs in response to each DOWN input.
-
-    Maps from scroll to others:
 
     7.  scroll -> key
 

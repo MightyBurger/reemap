@@ -31,10 +31,19 @@ The two threads run mostly independently, but they do communicate through this m
 The UI thread sends these messages to the hook thread:
 - `Update` to change the remaps when the user clicks *Apply* in the UI
 - `Quit` as the UI thread exits to instruct the hook thread to stop running
+- `RegisterUIObserveInputs` when the UI needs to see button presses (i.e. the Button Viewer tool)
+- `UnregisterUIObserveInputs` when the UI no longer needs to see button presses
+
+The hook thread also registers callbacks to send `CheckForeground` to the hook thread's message loop
+when the foreground window changes.
 
 The hook thread sends the UI thread these messages:
 - `ChangedProfile` to inform the UI thread of the current active profile so it can display this to
 the user
+- `ButtonPressed` if the UI requested to see button presses via `RegisterUIObserveInputs`
+
+The UI thread also sends its own message loop messages, including `RequestRepaint`,
+`SetWindowVisibility`, `TrayIconEvent`, and `TrayMenuEvent`.
 
 ## The UI thread
 
@@ -47,10 +56,11 @@ it has been minimized; this is a dealbreaker for Reemap. Additionally, crates th
 the Windows tray require access to the event loop.
 
 Reemap therefore has its own egui implementation based closely on [this example][glow example].
-Additional code exists to implement running in the background and adding an icon to the tray.
+Reemap's implementation builds on this example to run in the background, to add an icon to the tray,
+and to fix a bug that caused the UI to re-render every frame.
 
 The grungy setup happens in `gui/mod.rs` and `gui/glutin_ctx.rs`. If you want to skip to the actual
-egui application code where things like buttons exist, go to `gui/reemapp.rs`.
+egui application code where things like buttons exist, go to `gui/reemapp/mod.rs`.
 
 If [eframe] adds support for running in the system tray, Reemap should likely switch to just
 using it.
@@ -70,6 +80,14 @@ This is partially why Reemap does not use [winit] on the hook thread. I don't ha
 what [winit] does, so having more control over the event loop makes me feel a little more confident
 there won't be unexpected delays. I'm also not sure whether any of [winit]'s abstractions would be
 incompatible with these low-level hooks I'm installing.
+
+Inside the hook thread is a map from buttons to a data structure containing information of whether
+the button is beind held down, and if so, what buttons it was remapped to. The choice of which
+button to map to is determined on receipt of the button *down* input. When the corresponding
+button *up* input arrives, the thread checks this map - not the user's settings - to determine how
+to remap the button up input. Normally, the behavior is the same, but importantly, this approach
+eliminates issues that exist in other remap software. Specifically, it prevents the situation where
+keys would get stuck if the user switches layers while holding down a button.
 
 [eframe]: https://crates.io/crates/eframe
 [egui]: https://github.com/emilk/egui
