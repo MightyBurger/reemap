@@ -57,6 +57,12 @@ To compile Reemap, you will need:
 
 Clone the repository. Then, in the repository root, run `cargo build --release`.
 
+To create the installer, you will also need:
+- [WiX Toolset v3](https://github.com/wixtoolset/wix3/releases)
+- [cargo-wix](https://github.com/volks73/cargo-wix)
+
+To create the installer, run `cargo wix`. WiX will return `warning LGHT1076 : ICE69`. This warning is safe to ignore.
+
 ## License
 
 Licensed under either of
