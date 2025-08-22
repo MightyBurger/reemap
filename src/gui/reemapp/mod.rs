@@ -32,7 +32,8 @@ use crate::query_windows;
 
 use windows::Win32::UI::Input::KeyboardAndMouse;
 
-const TUTORIAL_LINK: &str = "https://github.com/MightyBurger/reemap";
+const WEB_LINK: &str = "https://reemap.mightyburger.net";
+const TUTORIAL_LINK: &str = "https://reemap.mightyburger.net/tutorial";
 const REPO_LINK: &str = "https://github.com/MightyBurger/reemap";
 
 // Thought the name was clever. Don't get too mad, please.
@@ -427,6 +428,7 @@ impl crate::gui::TrayApp for ReemApp {
                         }
                     });
                     ui.menu_button("Help", |ui| {
+                        ui.hyperlink_to("Website", WEB_LINK);
                         ui.hyperlink_to("Tutorial", TUTORIAL_LINK);
                         if ui.button("About").clicked() {
                             self.gui_local.about_modal = true;
